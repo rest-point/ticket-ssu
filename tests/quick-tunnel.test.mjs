@@ -77,6 +77,13 @@ test('DB의 기존 하드 링크·보호 파일의 심볼릭 링크 경로를 �
   assert.equal(await readFile(original, 'utf8'), 'owned test bytes');
 });
 
+test('대상이 없는 디렉터리 링크를 새 DB 경로로 해석하지 않는다', async t => {
+  const dir = await temporary(t), missing = join(dir, 'missing-target'), alias = join(dir, 'dangling-data');
+  await symlink(missing, alias, process.platform === 'win32' ? 'junction' : 'dir');
+  assert.throws(() => tunnelOptionsFromEnv(environment(join(alias, 'future.sqlite'))), /TUNNEL_DB_PROTECTED/);
+  assert.equal(existsSync(missing), false);
+});
+
 test('실행 파일 검증 실패는 중계/자식/DB를 만들지 않고 출력에서 비밀값을 제외한다', async t => {
   const dir = await temporary(t), path = join(dir, 'never.sqlite'), logs = []; let launched = false;
   const tunnel = createQuickTunnel({ env: environment(path), verify: async () => { throw new Error(adminPassword); }, launch: async () => { launched = true; }, log: value => logs.push(value) });

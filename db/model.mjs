@@ -81,12 +81,13 @@ const inside = (base, file) => { const rel = relative(base, file); return rel ==
 export function destinationPath(file) {
   if (extname(file).toLowerCase() !== '.sqlite') throw new Error('destination must use .sqlite');
   const requested = resolve(file);
-  const path = resolve(realpathSync(dirname(requested)), requested.split(/[\\/]/).at(-1));
-  const root = realpathSync(project);
   const lexicalRoot = resolve(project);
+  if (requested.toLowerCase() === resolve(lexicalRoot, 'data', 'temp.sqlite').toLowerCase()) throw new Error('project database is protected');
   if (inside(lexicalRoot, requested) && !['data', 'test-results'].some(dir => inside(resolve(lexicalRoot, dir), requested))) {
     throw new Error('database output must stay outside tracked/static/document paths');
   }
+  const path = resolve(realpathSync(dirname(requested)), requested.split(/[\\/]/).at(-1));
+  const root = realpathSync(project);
   const allowed = ['data', 'test-results'].some(dir => inside(resolve(root, dir), path));
   if (inside(root, path) && !allowed) throw new Error('database output must stay outside tracked/static/document paths');
   const protectedPath = resolve(root, 'data', 'temp.sqlite');
