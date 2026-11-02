@@ -1,10 +1,10 @@
 # 기능·테이블 CRUD와 트랜잭션
 
-기본 웹 앱은 legacy 9개 테이블, DB_SCHEMA=model 명시 선택은 [ModelStore](../../lib/model-store.mjs)를 사용한다. 아래 목표 열은 [물리 DDL](../../db/migrations/001_model.sql) 대응이다. model 키·BUSY·큐 HTTP/입장권·health/readiness를 연결했다. [API](api.md), [상태 전이](api.md), [정합성](api.md), [입장권](api.md)을 함께 참조한다.
+기본 웹 앱은 legacy 9개 테이블, DB_SCHEMA=model 명시 선택은 [ModelStore](../../lib/model-store.mjs)를 사용한다. 아래 model 열은 [물리 DDL](../../db/migrations/001_model.sql) 대응이다. model 키·BUSY·큐 HTTP/입장권·health/readiness를 연결했다. 상태 전이·정합성·입장권은 [API 계약](api.md)을 따른다.
 
 C=INSERT, R=SELECT, U=UPDATE, D=DELETE다. health/readiness를 제외한 API의 세션 조회(users/sessions R), 관리자 역할 조회(users R)는 공통이다. IP 제한은 세션 조회 전, 회원 제한은 인증 뒤 메모리만 변경한다. 공연/좌석/관리자 조회는 읽기 스냅샷이며 expire는 선점·확정·차단과 주기 정리에 남긴다. 예매 이력의 D는 일반 기능에 두지 않는다. [제한/폴링 경계](api.md)를 참조한다.
 
-| 기능·operationId | 권한 | 현재 legacy CRUD | 목표 CRUD | 경계 |
+| 기능·operationId | 권한 | legacy CRUD | model CRUD | 경계 |
 | --- | --- | --- | --- | --- |
 | signup | 익명/기존 세션 CSRF | users CR; sessions CD | users CR; sessions CD | 비밀번호 해시는 await 후 회원 INSERT, 세션 교체는 별도 짧은 트랜잭션. 전체 가입+로그인이 한 트랜잭션인 것은 아님 |
 | login | 익명/기존 세션 CSRF | users R; sessions CD | users R; sessions CD | 해시 검증은 트랜잭션 밖. 기존 삭제·만료 정리·새 세션 발급은 짧은 트랜잭션 |
@@ -30,7 +30,7 @@ C=INSERT, R=SELECT, U=UPDATE, D=DELETE다. health/readiness를 제외한 API의 
 
 ## 테이블별 보존·노출 정책
 
-| 목표 테이블 | 생성·변경 주체 / 삭제 정책 |
+| model 테이블 | 생성·변경 주체 / 삭제 정책 |
 | --- | --- |
 | users | 가입·오프라인 이관. 역할은 초기 관리자 설정, 일반 body.role로 승격 불가. 수정/탈퇴 API 없음 |
 | sessions | 로그인/가입 시 발급·회전, 로그아웃/만료 시 D 허용. 외부 목록/일괄 삭제 API 없음 |

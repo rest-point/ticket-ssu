@@ -86,7 +86,7 @@ inventory_id -> physical_seat_id -> seat_venue_id, seat_code, row_label, number
 
 performances·concerts·venues·physical_seats로 분리하고 inventory에는 두 부모의 ID만 남긴다. seat_venue_id와 venue_name은 설명용 이름이며 실제 컬럼은 각각 physical_seats.venue_id와 venues.name이다. 두 venue_id가 같은지는 FD 분해가 아니라 X-01 참조 일치 제약이다.
 
-현재 bookings.user_id / performance_id는 hold_id에서 구할 수 있다. 목표 bookings는 이 두 속성을 중복 저장하지 않고 holds를 정본으로 둔다. 현행 hold_id가 후보키라서 현행 bookings 하나만 보면 이 중복 자체가 3NF 위반이라고 단정할 수는 없다. 이번 분리는 여러 릴레이션에 같은 소유권 사실을 저장하는 갱신 위험과 일치 검사를 줄이기 위한 선택이다.
+legacy bookings.user_id / performance_id는 hold_id에서 구할 수 있다. model bookings는 이 두 속성을 중복 저장하지 않고 holds를 정본으로 둔다. legacy의 hold_id가 후보키라서 legacy bookings 하나만 보면 이 중복 자체가 3NF 위반이라고 단정할 수는 없다. 이번 분리는 여러 릴레이션에 같은 소유권 사실을 저장하는 갱신 위험과 일치 검사를 줄이기 위한 선택이다.
 
 마찬가지로 inventory의 nullable hold_id / booking_id를 현재 관계 두 개로 분리한다. current_holds는 `inventory_id → hold_id`, current_bookings는 `inventory_id → booking_id`로 각 결정자가 키다. 상태별 참조 조건은 정규화가 자동 해결하지 않으므로 두 연결의 상호 배타성·회차·예매 상태를 X-02~X-05에서 강제한다.
 

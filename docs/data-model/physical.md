@@ -21,7 +21,7 @@
 
 연결마다 foreign_keys=ON, 기본 busy_timeout=5000을 설정한다. API는 seed 뒤 busy_timeout을 25ms로 낮추고 [제한 비동기 재시도](../design/api.md)를 적용한다. 새 파일 DB는 journal_mode=WAL이고 메모리 DB는 memory다. user_version=0은 legacy Store, 1은 model Store 스키마다. 별도 DDL의 초기화는 빈 DB에서 한 트랜잭션으로만 허용한다. 기본 legacy Store의 v1 오접속 거부는 유지한다. 별도 DB_PATH와 DB_SCHEMA=model을 함께 명시하면 ModelStore로 새/이관 v1 DB를 실행하며 시작 시 한 번 전체 검사를 수행한다.
 
-모든 목표 테이블은 STRICT다. SQLite의 허용 가능한 무손실 타입 변환까지 금지하는 것은 아니므로 INTEGER 컬럼의 숫자 문자열이 항상 거부된다고 가정하지 않는다. 핵심 저장 타입·범위는 CHECK와 함께 확인한다. 금액은 원 단위 INTEGER, 시각은 UTC epoch milliseconds INTEGER(0~9,007,199,254,740,991), 화면은 Asia/Seoul이다. ID는 기존 문자열 형식을 보존하며 감사 ID만 기존 INTEGER를 유지한다.
+모든 model 테이블은 STRICT다. SQLite의 허용 가능한 무손실 타입 변환까지 금지하는 것은 아니므로 INTEGER 컬럼의 숫자 문자열이 항상 거부된다고 가정하지 않는다. 핵심 저장 타입·범위는 CHECK와 함께 확인한다. 금액은 원 단위 INTEGER, 시각은 UTC epoch milliseconds INTEGER(0~9,007,199,254,740,991), 화면은 Asia/Seoul이다. ID는 기존 문자열 형식을 보존하며 감사 ID만 기존 INTEGER를 유지한다.
 
 각 컬럼의 업무 의미·길이·NULL·후보키는 [논리 사전](logical.md), 정확한 타입·기본값·제약은 SQL을 원본으로 삼는다. 다음 표는 물리 저장과 조회의 차이다.
 
