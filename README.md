@@ -6,6 +6,16 @@ Node.js 내장 HTTP 서버·HTML/CSS/JavaScript·로컬 SQLite로 만든 팀프�
 
 검증 기준은 .node-version의 Node26.13.0이며 최소24.15가 필요하다. 앱 실행에는 외부 패키지 설치나 빌드가 필요 없다. 프로젝트 루트에서 실행한다.
 
+팀원은 초대받은 GitHub 계정으로 비공개 저장소 초대를 수락한 뒤, PC의 원하는 상위 폴더에서 처음 한 번 가져온다. 계정 암호·토큰을 clone URL이나 채팅에 넣지 않는다.
+
+```powershell
+git clone https://github.com/rest-point/temp-team.git
+cd temp-team
+node --version
+```
+
+이미 clone한 폴더는 로컬 변경을 확인하고 `git pull --ff-only`로 갱신한다. 각 PC는 예시 환경 파일로 자신의 DB를 생성한다. 다른 PC의 실제 .env·DB·WAL/SHM을 복사해 공유하지 않는다.
+
 ```powershell
 if (-not (Test-Path -LiteralPath .env)) { Copy-Item -LiteralPath .env.example -Destination .env }
 npm run start:local
@@ -21,6 +31,8 @@ npm run status
 ```
 
 status의 schema_version=1이 과제 ERD와 같은 model 모드다. 0이면 legacy 실행이므로 종료 후 설정을 확인한다. POSIX에서는 test -e .env || cp .env.example .env 후 같은 npm 명령을 쓴다. 셸 환경변수가 파일보다 우선하므로 이전 DB_SCHEMA/DB_PATH/NODE_ENV 등이 남아 있으면 정리한다.
+
+다른 PC의 실행 확인은 Node 버전·schema_version=1·브라우저 로그인→선점→데모 예매→조회→취소·Ctrl+C 종료까지 수행한다. 실패를 공유할 때는 OS/Node 버전·실행 명령·민감값을 제거한 오류만 전달한다. 원격 CI 통과와 팀원 PC의 실제 실행 완료는 구분한다.
 
 | 설정 | 기본값/용도 |
 | --- | --- |
@@ -124,5 +136,7 @@ npm run verify:traffic
 ## 저장소 구성
 
 server.mjs·lib/는 API/SQLite/큐·보안, public/은 화면, db/는 DDL/seed/이관·백업, scripts/는 실행/명세 검사, tests/·postman/·load-tests/는 재현 가능한 검증 코드다. .github/workflows/ci.yml은 Ubuntu/Windows의 구문·API/모델·핵심·Newman 검증을 실행한다. 실제 원격 실행 여부는 GitHub의 실행 결과로 확인한다.
+
+팀 작업은 기능별 브랜치에서 커밋하고 PR로 검토한다. PR에는 변경 기능·실행한 검증·미검증 사항을 적고 CI가 성공한 상태에서 병합한다. 초대 수락·저장소 접근·실행 결과는 각 팀원의 계정과 PC에서 확인한다.
 
 DB·WAL/SHM·백업·실제 .env/비밀값·설치 도구·node_modules·개인 실행 결과는 Git 제외 대상이다. 단일 서버·로컬 SQLite 범위를 유지하며 Docker·외부 DB/캐시/브로커·다중 API·실제 결제는 포함하지 않는다. UI 전면 접근성·장시간 운영 용량·실제 장애 복구 시간은 보장하지 않는다.
