@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Temp — 좋아하는 음악을 가장 가까이. 콘서트 예매와 나의 티켓.">
+  <title>Temp · 오늘의 설렘을 예매하세요</title>
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <script type="module" src="/app.js"></script>
+</head>
+<body>
+  <header class="header">
+    <a class="logo" href="#/" aria-label="Temp 홈">Temp<span class="logo-dot"></span></a>
+    <nav class="primary-nav" aria-label="주 메뉴"><a href="#/" data-nav="home">공연 둘러보기</a><a href="#/bookings" data-nav="bookings">나의 티켓</a></nav>
+    <div id="account" class="account"></div>
+  </header>
+  <main id="app" tabindex="-1"><div class="loading">공연을 불러오고 있어요…</div></main>
+  <footer><a class="logo small" href="#/">Temp<span class="logo-dot"></span></a><p>좋아하는 음악을, 가장 가까이.</p><span>Temp 티켓 · 로컬 데모 서비스</span></footer>
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+  <dialog id="confirm-dialog"><form method="dialog"><h2 id="dialog-title">예매를 취소할까요?</h2><p id="dialog-body"></p><div class="actions"><button value="no" class="button secondary">돌아가기</button><button value="yes" class="button danger">예매 취소하기</button></div></form></dialog>
+</body>
+</html>

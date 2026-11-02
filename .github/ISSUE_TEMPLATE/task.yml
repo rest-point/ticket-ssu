@@ -1,0 +1,46 @@
+{
+  "name": "구현·검증 작업",
+  "description": "요구사항과 검증 증거를 연결하는 작업",
+  "title": "[작업] ",
+  "body": [
+    {
+      "type": "markdown",
+      "attributes": {
+        "value": "DB·환경 파일·쿠키·토큰·원시 개인정보는 첨부하지 마세요."
+      }
+    },
+    {
+      "type": "textarea",
+      "id": "purpose",
+      "attributes": {
+        "label": "목적과 연결",
+        "description": "관련 기능 / 담당자 / 의존 작업"
+      },
+      "validations": {
+        "required": true
+      }
+    },
+    {
+      "type": "textarea",
+      "id": "deliverables",
+      "attributes": {
+        "label": "산출물과 완료 조건",
+        "description": "변경할 코드·설계·API·테스트·문서와 확인할 동작"
+      },
+      "validations": {
+        "required": true
+      }
+    },
+    {
+      "type": "textarea",
+      "id": "verification",
+      "attributes": {
+        "label": "검증",
+        "description": "임시 DB·실행 명령·예상 결과·미검증 항목"
+      },
+      "validations": {
+        "required": true
+      }
+    }
+  ]
+}

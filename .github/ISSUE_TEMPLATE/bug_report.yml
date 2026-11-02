@@ -1,0 +1,46 @@
+{
+  "name": "버그 보고",
+  "description": "실제 동작과 기대 계약의 차이",
+  "title": "[버그] ",
+  "body": [
+    {
+      "type": "markdown",
+      "attributes": {
+        "value": "DB·환경 파일·쿠키·토큰·원시 개인정보는 첨부하지 마세요."
+      }
+    },
+    {
+      "type": "textarea",
+      "id": "impact",
+      "attributes": {
+        "label": "문제와 영향",
+        "description": "실제/기대 동작과 영향받는 기능"
+      },
+      "validations": {
+        "required": true
+      }
+    },
+    {
+      "type": "textarea",
+      "id": "reproduction",
+      "attributes": {
+        "label": "재현",
+        "description": "명령·Node/OS·DB_SCHEMA·새 임시 DB 여부와 최소 재현"
+      },
+      "validations": {
+        "required": true
+      }
+    },
+    {
+      "type": "textarea",
+      "id": "evidence",
+      "attributes": {
+        "label": "근거와 완료 조건",
+        "description": "코드/현재 OpenAPI/테스트 경로·상태코드·수정 후 확인할 결과"
+      },
+      "validations": {
+        "required": true
+      }
+    }
+  ]
+}

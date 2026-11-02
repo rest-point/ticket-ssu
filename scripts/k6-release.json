@@ -1,0 +1,9 @@
+{
+  "version": "2.3.0",
+  "archiveUrl": "https://github.com/grafana/k6/releases/download/v2.3.0/k6-v2.3.0-windows-amd64.zip",
+  "archiveBytes": 31706650,
+  "archiveSha256": "112276d495e5741c968e2bc09ea6196099c1275bd6db9ee0875d173c7148ce43",
+  "executableBytes": 67116752,
+  "executableSha256": "efec04c36452cfb9c0ef313082c021e5656caf5004f922c2d8b807fdf4a0e02f",
+  "archiveExecutable": "k6-v2.3.0-windows-amd64/k6.exe"
+}

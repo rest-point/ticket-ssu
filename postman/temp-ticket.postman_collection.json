@@ -1,0 +1,1490 @@
+{
+  "info": {
+    "name": "Temp Ticket current API regression",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "description": "Current 18 operations only. Use a dedicated demo target. Run 01 Booking smoke only on staging. Cookie Jar must be enabled. Failures stop the run and require owned-state review."
+  },
+  "protocolProfileBehavior": {
+    "followRedirects": false
+  },
+  "variable": [
+    {
+      "key": "contracts",
+      "value": "{\"01 health\":{\"id\":\"health\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/Health\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"02 readiness\":{\"id\":\"readiness\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/Readiness\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"03 anonymous session\":{\"id\":\"getSession\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/Session\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"04 anonymous booking denied\":{\"id\":\"listBookings\",\"status\":401,\"schema\":{\"$ref\":\"#/definitions/Error\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"05 incorrect password denied\":{\"id\":\"login\",\"status\":401,\"schema\":{\"$ref\":\"#/definitions/Error\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"06 foreign origin denied\":{\"id\":\"login\",\"status\":403,\"schema\":{\"$ref\":\"#/definitions/Error\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"07 member login\":{\"id\":\"login\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/AuthResult\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"08 authenticated session\":{\"id\":\"getSession\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/Session\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"09 member admin access denied\":{\"id\":\"adminSummary\",\"status\":403,\"schema\":{\"$ref\":\"#/definitions/Error\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"10 missing csrf denied\":{\"id\":\"logout\",\"status\":403,\"schema\":{\"$ref\":\"#/definitions/Error\"},\"localOnly\":false,\"noCsrf\":true,\"admission\":false},\"11 concerts\":{\"id\":\"listConcerts\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/ConcertList\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"12 seat preflight\":{\"id\":\"getSeats\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/SeatMap\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"13 booking preflight\":{\"id\":\"listBookings\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/BookingList\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"14 queue preflight\":{\"id\":\"getQueue\",\"status\":404,\"schema\":{\"$ref\":\"#/definitions/QueueError\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"15 admission bypass denied\":{\"id\":\"replaceHold\",\"status\":403,\"schema\":{\"$ref\":\"#/definitions/Error\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"16 enter queue\":{\"id\":\"enterQueue\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/QueueStatus\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"17 queue status\":{\"id\":\"getQueue\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/QueueStatus\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"18 reserve one seat\":{\"id\":\"replaceHold\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/HoldResult\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":true},\"18b owned hold readback\":{\"id\":\"getSeats\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/SeatMap\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"19 demo checkout\":{\"id\":\"createBooking\",\"status\":201,\"schema\":{\"$ref\":\"#/definitions/BookingResult\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":true},\"20 booking query\":{\"id\":\"listBookings\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/BookingList\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"21 cancel owned booking\":{\"id\":\"cancelBooking\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/BookingResult\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"22 cancelled history\":{\"id\":\"listBookings\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/BookingList\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"23 released inventory\":{\"id\":\"getSeats\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/SeatMap\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"24 leave queue\":{\"id\":\"leaveQueue\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/Ok\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"25 member logout\":{\"id\":\"logout\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/Ok\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"26 revoked session\":{\"id\":\"getSession\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/Session\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"27 signup isolated second member\":{\"id\":\"signup\",\"status\":201,\"schema\":{\"$ref\":\"#/definitions/AuthResult\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"28 other member cancellation denied\":{\"id\":\"cancelBooking\",\"status\":404,\"schema\":{\"$ref\":\"#/definitions/Error\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"29 other member logout\":{\"id\":\"logout\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/Ok\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"30 isolated administrator login\":{\"id\":\"login\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/AuthResult\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"31 administrator summary\":{\"id\":\"adminSummary\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/AdminSummary\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"32 create fixture concert\":{\"id\":\"createConcert\",\"status\":201,\"schema\":{\"$ref\":\"#/definitions/IdResult\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"33 administrator blocks one seat\":{\"id\":\"blockSeats\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/Updated\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"34 blocked seat visible\":{\"id\":\"getSeats\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/SeatMap\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"35 administrator restores seat\":{\"id\":\"blockSeats\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/Updated\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"36 administrator logout\":{\"id\":\"logout\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/Ok\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false}}"
+    },
+    {
+      "key": "definitions",
+      "value": "{\"Id\":{\"type\":\"string\",\"minLength\":1},\"Time\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":9007199254740991},\"Money\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":9007199254740991},\"Error\":{\"type\":\"object\",\"required\":[\"error\"],\"properties\":{\"error\":{\"type\":\"string\",\"minLength\":1}},\"additionalProperties\":false},\"User\":{\"type\":\"object\",\"required\":[\"id\",\"email\",\"name\",\"phone\",\"role\"],\"properties\":{\"id\":{\"$ref\":\"#/definitions/Id\"},\"email\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"phone\":{\"type\":\"string\"},\"role\":{\"type\":\"string\",\"enum\":[\"user\",\"admin\"]}},\"additionalProperties\":false},\"NullableUser\":{\"type\":[\"object\",\"null\"],\"required\":[\"id\",\"email\",\"name\",\"phone\",\"role\"],\"properties\":{\"id\":{\"$ref\":\"#/definitions/Id\"},\"email\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"phone\":{\"type\":\"string\"},\"role\":{\"type\":\"string\",\"enum\":[\"user\",\"admin\"]}},\"additionalProperties\":false},\"Hold\":{\"type\":\"object\",\"required\":[\"id\",\"expires_at\"],\"properties\":{\"id\":{\"$ref\":\"#/definitions/Id\"},\"expires_at\":{\"$ref\":\"#/definitions/Time\"}},\"additionalProperties\":false},\"NullableHold\":{\"type\":[\"object\",\"null\"],\"required\":[\"id\",\"expires_at\"],\"properties\":{\"id\":{\"$ref\":\"#/definitions/Id\"},\"expires_at\":{\"$ref\":\"#/definitions/Time\"}},\"additionalProperties\":false},\"Session\":{\"type\":\"object\",\"required\":[\"user\",\"csrf\",\"demo\"],\"properties\":{\"user\":{\"$ref\":\"#/definitions/NullableUser\"},\"csrf\":{\"type\":[\"string\",\"null\"],\"pattern\":\"^[a-f0-9]{48}$\"},\"demo\":{\"type\":\"boolean\"}},\"additionalProperties\":false},\"AuthResult\":{\"type\":\"object\",\"required\":[\"user\",\"csrf\"],\"properties\":{\"user\":{\"$ref\":\"#/definitions/User\"},\"csrf\":{\"type\":\"string\",\"pattern\":\"^[a-f0-9]{48}$\"}},\"additionalProperties\":false},\"Login\":{\"type\":\"object\",\"required\":[\"email\",\"password\"],\"properties\":{\"email\":{\"type\":\"string\",\"description\":\"trim 후 소문자로 조회한다.\"},\"password\":{\"type\":\"string\",\"maxLength\":128}},\"additionalProperties\":true},\"Signup\":{\"type\":\"object\",\"required\":[\"email\",\"name\",\"phone\",\"password\",\"terms\",\"ageConfirmed\"],\"properties\":{\"email\":{\"type\":\"string\",\"maxLength\":254},\"name\":{\"type\":\"string\",\"minLength\":2,\"maxLength\":40},\"phone\":{\"type\":\"string\",\"description\":\"하이픈·공백 제거 후 01[016789]와 7~8자리 숫자.\"},\"password\":{\"type\":\"string\",\"minLength\":10,\"maxLength\":128},\"terms\":{\"type\":\"boolean\",\"enum\":[true]},\"ageConfirmed\":{\"type\":\"boolean\",\"enum\":[true]}},\"additionalProperties\":true},\"Performance\":{\"type\":\"object\",\"required\":[\"id\",\"concert_id\",\"starts_at\"],\"properties\":{\"id\":{\"$ref\":\"#/definitions/Id\"},\"concert_id\":{\"$ref\":\"#/definitions/Id\"},\"starts_at\":{\"$ref\":\"#/definitions/Time\"}},\"additionalProperties\":false},\"PerformanceSummary\":{\"type\":\"object\",\"required\":[\"id\",\"concert_id\",\"starts_at\",\"available\",\"min_price\"],\"properties\":{\"id\":{\"$ref\":\"#/definitions/Id\"},\"concert_id\":{\"$ref\":\"#/definitions/Id\"},\"starts_at\":{\"$ref\":\"#/definitions/Time\"},\"available\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":96},\"min_price\":{\"$ref\":\"#/definitions/Money\"}},\"additionalProperties\":false},\"Concert\":{\"type\":\"object\",\"required\":[\"id\",\"title\",\"artist\",\"venue\",\"description\",\"theme\",\"duration\",\"age\",\"created_at\",\"performances\"],\"properties\":{\"id\":{\"$ref\":\"#/definitions/Id\"},\"title\":{\"type\":\"string\"},\"artist\":{\"type\":\"string\"},\"venue\":{\"type\":\"string\"},\"description\":{\"type\":\"string\"},\"theme\":{\"type\":\"string\",\"enum\":[\"teal\",\"purple\",\"orange\",\"blue\"]},\"duration\":{\"type\":\"integer\",\"minimum\":1,\"maximum\":9007199254740991},\"age\":{\"type\":\"string\"},\"created_at\":{\"$ref\":\"#/definitions/Time\"},\"performances\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/definitions/PerformanceSummary\"},\"minItems\":1}},\"additionalProperties\":false},\"ConcertList\":{\"type\":\"object\",\"required\":[\"concerts\"],\"properties\":{\"concerts\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/definitions/Concert\"}}},\"additionalProperties\":false},\"Seat\":{\"type\":\"object\",\"required\":[\"id\",\"row\",\"number\",\"grade\",\"price\",\"state\"],\"properties\":{\"id\":{\"$ref\":\"#/definitions/Id\"},\"row\":{\"type\":\"string\"},\"number\":{\"type\":\"integer\",\"minimum\":1,\"maximum\":9007199254740991},\"grade\":{\"type\":\"string\",\"enum\":[\"VIP\",\"R\",\"S\"]},\"price\":{\"$ref\":\"#/definitions/Money\"},\"state\":{\"type\":\"string\",\"enum\":[\"available\",\"selected\",\"held\",\"booked\",\"blocked\"]}},\"additionalProperties\":false},\"SeatMap\":{\"type\":\"object\",\"required\":[\"performance\",\"seats\",\"hold\",\"server_now\",\"max_tickets\"],\"properties\":{\"performance\":{\"type\":\"object\",\"required\":[\"id\",\"concert_id\",\"starts_at\",\"title\",\"venue\"],\"properties\":{\"id\":{\"$ref\":\"#/definitions/Id\"},\"concert_id\":{\"$ref\":\"#/definitions/Id\"},\"starts_at\":{\"$ref\":\"#/definitions/Time\"},\"title\":{\"type\":\"string\"},\"venue\":{\"type\":\"string\"}},\"additionalProperties\":false},\"seats\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/definitions/Seat\"}},\"hold\":{\"$ref\":\"#/definitions/NullableHold\"},\"server_now\":{\"$ref\":\"#/definitions/Time\"},\"max_tickets\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":9007199254740991,\"enum\":[4]}},\"additionalProperties\":false},\"HoldRequest\":{\"type\":\"object\",\"required\":[\"seatIds\"],\"properties\":{\"seatIds\":{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"maxItems\":4,\"uniqueItems\":true,\"description\":\"빈 배열은 선택 전체 해제. 문자열의 유효 좌석 여부는 서버가 검사한다.\"}},\"additionalProperties\":true},\"HoldResult\":{\"type\":\"object\",\"required\":[\"hold\",\"server_now\"],\"properties\":{\"hold\":{\"$ref\":\"#/definitions/NullableHold\"},\"server_now\":{\"$ref\":\"#/definitions/Time\"}},\"additionalProperties\":false},\"Checkout\":{\"type\":\"object\",\"required\":[\"holdId\",\"buyerName\",\"buyerPhone\",\"delivery\",\"paymentMethod\",\"agreed\"],\"properties\":{\"holdId\":{\"$ref\":\"#/definitions/Id\"},\"buyerName\":{\"type\":\"string\",\"minLength\":2,\"maxLength\":40},\"buyerPhone\":{\"type\":\"string\"},\"delivery\":{\"type\":\"string\",\"enum\":[\"mobile\",\"onsite\"]},\"paymentMethod\":{\"type\":\"string\",\"enum\":[\"demo\"]},\"agreed\":{\"type\":\"boolean\",\"enum\":[true]}},\"additionalProperties\":true},\"BookingSeat\":{\"type\":\"object\",\"required\":[\"seat_id\",\"grade\",\"price\"],\"properties\":{\"seat_id\":{\"$ref\":\"#/definitions/Id\"},\"grade\":{\"type\":\"string\",\"enum\":[\"VIP\",\"R\",\"S\"]},\"price\":{\"$ref\":\"#/definitions/Money\"}},\"additionalProperties\":false},\"Booking\":{\"type\":\"object\",\"required\":[\"id\",\"user_id\",\"performance_id\",\"hold_id\",\"status\",\"ticket_total\",\"fee\",\"total\",\"buyer_name\",\"buyer_phone\",\"delivery\",\"created_at\",\"cancelled_at\",\"starts_at\",\"title\",\"artist\",\"venue\",\"theme\",\"seats\"],\"properties\":{\"id\":{\"$ref\":\"#/definitions/Id\"},\"user_id\":{\"$ref\":\"#/definitions/Id\"},\"performance_id\":{\"$ref\":\"#/definitions/Id\"},\"hold_id\":{\"$ref\":\"#/definitions/Id\"},\"status\":{\"type\":\"string\",\"enum\":[\"confirmed\",\"cancelled\"]},\"ticket_total\":{\"$ref\":\"#/definitions/Money\"},\"fee\":{\"$ref\":\"#/definitions/Money\"},\"total\":{\"$ref\":\"#/definitions/Money\"},\"buyer_name\":{\"type\":\"string\"},\"buyer_phone\":{\"type\":\"string\"},\"delivery\":{\"type\":\"string\",\"enum\":[\"mobile\",\"onsite\"]},\"created_at\":{\"$ref\":\"#/definitions/Time\"},\"cancelled_at\":{\"type\":[\"integer\",\"null\"],\"minimum\":0,\"maximum\":9007199254740991},\"starts_at\":{\"$ref\":\"#/definitions/Time\"},\"title\":{\"type\":\"string\"},\"artist\":{\"type\":\"string\"},\"venue\":{\"type\":\"string\"},\"theme\":{\"type\":\"string\",\"enum\":[\"teal\",\"purple\",\"orange\",\"blue\"]},\"seats\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/definitions/BookingSeat\"},\"minItems\":1,\"maxItems\":4}},\"additionalProperties\":false},\"BookingResult\":{\"type\":\"object\",\"required\":[\"booking\"],\"properties\":{\"booking\":{\"$ref\":\"#/definitions/Booking\"}},\"additionalProperties\":false},\"BookingList\":{\"type\":\"object\",\"required\":[\"bookings\"],\"properties\":{\"bookings\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/definitions/Booking\"}}},\"additionalProperties\":false},\"Ok\":{\"type\":\"object\",\"required\":[\"ok\"],\"properties\":{\"ok\":{\"type\":\"boolean\",\"enum\":[true]}},\"additionalProperties\":false},\"CreateConcert\":{\"type\":\"object\",\"required\":[\"title\",\"artist\",\"venue\",\"description\",\"basePrice\",\"dates\"],\"properties\":{\"title\":{\"type\":\"string\",\"minLength\":1,\"maxLength\":120},\"artist\":{\"type\":\"string\",\"minLength\":1,\"maxLength\":120},\"venue\":{\"type\":\"string\",\"minLength\":1,\"maxLength\":120},\"description\":{\"type\":\"string\",\"minLength\":1,\"maxLength\":2000},\"basePrice\":{\"type\":\"integer\",\"minimum\":1000,\"maximum\":1000000,\"description\":\"실제 서버는 Number로 변환하므로 수치 문자열도 수용한다. 정수 JSON 사용을 권장한다.\"},\"dates\":{\"type\":\"array\",\"items\":{\"type\":\"string\",\"format\":\"date-time\",\"description\":\"시간대가 명시된 서로 다른 미래 일시.\"},\"minItems\":1,\"maxItems\":10,\"uniqueItems\":true}},\"additionalProperties\":true},\"IdResult\":{\"type\":\"object\",\"required\":[\"id\"],\"properties\":{\"id\":{\"$ref\":\"#/definitions/Id\"}},\"additionalProperties\":false},\"BlockRequest\":{\"type\":\"object\",\"required\":[\"seatIds\",\"blocked\"],\"properties\":{\"seatIds\":{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"minItems\":1,\"maxItems\":96,\"uniqueItems\":true},\"blocked\":{\"type\":\"boolean\"}},\"additionalProperties\":true},\"Updated\":{\"type\":\"object\",\"required\":[\"updated\"],\"properties\":{\"updated\":{\"type\":\"integer\",\"minimum\":1,\"maximum\":96}},\"additionalProperties\":false},\"AdminSummary\":{\"type\":\"object\",\"required\":[\"stats\",\"users\",\"performances\",\"audit\"],\"properties\":{\"stats\":{\"type\":\"object\",\"required\":[\"bookings\",\"revenue\"],\"properties\":{\"bookings\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":9007199254740991},\"revenue\":{\"$ref\":\"#/definitions/Money\"}},\"additionalProperties\":false},\"users\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":9007199254740991},\"performances\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"required\":[\"id\",\"starts_at\",\"title\",\"total\",\"blocked\",\"booked\",\"held\"],\"properties\":{\"id\":{\"$ref\":\"#/definitions/Id\"},\"starts_at\":{\"$ref\":\"#/definitions/Time\"},\"title\":{\"type\":\"string\"},\"total\":{\"type\":\"integer\",\"minimum\":1,\"maximum\":9007199254740991},\"blocked\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":9007199254740991},\"booked\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":9007199254740991},\"held\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":9007199254740991}},\"additionalProperties\":false}},\"audit\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"required\":[\"action\",\"detail\",\"created_at\",\"name\"],\"properties\":{\"action\":{\"type\":\"string\",\"enum\":[\"block\",\"unblock\",\"create-concert\"]},\"detail\":{\"type\":\"string\",\"description\":\"감사 상세 JSON을 담은 문자열. 토큰·비밀번호는 포함하지 않는다.\"},\"created_at\":{\"$ref\":\"#/definitions/Time\"},\"name\":{\"type\":\"string\"}},\"additionalProperties\":false},\"maxItems\":15}},\"additionalProperties\":false},\"QueueError\":{\"type\":\"object\",\"required\":[\"error\",\"code\"],\"properties\":{\"error\":{\"type\":\"string\"},\"code\":{\"type\":\"string\",\"pattern\":\"^[A-Z][A-Z0-9_]{0,63}$\"}},\"additionalProperties\":false},\"QueueRequest\":{\"type\":\"object\",\"required\":[],\"properties\":{\"resumeHoldId\":{\"type\":\"string\",\"minLength\":1}},\"additionalProperties\":false},\"QueueStatus\":{\"type\":\"object\",\"required\":[\"performance_id\",\"entry_id\",\"sequence\",\"state\",\"position\",\"estimated_wait_ms\",\"entry_expires_at\",\"server_now\",\"restart_epoch\",\"admission_token\",\"admission_expires_at\",\"mode\",\"ahead\"],\"properties\":{\"performance_id\":{\"$ref\":\"#/definitions/Id\"},\"entry_id\":{\"$ref\":\"#/definitions/Id\"},\"sequence\":{\"type\":\"integer\",\"minimum\":1},\"state\":{\"type\":\"string\",\"enum\":[\"waiting\",\"admitted\"]},\"position\":{\"type\":\"integer\",\"minimum\":0},\"estimated_wait_ms\":{\"type\":[\"integer\",\"null\"],\"minimum\":0},\"entry_expires_at\":{\"$ref\":\"#/definitions/Time\"},\"server_now\":{\"$ref\":\"#/definitions/Time\"},\"restart_epoch\":{\"type\":\"string\"},\"admission_token\":{\"type\":[\"string\",\"null\"]},\"admission_expires_at\":{\"type\":[\"integer\",\"null\"],\"minimum\":0},\"mode\":{\"type\":\"string\",\"enum\":[\"general\",\"hold-recovery\"]},\"ahead\":{\"type\":\"integer\",\"minimum\":0}},\"additionalProperties\":false},\"Health\":{\"type\":\"object\",\"required\":[\"status\"],\"properties\":{\"status\":{\"type\":\"string\",\"enum\":[\"ok\"]}},\"additionalProperties\":false},\"Readiness\":{\"type\":\"object\",\"required\":[\"status\",\"schema_version\"],\"properties\":{\"status\":{\"type\":\"string\",\"enum\":[\"ready\"]},\"schema_version\":{\"type\":\"integer\",\"enum\":[0,1]}},\"additionalProperties\":false}}"
+    }
+  ],
+  "event": [
+    {
+      "listen": "prerequest",
+      "script": {
+        "type": "text/javascript",
+        "exec": [
+          "(function () {",
+          "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+          "const mode=pm.environment.get('mode'), base=pm.environment.get('baseUrl');",
+          "const local=new RegExp('^http://127[.]0[.]0[.]1:[1-9][0-9]{0,4}$').test(base||'');",
+          "const staging=new RegExp('^https://[a-z0-9](?:[a-z0-9.-]*[a-z0-9])?(?::[1-9][0-9]{0,4})?$').test(base||'');",
+          "let valid=pm.environment.get('allowWrite')==='dedicated-demo' && ((mode==='local'&&local)||(mode==='staging'&&staging));",
+          "valid=valid && ['memberEmail','memberPassword','performanceId','seatId'].every(k=>typeof pm.environment.get(k)==='string'&&pm.environment.get(k).length>0);",
+          "valid=valid && /^[A-Za-z0-9_-]{1,160}$/.test(pm.environment.get('performanceId')||'') && /^[A-Za-z0-9_-]{1,32}$/.test(pm.environment.get('seatId')||'');",
+          "valid=valid && !(meta.localOnly && mode!=='local');",
+          "const port=Number((base||'').match(/:([0-9]+)$/)?.[1] || (mode==='staging'?443:0)); valid=valid && port>0 && port<=65535;",
+          "if (!valid) { pm.test('dedicated demo target and run scope',()=>pm.expect(valid).eql(true)); pm.execution.setNextRequest(null); pm.execution.skipRequest(); }",
+          "if (pm.info.requestName==='01 health') { ['csrf','admission','holdId','bookingId','seatPrice','userId'].forEach(k=>pm.variables.unset(k)); }",
+          "pm.variables.set('futureDate',new Date(Date.now()+86400000*30).toISOString());",
+          "if (!pm.request.headers.has('Origin')) pm.request.headers.upsert({key:'Origin',value:base});",
+          "pm.request.headers.remove('X-CSRF-Token'); pm.request.headers.remove('X-Admission-Token');",
+          "if (!meta.noCsrf && pm.variables.get('csrf') && !['GET','HEAD'].includes(pm.request.method)) pm.request.headers.upsert({key:'X-CSRF-Token',value:pm.variables.get('csrf')});",
+          "if (meta.admission && pm.variables.get('admission')) pm.request.headers.upsert({key:'X-Admission-Token',value:pm.variables.get('admission')});",
+          "if (pm.request.body && pm.request.body.mode==='raw') {",
+          "  const replace=value=>typeof value==='string'?pm.variables.replaceIn(value):Array.isArray(value)?value.map(replace):value&&typeof value==='object'?Object.fromEntries(Object.entries(value).map(([key,item])=>[key,replace(item)])):value;",
+          "  pm.request.body.update(JSON.stringify(replace(JSON.parse(pm.request.body.raw))));",
+          "}",
+          "})();"
+        ]
+      }
+    }
+  ],
+  "item": [
+    {
+      "name": "01 Booking smoke",
+      "item": [
+        {
+          "name": "01 health",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/health"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "02 readiness",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/readiness"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "verify('ready schema', () => { pm.expect(data.status).eql('ready'); pm.expect([0, 1]).include(data.schema_version); });",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "03 anonymous session",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/session"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "verify('dedicated non-demo target', () => { pm.expect(data.user).eql(null); pm.expect(data.demo).eql(false); });",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "04 anonymous booking denied",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/bookings"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "05 incorrect password denied",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{memberEmail}}\",\"password\":\"intentionally-incorrect-password\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "06 foreign origin denied",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "https://untrusted.example.invalid"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{memberEmail}}\",\"password\":\"{{memberPassword}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "07 member login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{memberEmail}}\",\"password\":\"{{memberPassword}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "verify('user session and cookie contract', () => { pm.expect(data.user.role).eql('user'); pm.expect(data.csrf).to.be.a('string');",
+                  "const cookie = pm.response.headers.get('Set-Cookie'); pm.expect(cookie).match(/HttpOnly/); pm.expect(cookie).match(/SameSite=Lax/);",
+                  "if (pm.environment.get('mode') === 'staging') pm.expect(cookie).match(/; Secure(?:;|$)/);",
+                  "pm.variables.set('csrf', data.csrf); pm.variables.set('userId', data.user.id); });",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "08 authenticated session",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/session"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "verify('cookie jar persists the session', () => { pm.expect(data.user.id).eql(pm.variables.get('userId')); pm.expect(data.csrf).eql(pm.variables.get('csrf')); });",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "09 member admin access denied",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/summary"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "10 missing csrf denied",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/logout"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "11 concerts",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/concerts"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "verify('explicit target performance exists', () => { pm.expect(data.concerts.some(c => c.performances.some(p => p.id === pm.environment.get('performanceId')))).eql(true); });",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "12 seat preflight",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/performances/{{performanceId}}/seats"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "verify('future available seat and no existing hold', () => { pm.expect(data.performance.starts_at).above(data.server_now); pm.expect(data.hold).eql(null);",
+                  "const seat = data.seats.find(s => s.id === pm.environment.get('seatId')); pm.expect(seat.state).eql('available'); pm.expect(Number.isSafeInteger(seat.price)).eql(true); pm.variables.set('seatPrice', seat.price); });",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "13 booking preflight",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/bookings"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "verify('no pre-existing confirmed booking in target', () => { pm.expect(data.bookings.some(b => b.performance_id === pm.environment.get('performanceId') && b.status === 'confirmed')).eql(false); });",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "14 queue preflight",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/performances/{{performanceId}}/queue"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "15 admission bypass denied",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/performances/{{performanceId}}/hold",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"seatIds\":[\"{{seatId}}\"]}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "16 enter queue",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/performances/{{performanceId}}/queue",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "verify('general admission required', () => { pm.expect(data.state).eql('admitted'); pm.expect(data.mode).eql('general'); pm.expect(data.admission_token).to.be.a('string'); pm.variables.set('admission', data.admission_token); });",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "17 queue status",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/performances/{{performanceId}}/queue"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "verify('session-bound admission', () => { pm.expect(data.state).eql('admitted'); pm.expect(data.admission_token).eql(pm.variables.get('admission')); });",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "18 reserve one seat",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/performances/{{performanceId}}/hold",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"seatIds\":[\"{{seatId}}\"]}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "verify('single owned hold', () => { pm.expect(data.hold.id).to.be.a('string'); pm.expect(data.hold.expires_at).above(data.server_now); pm.variables.set('holdId', data.hold.id); });",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "18b owned hold readback",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/performances/{{performanceId}}/seats"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "verify('held seat readback', () => { pm.expect(data.hold.id).eql(pm.variables.get('holdId')); pm.expect(data.seats.filter(s=>s.state==='selected')).to.have.lengthOf(1); pm.expect(data.seats.find(s=>s.id===pm.environment.get('seatId')).state).eql('selected'); });",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "19 demo checkout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"holdId\":\"{{holdId}}\",\"buyerName\":\"검증회원\",\"buyerPhone\":\"01000000000\",\"delivery\":\"mobile\",\"agreed\":true,\"paymentMethod\":\"demo\",\"total\":1}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "verify('server-calculated money and ownership', () => { const b=data.booking; pm.expect(b.hold_id).eql(pm.variables.get('holdId')); pm.expect(b.status).eql('confirmed'); pm.expect(b.seats).to.have.lengthOf(1);",
+                  "pm.expect(b.ticket_total).eql(pm.variables.get('seatPrice')); pm.expect(b.fee).eql(2000); pm.expect(b.total).eql(Number(pm.variables.get('seatPrice'))+2000); pm.variables.set('bookingId', b.id); });",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "20 booking query",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/bookings"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "verify('confirmed booking retained', () => { pm.expect(data.bookings.some(b => b.id===pm.variables.get('bookingId') && b.status==='confirmed')).eql(true); });",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "21 cancel owned booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/bookings/{{bookingId}}/cancel"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "verify('full demo cancellation', () => { pm.expect(data.booking.id).eql(pm.variables.get('bookingId')); pm.expect(data.booking.status).eql('cancelled'); pm.expect(data.booking.total).eql(Number(pm.variables.get('seatPrice'))+2000); });",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "22 cancelled history",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/bookings"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "verify('cancellation is history, not deletion', () => { pm.expect(data.bookings.some(b => b.id===pm.variables.get('bookingId') && b.status==='cancelled')).eql(true); });",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "23 released inventory",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/performances/{{performanceId}}/seats"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "verify('seat released and hold absent', () => { pm.expect(data.hold).eql(null); pm.expect(data.seats.find(s=>s.id===pm.environment.get('seatId')).state).eql('available'); });",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "24 leave queue",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/performances/{{performanceId}}/queue"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "25 member logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/logout"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "pm.variables.unset('csrf'); pm.variables.unset('admission');",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "26 revoked session",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/session"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "verify('cookie jar cleared by logout', () => { pm.expect(data.user).eql(null); pm.expect(data.csrf).eql(null); });",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "02 Isolated local authorization and admin",
+      "item": [
+        {
+          "name": "27 signup isolated second member",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/signup",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{otherEmail}}\",\"password\":\"{{otherPassword}}\",\"name\":\"다른검증회원\",\"phone\":\"01000000000\",\"terms\":true,\"ageConfirmed\":true,\"role\":\"admin\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "verify('user session and cookie contract', () => { pm.expect(data.user.role).eql('user'); pm.expect(data.csrf).to.be.a('string');",
+                  "const cookie = pm.response.headers.get('Set-Cookie'); pm.expect(cookie).match(/HttpOnly/); pm.expect(cookie).match(/SameSite=Lax/);",
+                  "if (pm.environment.get('mode') === 'staging') pm.expect(cookie).match(/; Secure(?:;|$)/);",
+                  "pm.variables.set('csrf', data.csrf); pm.variables.set('userId', data.user.id); });",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "28 other member cancellation denied",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/bookings/{{bookingId}}/cancel"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "29 other member logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/logout"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "pm.variables.unset('csrf');",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "30 isolated administrator login",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{adminEmail}}\",\"password\":\"{{adminPassword}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "verify('administrator authenticated', () => { pm.expect(data.user.role).eql('admin'); pm.variables.set('csrf', data.csrf); });",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "31 administrator summary",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/summary"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "32 create fixture concert",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/concerts",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"title\":\"CLI 가상 공연\",\"artist\":\"CLI 가상 밴드\",\"venue\":\"CLI 가상 공연장\",\"description\":\"격리된 DB에서만 생성\",\"basePrice\":50000,\"dates\":[\"{{futureDate}}\"]}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "33 administrator blocks one seat",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/performances/{{performanceId}}/seats",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"seatIds\":[\"A-03\"],\"blocked\":true}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "34 blocked seat visible",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/performances/{{performanceId}}/seats"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "verify('administrator block applied', () => { pm.expect(data.seats.find(s=>s.id==='A-03').state).eql('blocked'); });",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "35 administrator restores seat",
+          "request": {
+            "method": "PATCH",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/performances/{{performanceId}}/seats",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"seatIds\":[\"A-03\"],\"blocked\":false}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "36 administrator logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/logout"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "pm.variables.unset('csrf');",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

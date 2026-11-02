@@ -1,0 +1,69 @@
+{
+  "name": "Node SQLite and Postman",
+  "on": {
+    "pull_request": {},
+    "push": {
+      "branches": [
+        "main"
+      ]
+    },
+    "workflow_dispatch": {}
+  },
+  "permissions": {
+    "contents": "read"
+  },
+  "concurrency": {
+    "group": "ci-${{ github.workflow }}-${{ github.ref }}",
+    "cancel-in-progress": true
+  },
+  "jobs": {
+    "verify": {
+      "runs-on": "${{ matrix.os }}",
+      "timeout-minutes": 15,
+      "strategy": {
+        "fail-fast": false,
+        "matrix": {
+          "os": [
+            "ubuntu-latest",
+            "windows-latest"
+          ]
+        }
+      },
+      "env": {
+        "NODE_ENV": "test"
+      },
+      "steps": [
+        {
+          "uses": "actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1",
+          "with": {
+            "persist-credentials": false
+          }
+        },
+        {
+          "uses": "actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1",
+          "with": {
+            "node-version-file": ".node-version",
+            "cache": "npm",
+            "cache-dependency-path": "postman/runner/package-lock.json"
+          }
+        },
+        {
+          "name": "Install pinned verification tools",
+          "run": "npm run setup:postman"
+        },
+        {
+          "name": "Syntax, contracts, documents and generated collection",
+          "run": "npm run check && npm run check:api && npm run check:postman && npm run check:model"
+        },
+        {
+          "name": "Core tests including fresh schema and legacy migration",
+          "run": "npm test"
+        },
+        {
+          "name": "Postman requests, assertions and preservation guards",
+          "run": "npm run verify:postman"
+        }
+      ]
+    }
+  }
+}
