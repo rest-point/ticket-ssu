@@ -2,31 +2,30 @@
 
 Node.js 내장 HTTP 서버·HTML/CSS/JavaScript·로컬 SQLite로 만든 팀프로젝트다. 회원·공연/회차·좌석 선점·데모 예매/취소·관리자·FIFO 대기열을 단일 API 프로세스로 제공한다. 실제 PG/청구/환불·본인인증·유효한 입장권 발권은 연결하지 않는다.
 
-## 실행
+## 과제 표준 실행 — model 모드
 
 검증 기준은 .node-version의 Node26.13.0이며 최소24.15가 필요하다. 앱 실행에는 외부 패키지 설치나 빌드가 필요 없다. 프로젝트 루트에서 실행한다.
 
 ```powershell
-npm start
-```
-
-[http://127.0.0.1:3000](http://127.0.0.1:3000)에서 공연→회차→로그인→좌석 선택→데모 결제→나의 티켓→취소를 이용한다. 로컬 데모는 로그인 화면의 일반 회원/관리자 자동 입력을 제공한다. 개발은 npm run dev, 정상 종료는 Ctrl+C다.
-
-npm start는 .env를 읽지 않는다. 팀원 환경은 기존 파일을 덮어쓰지 않고 예시를 준비한다.
-
-```powershell
 if (-not (Test-Path -LiteralPath .env)) { Copy-Item -LiteralPath .env.example -Destination .env }
 npm run start:local
-# 별도 터미널:
+```
+
+[http://127.0.0.1:3000](http://127.0.0.1:3000)에서 공연→회차→로그인→좌석 선택→데모 결제→나의 티켓→취소를 이용한다. 로컬 데모는 로그인 화면의 일반 회원/관리자 자동 입력을 제공한다. 정상 종료는 Ctrl+C다.
+
+팀원은 같은 .env.example을 사용한다. 이미 .env가 있다면 덮어쓰지 말고 아래 설정을 대조한다. model 모드에서 기존 legacy DB를 그대로 지정하지 않는다.
+
+```powershell
+# 서버를 실행한 채 별도 터미널에서:
 npm run status
 ```
 
-POSIX에서는 test -e .env || cp .env.example .env 후 같은 npm 명령을 쓴다. 셸 환경변수가 환경 파일보다 우선한다.
+status의 schema_version=1이 과제 ERD와 같은 model 모드다. 0이면 legacy 실행이므로 종료 후 설정을 확인한다. POSIX에서는 test -e .env || cp .env.example .env 후 같은 npm 명령을 쓴다. 셸 환경변수가 파일보다 우선하므로 이전 DB_SCHEMA/DB_PATH/NODE_ENV 등이 남아 있으면 정리한다.
 
 | 설정 | 기본값/용도 |
 | --- | --- |
 | HOST / PORT | 127.0.0.1 / 3000 |
-| DB_PATH / DB_SCHEMA | data/temp.sqlite / legacy. .env.example은 별도 data/team-local.sqlite / model |
+| DB_PATH / DB_SCHEMA | 과제 표준 .env: data/team-local.sqlite / model. 기존 DB를 복사/초기화하지 않음 |
 | DEMO_MODE | 기본 true. false이면 공개 데모 계정 생성/자동 입력을 사용하지 않음 |
 | NODE_ENV | production이면 Secure 쿠키·DEMO_MODE=false·HTTPS/인증 프록시 필수 |
 | TEMP_ADMIN_EMAIL / TEMP_ADMIN_PASSWORD | 전용 관리자 쌍. 신규 생성/기존 계정 보호, 재사용하지 않는10~128자 암호 |
@@ -34,6 +33,8 @@ POSIX에서는 test -e .env || cp .env.example .env 후 같은 npm 명령을 쓴
 | QUEUE_* / LIMIT_* | [API 명세](docs/design/api.md)의 정원·입장률·IP/회원/인증 예산과 상한 |
 
 legacy는 기존 저장 모델, model은 별도의 새/이관 DB에 명시적으로 선택하는 정규화 모델이다. 잘못된 모드/버전 조합과 model의 기본 운영 경로는 거부한다. 모드 변경으로 기존 DB를 자동 이관하지 않는다. 파일 DB는 로컬 디스크에 두고 DB/WAL/SHM·기존 계정/예매를 보존한다. 네트워크 공유 DB나 다중 API 배포는 지원하지 않는다.
+
+환경변수 없는 npm start/node server.mjs는 호환용 legacy(data/temp.sqlite) 기본값이다. npm run dev도 .env를 읽지 않는다. 과제 개발 중 자동 재시작은 `node --watch --env-file=.env server.mjs`를 사용한다. 기존 .env.tunnel과 외부 시연 DB는 로컬 표준 환경과 별도로 유지한다.
 
 ## 업무 정책
 
