@@ -140,3 +140,18 @@ server.mjs·lib/는 API/SQLite/큐·보안, public/은 화면, db/는 DDL/seed/�
 팀 작업은 기능별 브랜치에서 커밋하고 PR로 검토한다. PR에는 변경 기능·실행한 검증·미검증 사항을 적고 CI가 성공한 상태에서 병합한다. 초대 수락·저장소 접근·실행 결과는 각 팀원의 계정과 PC에서 확인한다.
 
 DB·WAL/SHM·백업·실제 .env/비밀값·설치 도구·node_modules·개인 실행 결과는 Git 제외 대상이다. 단일 서버·로컬 SQLite 범위를 유지하며 Docker·외부 DB/캐시/브로커·다중 API·실제 결제는 포함하지 않는다. UI 전면 접근성·장시간 운영 용량·실제 장애 복구 시간은 보장하지 않는다.
+
+## Postman API 테스트와 팀 논의
+
+공유한 Postman 파일로 API 동작을 확인하고, 서비스 문제와 개선 내용은 Notion에서 함께 정리합니다.
+
+- [Postman 컬렉션 JSON](https://github.com/rest-point/ticket-ssu/blob/main/postman/ticket-ssu.postman_collection.json)
+- [Postman 환경 JSON](https://github.com/rest-point/ticket-ssu/blob/main/postman/ticket-ssu.postman_environment.json)
+
+1. 위 두 파일의 GitHub 화면에서 **Download raw file**을 눌러 JSON 파일을 다운로드합니다.
+2. Postman 앱에서 **Import → Files**를 선택하고 컬렉션과 환경 JSON을 함께 가져옵니다.
+3. 오른쪽 위 환경 선택에서 **ticket-ssu local**을 선택합니다. 로컬 서버를 실행하고 `baseUrl`이 `http://127.0.0.1:3000`인지 확인합니다.
+4. 개인 환경의 `email`과 `password`를 입력하고 `signup` 또는 `login` 요청을 **Send**합니다. Cookie Jar를 켜 두면 로그인 쿠키가 유지되며, CSRF·입장권·선점/예매 ID는 응답에서 자동 저장됩니다.
+5. 예매 확인은 `concert list` → `seat search` → `queue enter` → `queue state`에서 `admitted` 확인 → `seat preempt` → `booking confirm` 순서로 진행합니다. 취소는 `booking cancel`입니다. 목록 전체를 Run하기보다 필요한 요청을 순서대로 골라 Send합니다.
+
+서비스에서 예상되는 문제와 대응 방법은 [Notion 문제 처리 보드](https://app.notion.com/p/ticket-ssu-40e4f5bda5d381e3b27fff9ec95f7997#ba7b123123ec46f5b5e14dc6d08e2257)에서 확인하고 논의합니다.
