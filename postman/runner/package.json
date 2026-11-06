@@ -1,5 +1,5 @@
 {
-  "name": "temp-ticket-postman-runner",
+  "name": "ticket-ssu-postman-runner",
   "version": "1.0.0",
   "private": true,
   "description": "Local verification tools only; not an application dependency",

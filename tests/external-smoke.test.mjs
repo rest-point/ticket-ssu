@@ -18,10 +18,10 @@ const baseEnv = { SMOKE_ORIGIN: 'https://tickets.example.test', SMOKE_EMAIL: ema
 const order = hold => ({ holdId: hold.id, buyerName: '검증회원', buyerPhone: '01000000000', delivery: 'mobile', agreed: true, paymentMethod: 'demo' });
 async function fixture(t, schema, options = {}) {
   let edge, app;
-  const dir = await mkdtemp(join(tmpdir(), 'temp-external-'));
+  const dir = await mkdtemp(join(tmpdir(), 'ticket-ssu-external-'));
   t.after(async () => {
     await edge?.close(); await app?.shutdown(100);
-    assert.ok(resolve(dir).startsWith(resolve(tmpdir()) + sep + 'temp-external-')); await rm(dir, { recursive: true, force: true });
+    assert.ok(resolve(dir).startsWith(resolve(tmpdir()) + sep + 'ticket-ssu-external-')); await rm(dir, { recursive: true, force: true });
   });
   const token = randomBytes(32).toString('hex'); edge = await tlsProxy(dir, token);
   app = await createApp({ dbPath: join(dir, 'smoke.sqlite'), schema, demo: false, secureCookies: true,

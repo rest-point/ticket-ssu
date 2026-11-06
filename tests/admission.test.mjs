@@ -16,7 +16,7 @@ const initialTime = 1800000000000;
 const order = hold => ({ holdId: hold.id, buyerName: '가상예매자', buyerPhone: '01012345678', delivery: 'mobile', paymentMethod: 'demo', agreed: true });
 async function fixture(t, schema, { file = false, queueOptions = {}, setup } = {}) {
   let now = initialTime, mono = 0, app, worker;
-  const dir = file ? await mkdtemp(join(tmpdir(), 'temp-admission-')) : null;
+  const dir = file ? await mkdtemp(join(tmpdir(), 'ticket-ssu-admission-')) : null;
   const path = dir ? join(dir, 'test.sqlite') : ':memory:';
   const stop = async () => {
     if (app?.store.db.isOpen) await new Promise(ok => app.server.close(ok));
@@ -25,7 +25,7 @@ async function fixture(t, schema, { file = false, queueOptions = {}, setup } = {
     if (worker?.threadId !== undefined && worker.threadId !== -1) await worker.terminate();
     await stop();
     if (dir) {
-      assert.ok(resolve(dir).startsWith(resolve(tmpdir()) + sep + 'temp-admission-'));
+      assert.ok(resolve(dir).startsWith(resolve(tmpdir()) + sep + 'ticket-ssu-admission-'));
       await rm(dir, { recursive: true });
     }
   });
@@ -41,9 +41,9 @@ async function fixture(t, schema, { file = false, queueOptions = {}, setup } = {
   await start();
   const identity = userId => {
     const session = app.store.createSession(userId);
-    return { id: userId, cookie: `temp_session=${session.token}`, csrf: session.csrf };
+    return { id: userId, cookie: `ticket_ssu_session=${session.token}`, csrf: session.csrf };
   };
-  const users = ['demo@temp.local', 'admin@temp.local'].map(email => identity(app.store.get('SELECT id FROM users WHERE email=?', email).id));
+  const users = ['demo@ticket-ssu.local', 'admin@ticket-ssu.local'].map(email => identity(app.store.get('SELECT id FROM users WHERE email=?', email).id));
   const pid = app.store.concerts()[0].performances[0].id;
   const api = async (method, url, user, body, token, extra = {}) => {
     const response = await fetch(`http://127.0.0.1:${app.server.address().port}${url}`, {
@@ -229,7 +229,7 @@ for (const schema of ['legacy', 'model']) {
     const hold = f.app.store.liveHolds(a.id, pid)[0];
     const before = (await f.join(a, { resumeHoldId: hold.id })).body;
     assert.equal(before.mode, 'hold-recovery');
-    const other = await f.app.store.register({ email: 'wait@temp.local', name: '대기회원', phone: '01012345678', password: 'AdmissionDemo123!', terms: true, ageConfirmed: true });
+    const other = await f.app.store.register({ email: 'wait@ticket-ssu.local', name: '대기회원', phone: '01012345678', password: 'AdmissionDemo123!', terms: true, ageConfirmed: true });
     const c = f.identity(other.id);
     assert.equal((await f.join(c)).body.state, 'waiting');
     assert.equal((await f.hold(a, ['B-01'], before.admission_token)).status, 403);
@@ -268,7 +268,7 @@ for (const schema of ['legacy', 'model']) {
 
   test(`[${schema}] 큐 상태 조회는 DB 만료 쓰기 없이 본인만 반환하고 상한은 신규만 거부한다`, async t => {
     const f = await fixture(t, schema, { queueOptions: { maxWaiting: 1, maxTotal: 2 } }), [a, b] = f.users;
-    const other = await f.app.store.register({ email: 'limit@temp.local', name: '대기상한', phone: '01012345678', password: 'AdmissionDemo123!', terms: true, ageConfirmed: true });
+    const other = await f.app.store.register({ email: 'limit@ticket-ssu.local', name: '대기상한', phone: '01012345678', password: 'AdmissionDemo123!', terms: true, ageConfirmed: true });
     const c = f.identity(other.id);
     const first = (await f.join(a)).body;
     const waiting = (await f.join(b)).body;

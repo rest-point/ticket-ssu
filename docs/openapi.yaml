@@ -1,9 +1,9 @@
 {
   "openapi": "3.0.3",
   "info": {
-    "title": "Temp 현재 구현 API",
+    "title": "ticket-ssu 현재 구현 API",
     "version": "1.0.0-current",
-    "description": "현재 구현된 API 18개 작업의 입출력·권한·오류 계약. 단일 Node API와 로컬 SQLite, legacy 기본 및 별도 model 명시 선택을 지원한다. 자세한 설명은 docs/design/api.md를 따른다."
+    "description": "현재 구현된 API 19개 작업의 입출력·권한·오류 계약. 단일 Node API와 로컬 SQLite, legacy 기본 및 별도 model 명시 선택을 지원한다. 자세한 설명은 docs/design/api.md를 따른다."
   },
   "servers": [
     {
@@ -169,7 +169,7 @@
                 "example": {
                   "user": {
                     "id": "user-example",
-                    "email": "sample@temp.local",
+                    "email": "sample@ticket-ssu.local",
                     "name": "가상회원",
                     "phone": "01012345678",
                     "role": "user"
@@ -331,7 +331,7 @@
                 "$ref": "#/components/schemas/Signup"
               },
               "example": {
-                "email": "sample@temp.local",
+                "email": "sample@ticket-ssu.local",
                 "name": "가상회원",
                 "phone": "01012345678",
                 "password": "ExampleDemo123!",
@@ -371,7 +371,7 @@
                 "example": {
                   "user": {
                     "id": "user-example",
-                    "email": "sample@temp.local",
+                    "email": "sample@ticket-ssu.local",
                     "name": "가상회원",
                     "phone": "01012345678",
                     "role": "user"
@@ -533,7 +533,7 @@
                 "$ref": "#/components/schemas/Login"
               },
               "example": {
-                "email": "sample@temp.local",
+                "email": "sample@ticket-ssu.local",
                 "password": "ExampleDemo123!"
               }
             }
@@ -1217,7 +1217,7 @@
         "tags": [
           "bookings"
         ],
-        "description": "실제 금액 청구 없음. 서버가 금액을 계산하고 클라이언트 total을 무시한다. hold_id로 기존 예매를 재반환하며 반복도 201이다. 현재 일반 Idempotency-Key·본문 해시는 검사하지 않는다. 유효 입력 검사 후 기존 결과를 찾으므로 잘못된 재시도 본문은 400일 수 있다. 확정 직전에 좌석 수 1~4, 모든 좌석의 회차 일치, 기존 confirmed 수와 이번 좌석 합계 4매 이하를 같은 쓰기 트랜잭션에서 재검사한다. model 모드의 선택 Idempotency-Key는 소유권 확인 후 영속 성공/업무 실패 재사용과 본문 충돌 409를 적용한다. legacy 모드는 키를 거부한다. 입력/인증/DB 장애는 실패 시도로 기록하지 않는다. SQLite 트랜잭션 안에서 세션 결합 X-Admission-Token을 검사한다. 기존 경로도 큐 우회를 허용하지 않는다.",
+        "description": "실제 금액 청구 없음. 서버가 금액을 계산하고 클라이언트 total을 무시한다. hold_id로 기존 예매를 재반환하며 반복도 201이다. 헤더 생략은 hold 기반 호환 재시도이고 model은 선택 키를 지원한다. 유효 입력 검사 후 기존 결과를 찾으므로 잘못된 재시도 본문은 400일 수 있다. 확정 직전에 좌석 수 1~4, 모든 좌석의 회차 일치, 기존 confirmed 수와 이번 좌석 합계 4매 이하를 같은 쓰기 트랜잭션에서 재검사한다. model 모드의 선택 Idempotency-Key는 소유권 확인 후 영속 성공/업무 실패 재사용과 본문 충돌 409를 적용한다. legacy 모드는 키를 거부한다. 입력/인증/DB 장애는 실패 시도로 기록하지 않는다. SQLite 트랜잭션 안에서 세션 결합 X-Admission-Token을 검사한다. 기존 경로도 큐 우회를 허용하지 않는다.",
         "security": [
           {
             "cookieAuth": [],
@@ -3177,6 +3177,216 @@
           "users"
         ]
       }
+    },
+    "/api/auth/account": {
+      "delete": {
+        "operationId": "withdrawAccount",
+        "summary": "회원 탈퇴",
+        "tags": [
+          "auth"
+        ],
+        "description": "본인 비밀번호와 명시적 동의로 탈퇴한다. 시작 전 확정 예매가 있으면 409, 관리자 계정은 403. 모든 본인 세션·대기열·선점을 해제하고 회원/예매자 정보를 비식별화한다. 예매·결제·좌석 이력은 보존하며 같은 이메일 재가입은 새 회원이다.",
+        "security": [
+          {
+            "cookieAuth": [],
+            "csrfToken": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Ok"
+                },
+                "example": {
+                  "ok": true
+                }
+              }
+            },
+            "headers": {
+              "Set-Cookie": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "빈 ticket_ssu_session 쿠키, Max-Age=0; HttpOnly; SameSite=Lax; Path=/. production이면 Secure."
+              }
+            }
+          },
+          "400": {
+            "description": "현재 비밀번호와 탈퇴 동의를 확인해 주세요.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "현재 비밀번호와 탈퇴 동의를 확인해 주세요."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "로그인 필요 또는 인증 실패",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "로그인 필요 또는 인증 실패"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "CSRF·출처·역할 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "CSRF·출처·역할 오류"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "공연 시작 전 확정 예매를 먼저 취소해 주세요.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "공연 시작 전 확정 예매를 먼저 취소해 주세요."
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "요청 본문이 너무 큽니다.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "요청 본문이 너무 큽니다."
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "application/json 형식으로 요청해 주세요.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "application/json 형식으로 요청해 주세요."
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "IP/회원 요청 제한·인증 시도 제한 또는 큐/제한 키 상한. Retry-After 초 뒤 재시도.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string",
+                  "pattern": "^[1-9][0-9]*$"
+                },
+                "description": "최소 재시도 대기 초"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "요청이 너무 많습니다. 잠시 후 다시 이용해 주세요."
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "예상하지 못한 오류. 현재 SQLITE_BUSY도 일반 500일 수 있음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "예상하지 못한 오류. 현재 SQLITE_BUSY도 일반 500일 수 있음"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "SQLite 잠금 재시도 예산 소진. 같은 요청으로 1초 뒤 재시도. 비동기 인증 중 잠금은 즉시 같은 503.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "1"
+                  ]
+                },
+                "description": "재시도 전 최소 초"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "데이터베이스가 사용 중입니다. 잠시 후 같은 요청으로 다시 시도해 주세요."
+                }
+              }
+            }
+          }
+        },
+        "x-implementation": "implemented-legacy",
+        "x-role": "user",
+        "x-admission": "none-current",
+        "x-tables": [
+          "users",
+          "sessions",
+          "holds",
+          "current_holds",
+          "bookings",
+          "performances"
+        ],
+        "x-legacy-tables": [
+          "users",
+          "sessions",
+          "holds",
+          "seats",
+          "bookings",
+          "performances"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Withdrawal"
+              },
+              "example": {
+                "password": "ExampleDemo123!",
+                "confirmed": true
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -3184,7 +3394,7 @@
       "cookieAuth": {
         "type": "apiKey",
         "in": "cookie",
-        "name": "temp_session",
+        "name": "ticket_ssu_session",
         "description": "HttpOnly 세션 쿠키. Cookie Jar로 관리한다."
       },
       "csrfToken": {
@@ -4276,6 +4486,28 @@
             "enum": [
               0,
               1
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "Withdrawal": {
+        "type": "object",
+        "required": [
+          "password",
+          "confirmed"
+        ],
+        "properties": {
+          "password": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 128,
+            "description": "현재 로그인한 회원의 비밀번호"
+          },
+          "confirmed": {
+            "type": "boolean",
+            "enum": [
+              true
             ]
           }
         },

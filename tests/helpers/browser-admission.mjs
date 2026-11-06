@@ -6,7 +6,7 @@ let offset = 0;
 const { server, store, queue } = await createApp({ dbPath: ':memory:', schema: 'model', now: () => Date.now() + offset,
   secureCookies: false, queueOptions: { activeLimit: 1, admitPerSecond: 100, admissionMs: 60000, monotonic: () => performance.now() + offset } });
 const pid = store.concerts()[0].performances[0].id;
-const blocker = store.get("SELECT id FROM users WHERE email='admin@temp.local'").id;
+const blocker = store.get("SELECT id FROM users WHERE email='admin@ticket-ssu.local'").id;
 queue.enter(pid, blocker, { sessionKey: 'synthetic-browser-blocker' });
 server.listen(0, '127.0.0.1', () => console.log(`BROWSER_FIXTURE http://127.0.0.1:${server.address().port}/#/book/${pid}`));
 process.stdin.setEncoding('utf8');

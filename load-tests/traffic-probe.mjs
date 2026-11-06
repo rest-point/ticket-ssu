@@ -60,7 +60,7 @@ function coreProbe() {
       after_sweep_memory_delta: delta(limiterEmpty, limiterBaseline), after_sweep: { ips: 0, users: 0, authIps: 0 } } };
 }
 async function httpProbe(schema, kind) {
-  const dir = await mkdtemp(join(tmpdir(), 'temp-traffic-probe-'));
+  const dir = await mkdtemp(join(tmpdir(), 'ticket-ssu-traffic-probe-'));
   let app;
   try {
     let wall = 1800000000000;
@@ -76,9 +76,9 @@ async function httpProbe(schema, kind) {
     if (kind !== 'limited-burst') {
       for (let i = 0; i < 16; i++) {
         const id = `synthetic-probe-${i}`;
-        store.run('INSERT INTO users VALUES(?,?,?,?,?,?,?)', id, `probe${i}@temp.local`, '가상부하회원', '01012345678', password, 'user', wall);
+        store.run('INSERT INTO users VALUES(?,?,?,?,?,?,?)', id, `probe${i}@ticket-ssu.local`, '가상부하회원', '01012345678', password, 'user', wall);
         const session = store.createSession(id);
-        clients.push({ Cookie: `temp_session=${session.token}`, 'X-CSRF-Token': session.csrf });
+        clients.push({ Cookie: `ticket_ssu_session=${session.token}`, 'X-CSRF-Token': session.csrf });
       }
       store.setHold('synthetic-probe-0', pid, ['A-01']); wall += 1000;
       for (const headers of clients) {
@@ -134,7 +134,7 @@ async function httpProbe(schema, kind) {
     return report;
   } finally {
     if (app?.store.db.isOpen) await new Promise(ok => app.server.close(ok));
-    assert.ok(resolve(dir).startsWith(resolve(tmpdir()) + sep + 'temp-traffic-probe-'));
+    assert.ok(resolve(dir).startsWith(resolve(tmpdir()) + sep + 'ticket-ssu-traffic-probe-'));
     await rm(dir, { recursive: true });
   }
 }

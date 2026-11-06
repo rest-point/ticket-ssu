@@ -13,10 +13,10 @@ async function fixture(t) {
   });
   await store.seed();
   t.after(() => store.close());
-  const user = await store.authenticate('demo@temp.local', 'TempDemo123!');
-  const admin = await store.authenticate('admin@temp.local', 'TempAdmin123!');
+  const user = await store.authenticate('demo@ticket-ssu.local', 'TicketSsuDemo123!');
+  const admin = await store.authenticate('admin@ticket-ssu.local', 'TicketSsuAdmin123!');
   const other = await store.register({
-    email: 'other@temp.local',
+    email: 'other@ticket-ssu.local',
     name: '다른고객',
     phone: '01099998888',
     password: 'AnotherTest123!',
@@ -145,12 +145,12 @@ test('이메일 정규화·중복 가입과 잘못된 비밀번호를 검사한�
   const {
     store
   } = await fixture(t);
-  assert.equal((await store.authenticate(' DEMO@TEMP.LOCAL ', 'TempDemo123!')).role, 'user');
-  await assert.rejects(store.authenticate('demo@temp.local', 'incorrect'), {
+  assert.equal((await store.authenticate(' DEMO@TICKET-SSU.LOCAL ', 'TicketSsuDemo123!')).role, 'user');
+  await assert.rejects(store.authenticate('demo@ticket-ssu.local', 'incorrect'), {
     status: 401
   });
   await assert.rejects(store.register({
-    email: 'DEMO@temp.local',
+    email: 'DEMO@ticket-ssu.local',
     name: '김고객',
     phone: '01012345678',
     password: 'AnotherTest123!',
@@ -160,7 +160,7 @@ test('이메일 정규화·중복 가입과 잘못된 비밀번호를 검사한�
     status: 409
   });
   await assert.rejects(store.register({
-    email: 'new@temp.local',
+    email: 'new@ticket-ssu.local',
     name: '김고객',
     phone: '01012345678',
     password: 'AnotherTest123!',
@@ -171,13 +171,13 @@ test('이메일 정규화·중복 가입과 잘못된 비밀번호를 검사한�
   });
 });
 test('DB 재시작 후 예매와 좌석 상태가 유지된다', async () => {
-  const dir = await mkdtemp(join(tmpdir(), 'temp-ticket-'));
+  const dir = await mkdtemp(join(tmpdir(), 'ticket-ssu-'));
   const dbPath = join(dir, 'persist.sqlite');
   let store;
   try {
     store = new Store(dbPath);
     await store.seed();
-    const user = await store.authenticate('demo@temp.local', 'TempDemo123!');
+    const user = await store.authenticate('demo@ticket-ssu.local', 'TicketSsuDemo123!');
     const pid = store.concerts()[0].performances[0].id;
     const {
       hold
@@ -217,8 +217,8 @@ test('HTTP에서 쿠키·CSRF·권한·로그아웃·교차 출처를 검사한�
       'Content-Type': 'application/json'
     },
     body: JSON.stringify({
-      email: 'demo@temp.local',
-      password: 'TempDemo123!'
+      email: 'demo@ticket-ssu.local',
+      password: 'TicketSsuDemo123!'
     })
   });
   assert.equal(login.status, 200);
@@ -261,15 +261,15 @@ test('HTTP에서 쿠키·CSRF·권한·로그아웃·교차 출처를 검사한�
   })).status, 401);
 });
 test('서로 다른 DB 연결에서도 동일 좌석은 한 사람만 확보한다', async () => {
-  const dir = await mkdtemp(join(tmpdir(), 'temp-race-')),
+  const dir = await mkdtemp(join(tmpdir(), 'ticket-ssu-race-')),
     file = join(dir, 'race.sqlite');
   const one = new Store(file);
   let two;
   try {
     await one.seed();
     two = new Store(file);
-    const user = await one.authenticate('demo@temp.local', 'TempDemo123!');
-    const admin = await one.authenticate('admin@temp.local', 'TempAdmin123!');
+    const user = await one.authenticate('demo@ticket-ssu.local', 'TicketSsuDemo123!');
+    const admin = await one.authenticate('admin@ticket-ssu.local', 'TicketSsuAdmin123!');
     const pid = one.concerts()[0].performances[0].id;
     const results = await Promise.allSettled([Promise.resolve().then(() => one.setHold(user.id, pid, ['A-01'])), Promise.resolve().then(() => two.setHold(admin.id, pid, ['A-01']))]);
     assert.equal(results.filter(r => r.status === 'fulfilled').length, 1);
@@ -422,6 +422,6 @@ test('초기 데이터 생성을 반복해도 기존 계정·세션·공연·예
   assert.deepEqual(store.all('SELECT * FROM concerts ORDER BY id'), concerts);
   assert.equal(store.session(token).user.id, user.id);
   assert.equal(store.booking(booking.id, user.id).status, 'confirmed');
-  assert.equal((await store.authenticate('admin@temp.local', 'TempAdmin123!')).id, admin.id);
-  assert.equal((await store.authenticate('demo@temp.local', 'TempDemo123!')).id, user.id);
+  assert.equal((await store.authenticate('admin@ticket-ssu.local', 'TicketSsuAdmin123!')).id, admin.id);
+  assert.equal((await store.authenticate('demo@ticket-ssu.local', 'TicketSsuDemo123!')).id, user.id);
 });

@@ -15,10 +15,10 @@ import { checkReadiness } from '../scripts/status.mjs';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 async function temporary(t, close = async () => {}) {
-  const dir = await mkdtemp(join(tmpdir(), 'temp-deploy-'));
+  const dir = await mkdtemp(join(tmpdir(), 'ticket-ssu-deploy-'));
   t.after(async () => {
     await close();
-    assert.ok(resolve(dir).startsWith(resolve(tmpdir()) + sep + 'temp-deploy-'));
+    assert.ok(resolve(dir).startsWith(resolve(tmpdir()) + sep + 'ticket-ssu-deploy-'));
     await rm(dir, { recursive: true, force: true });
   });
   return dir;
@@ -29,7 +29,7 @@ async function fixture(t, schema, options = {}) {
   t.after(() => app.shutdown(100));
   const base = `http://127.0.0.1:${app.server.address().port}`;
   const get = async path => {
-    const response = await fetch(base + path, { headers: { Cookie: `temp_session=${'a'.repeat(64)}` }, signal: AbortSignal.timeout(3000) });
+    const response = await fetch(base + path, { headers: { Cookie: `ticket_ssu_session=${'a'.repeat(64)}` }, signal: AbortSignal.timeout(3000) });
     return { status: response.status, body: await response.json(), headers: response.headers };
   };
   return { ...app, base, get };
@@ -129,14 +129,14 @@ for (const schema of ['legacy', 'model']) {
   });
   test(`[${schema}] 수락된 로그인은 종료 예산 안에서 완료한 뒤 DB를 닫는다`, async t => {
     const f = await fixture(t, schema);
-    const body = JSON.stringify({ email: 'demo@temp.local', password: 'TempDemo123!' });
+    const body = JSON.stringify({ email: 'demo@ticket-ssu.local', password: 'TicketSsuDemo123!' });
     const accepted = once(f.server, 'request');
     const pending = request(f.base + '/api/auth/login', { method: 'POST', agent: false,
       headers: { 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) } });
     const response = once(pending, 'response'); pending.flushHeaders(); await accepted;
     const closing = f.shutdown(2000); pending.end(body);
     const [res] = await response; assert.equal(res.statusCode, 200);
-    assert.match(res.headers['set-cookie'][0], /temp_session=/); res.resume(); await once(res, 'end');
+    assert.match(res.headers['set-cookie'][0], /ticket_ssu_session=/); res.resume(); await once(res, 'end');
     await closing; assert.equal(f.store.db.isOpen, false);
   });
   test(`[${schema}] SIGINT/SIGTERM 경로는 수신 종료와 시그널 리스너 정리를 수행한다`, async t => {
@@ -155,7 +155,7 @@ for (const schema of ['legacy', 'model']) {
     }), dbPath = join(dir, 'persistent.sqlite'), envFile = join(dir, 'team.env');
     const template = await readFile(new URL('../.env.example', import.meta.url), 'utf8');
     await writeFile(envFile, template.replace('PORT=3000', 'PORT=0').replace('DB_SCHEMA=model', `DB_SCHEMA=${schema}`).replace('DB_PATH=data/team-local.sqlite', `DB_PATH="${dbPath.replaceAll('\\', '/')}"`));
-    const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !/^(?:HOST|PORT|NODE_ENV|DB_PATH|DB_SCHEMA|DEMO_MODE|PUBLIC_ORIGIN|PROXY_.+|SHUTDOWN_TIMEOUT_MS|TEMP_ADMIN_.+|QUEUE_.+|LIMIT_.+)$/i.test(key)));
+    const env = Object.fromEntries(Object.entries(process.env).filter(([key]) => !/^(?:HOST|PORT|NODE_ENV|DB_PATH|DB_SCHEMA|DEMO_MODE|PUBLIC_ORIGIN|PROXY_.+|SHUTDOWN_TIMEOUT_MS|TICKET_SSU_ADMIN_.+|QUEUE_.+|LIMIT_.+)$/i.test(key)));
     const start = async () => {
       child = fork(new URL('./helpers/runtime-child.mjs', import.meta.url), [], { cwd: root, env, execArgv: [`--env-file=${envFile}`], silent: true });
       let error = ''; child.stderr.on('data', data => { error += data; });
@@ -165,7 +165,7 @@ for (const schema of ['legacy', 'model']) {
     const stop = async signal => { const exited = once(child, 'exit'); child.send(signal); assert.deepEqual(await exited, [0, null]); };
     let base = await start();
     assert.equal((await checkReadiness(base)).schema_version, version);
-    const login = await fetch(base + '/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: 'demo@temp.local', password: 'TempDemo123!' }) });
+    const login = await fetch(base + '/api/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email: 'demo@ticket-ssu.local', password: 'TicketSsuDemo123!' }) });
     assert.equal(login.status, 200); const data = await login.json(), cookie = login.headers.get('set-cookie').split(';')[0];
     await stop('SIGTERM'); base = await start();
     const session = await (await fetch(base + '/api/session', { headers: { Cookie: cookie } })).json();
@@ -173,7 +173,7 @@ for (const schema of ['legacy', 'model']) {
     const status = spawn(process.execPath, ['scripts/status.mjs', base], { cwd: root, env });
     let out = ''; status.stdout.on('data', chunk => { out += chunk; });
     assert.deepEqual(await once(status, 'exit'), [0, null]); assert.equal(JSON.parse(out).status, 'ready');
-    for (const path of ['/.env', '/.env.example', '/data/team-local.sqlite', '/data/temp.sqlite', '/package.json']) assert.equal((await fetch(base + path)).status, 404);
+    for (const path of ['/.env', '/.env.example', '/data/team-local.sqlite', '/data/ticket-ssu.sqlite', '/package.json']) assert.equal((await fetch(base + path)).status, 404);
     await stop('SIGINT');
   });
 }

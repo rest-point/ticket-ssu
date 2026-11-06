@@ -22,7 +22,7 @@ try {
     const seats = db.prepare("SELECT id FROM inventory WHERE performance_id='seed-performance-1' ORDER BY id").all();
     for (let n = 0; n < seats.length; n++) {
       const id = `bench-u:${n}`, h = `bench-active:${n}`;
-      insertRow(db, 'users', { ...template, id, email: `bench-${n}@temp.local` });
+      insertRow(db, 'users', { ...template, id, email: `bench-${n}@ticket-ssu.local` });
       insertRow(db, 'holds', { id: h, user_id: id, performance_id: 'seed-performance-1', expires_at: now + (n - 48) * 1000, status: 'active' });
       insertRow(db, 'current_holds', { inventory_id: seats[n].id, hold_id: h });
     }

@@ -3,7 +3,7 @@ import { sleep } from 'k6';
 import execution from 'k6/execution';
 import { Counter, Rate, Trend } from 'k6/metrics';
 
-const fixture = JSON.parse(open(__ENV.TEMP_K6_FIXTURE));
+const fixture = JSON.parse(open(__ENV.TICKET_SSU_K6_FIXTURE));
 if (fixture.scope !== 'isolated-new-database' || !/^http:\/\/127\.0\.0\.1:[1-9][0-9]{0,4}$/.test(fixture.base) ||
     !['race', 'ticket-cap', 'queue', 'read-control', 'read-current', 'mixed-default', 'busy'].includes(fixture.profile)) throw new Error('K6_LOCAL_FIXTURE_REQUIRED');
 const profile = fixture.profile, base = fixture.base, pid = fixture.performanceId;
@@ -108,4 +108,4 @@ export default function () {
     sleep(0.3);
   }
 }
-export function handleSummary(data) { return { [__ENV.TEMP_K6_SUMMARY]: JSON.stringify({ metrics: data.metrics }) }; }
+export function handleSummary(data) { return { [__ENV.TICKET_SSU_K6_SUMMARY]: JSON.stringify({ metrics: data.metrics }) }; }

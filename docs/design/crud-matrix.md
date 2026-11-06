@@ -9,6 +9,7 @@ C=INSERT, R=SELECT, U=UPDATE, D=DELETE다. health/readiness를 제외한 API의 
 | signup | 익명/기존 세션 CSRF | users CR; sessions CD | users CR; sessions CD | 비밀번호 해시는 await 후 회원 INSERT, 세션 교체는 별도 짧은 트랜잭션. 전체 가입+로그인이 한 트랜잭션인 것은 아님 |
 | login | 익명/기존 세션 CSRF | users R; sessions CD | users R; sessions CD | 해시 검증은 트랜잭션 밖. 기존 삭제·만료 정리·새 세션 발급은 짧은 트랜잭션 |
 | getSession | 공개/선택 쿠키 | users R; sessions R | users R; sessions R | 만료 세션은 응답에서 익명. 이 조회가 만료 세션을 삭제하는 것은 아님 |
+| withdrawAccount | 로그인·본인·CSRF·비밀번호·동의 | users RU; sessions RD; holds RU; seats U; bookings RU; performances R | users RU; sessions RD; holds RU; current_holds D; bookings RU; performances R | 짧은 트랜잭션에서 시작 전 확정 예매 거부·전체 선점/세션 해제·회원/예매자 비식별화. 커밋 후 전체 본인 큐 제거. 금액·항목·결제 이력 보존 |
 | logout | 로그인·CSRF | sessions D | sessions D | 현재 쿠키의 세션만 삭제 |
 | listConcerts | 공개 | concerts R; performances R; seats R; holds R | concerts R; performances R; venues R; inventory R; holds R; current_holds R; current_bookings R | BEGIN + SELECT, 유효 선점만 잔여석 계산. 물리 만료 정리 없음 |
 | getSeats | 공개/본인 표시 | performances R; concerts R; holds R; seats R | performances R; concerts R; venues R; physical_seats R; inventory R; holds R; current_holds R; current_bookings R | BEGIN + SELECT의 한 시각/스냅샷. 만료된 연결은 논리적으로 제외, 판매는 쓰기에서 재검증 |
@@ -32,15 +33,15 @@ C=INSERT, R=SELECT, U=UPDATE, D=DELETE다. health/readiness를 제외한 API의 
 
 | model 테이블 | 생성·변경 주체 / 삭제 정책 |
 | --- | --- |
-| users | 가입·오프라인 이관. 역할은 초기 관리자 설정, 일반 body.role로 승격 불가. 수정/탈퇴 API 없음 |
-| sessions | 로그인/가입 시 발급·회전, 로그아웃/만료 시 D 허용. 외부 목록/일괄 삭제 API 없음 |
+| users | 가입·오프라인 이관. 역할은 초기 관리자 설정, 일반 body.role로 승격 불가. 본인 탈퇴는 정보 비식별화 U, ID/FK 이력은 보존. 관리자/시작 전 확정 예매는 거부. 일반 수정 API 없음 |
+| sessions | 로그인/가입 시 발급·회전, 로그아웃/만료 시 D 허용. 탈퇴는 본인의 모든 세션 D. 외부 목록 API 없음 |
 | venues | 관리자 공연 등록·이관. 일반 공개 CRUD 없음; 같은 이름 자동 병합 금지 |
 | physical_seats | 관리자 등록·이관. 참조된 좌석 ID/코드/배치는 불변, 일반 D 없음 |
 | concerts | 관리자 생성·공개 조회. 일반 수정/삭제 API 없음 |
 | performances | 관리자 생성·공개 조회. 참조된 회차 식별/장소 불변, 일반 D 없음 |
 | inventory | 관리자 생성·차단/해제, 회원은 조회/관계로 점유. 회차·물리 좌석 식별 불변 |
 | holds | 본인 선택·서버 만료·확정으로 C/U, 이력은 D 금지. 외부 임의 상태 UPDATE 없음 |
-| bookings | 본인 확정 C·전체 취소 U, D 금지. 예매자/금액 스냅샷 수정 API 없음 |
+| bookings | 본인 확정 C·전체 취소 U, D 금지. 금액/항목은 불변. 탈퇴 회원의 예매자 이름/전화만 지정 비식별 값으로 U 허용 |
 | booking_items | 확정 시 C, 이후 U/D 금지. 재고 전체 이력 UNIQUE 금지 |
 | current_holds | 선점 시 C, 변경·해제·만료·확정 시 D. UPDATE 대신 검증된 삭제/삽입 |
 | current_bookings | 확정 시 C, 취소 시 D. 해당 예매 항목 복합 FK·재고 PK |

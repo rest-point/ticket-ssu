@@ -24,14 +24,14 @@ async function fixture(t, { specialPassword = false } = {}) {
     memberEmail: email, memberPassword: password, performanceId: pid }) };
 }
 
-test('Postman 산출물은 현재 OpenAPI18개와 생성 원본에 일치한다', async () => {
-  assert.deepEqual(await checkCollection(), { currentOperations: 18, requests: 37, status: 'passed' });
+test('Postman 산출물은 현재 OpenAPI19개와 생성 원본에 일치한다', async () => {
+  assert.deepEqual(await checkCollection(), { currentOperations: 19, requests: 41, status: 'passed' });
 });
 for (const schema of ['legacy', 'model']) {
-  test(`[${schema}] 실제 Newman 전체37요청·131assertion·18작업과 임시 DB 정리`, async t => {
+  test(`[${schema}] 실제 Newman 전체41요청·146assertion·19작업과 임시 DB 정리`, async t => {
     const report = await runIsolatedPostman(schema);
     assert.equal(report.passed, true, JSON.stringify(report));
-    assert.equal(report.requests, 37); assert.equal(report.assertions, 131); assert.equal(report.currentOperationsCovered, 18);
+    assert.equal(report.requests, 41); assert.equal(report.assertions, 146); assert.equal(report.currentOperationsCovered, 19);
     assert.equal(report.confirmedBookings, 0); assert.equal(report.activeHolds, 0); assert.equal(report.sessions, 0); assert.equal(report.cleanupPassed, true);
     t.diagnostic(`Newman ${schema}: requests=${report.requests}; assertions=${report.assertions}; operations=${report.currentOperationsCovered}`);
   });

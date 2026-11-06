@@ -1,11 +1,11 @@
 # HTTP API 명세
 
-[현재 OpenAPI](../openapi.yaml)는15경로/18작업의 실행 계약이다. 파라미터·요청/응답 예시·필드 스키마·상태코드는 이 파일을 Postman 등에서 읽어 확인한다. [CRUD](crud-matrix.md)·[물리 모델](../data-model/physical.md)과 함께 사용한다. 기본 legacy와 별도 DB_SCHEMA=model은 같은 현재 경로/공개 ID/JSON을 제공하며 기존 DB를 자동 이관하지 않는다.
+[현재 OpenAPI](../openapi.yaml)는16경로/19작업의 실행 계약이다. 파라미터·요청/응답 예시·필드 스키마·상태코드는 이 파일을 Postman 등에서 읽어 확인한다. [CRUD](crud-matrix.md)·[물리 모델](../data-model/physical.md)과 함께 사용한다. 기본 legacy와 별도 DB_SCHEMA=model은 같은 현재 경로/공개 ID/JSON을 제공하며 기존 DB를 자동 이관하지 않는다.
 
 ## 공통 계약
 
 - 기본 출처는 http://127.0.0.1:3000이다. 모든 API JSON은 Cache-Control: no-store를 사용한다. 금액은 원 단위 정수, 시각은 UTC epoch milliseconds이고 화면은 Asia/Seoul이다.
-- temp_session 쿠키로 인증한다. GET /api/session의 user·csrf는 익명이면 null이다. 쿠키는 HttpOnly·SameSite=Lax·Path=/·7일이며 production에서는 Secure를 추가한다. 재로그인은 기존 세션을 교체하고 로그아웃은 해당 세션과 쿠키를 만료시킨다.
+- ticket_ssu_session 쿠키로 인증한다. GET /api/session의 user·csrf는 익명이면 null이다. 쿠키는 HttpOnly·SameSite=Lax·Path=/·7일이며 production에서는 Secure를 추가한다. 재로그인은 기존 세션을 교체하고 로그아웃은 해당 세션과 쿠키를 만료시킨다.
 - 유효한 세션의 모든 변경 요청은 X-CSRF-Token을 요구한다. 로그인한 상태의 가입/로그인도 포함한다. 변경 Origin은 현재 출처와 같아야 하고 Sec-Fetch-Site: cross-site는 거부한다. Origin 없는 클라이언트도 CSRF를 검사한다.
 - 공개 모드는 PUBLIC_ORIGIN·정확한 loopback peer·비밀 PROXY_TOKEN·Host를 검사한다. 표준 전달 헤더는 신뢰하지 않는다. Quick Tunnel 중계는 외부 전달 헤더를 제거하고 실행 중 발급 출처/토큰을 연결한다. 실제 사용자 IP를 검증하지 않아 모든 터널 사용자가 공유 IP 예산을 쓴다.
 - JSON 본문은 application/json의 객체이며 최대16KiB다. 정상 입력의 스키마와 달리 현재 서버에는 일부 타입 변환/추가 속성 무시가 남아 있다. 클라이언트 금액이나 role은 가격/권한을 결정하지 않는다. 명세를 런타임 검증 미들웨어로 사용하지 않는다.
@@ -18,6 +18,7 @@
 | getSession | GET /api/session | 공개, 쿠키 선택 | 200. user / csrf / demo |
 | signup | POST /api/auth/signup | 익명 가능; 기존 세션이면 CSRF | 201. 이메일 trim/소문자·중복, 이름 2~40자, 전화 형식, 비밀번호 10~128자, terms/ageConfirmed=true |
 | login | POST /api/auth/login | 익명 가능; 기존 세션이면 CSRF | 200. scrypt 검증, 기존 쿠키 세션 삭제 후 새 쿠키/CSRF |
+| withdrawAccount | DELETE /api/auth/account | 로그인·CSRF·본인 비밀번호·confirmed=true | 200 {ok:true}. 관리자 403, 시작 전 확정 예매 409. 모든 본인 세션·대기열·선점 정리, 회원/예매자 비식별화, 이력 보존 |
 | logout | POST /api/auth/logout | 로그인·CSRF | 200 {ok:true}. 해당 세션 삭제·쿠키 만료 |
 | listConcerts | GET /api/concerts | 공개 | 200. 회차·잔여석·최저가. 검색/지역/정렬은 브라우저 수행 |
 | getSeats | GET /api/performances/{performanceId}/seats | 공개, 본인 선점 표시만 세션 사용 | 200. performance / seats / hold / server_now / max_tickets=4. 회차 없음 404 |
@@ -50,6 +51,14 @@ health/readiness GET은 세션·일반 예산·CSRF·입장권과 독립적이�
 선점·확정·취소·차단은 짧은 BEGIN IMMEDIATE에서 소유권·현재 시각·회차/공연장·가용 좌석·확정 포함4매를 재검증한다. 묶음은 전부 성공하거나 전부 롤백한다. SQLite가 판매의 최종 원본이며 큐/화면 상태로 DB 검사를 대체하지 않는다. 현재 재고의 소유자만 하나이고 취소/재판매의 과거 항목은 여러 건 보존할 수 있다. 관리자 차단은 가용 좌석만 허용한다.
 
 공연/좌석/관리자 읽기는 BEGIN+SELECT 스냅샷에서 만료를 논리적으로 제외한다. 물리 만료는5초 배치와 쓰기 트랜잭션에서 수행한다. API의 busy_timeout은25ms이며 BUSY에만 최초 포함 최대4회, 20/40/80ms+0~9ms jitter의 비동기 백오프를 적용한다. 매 시도에 세션/CSRF·시각·입장권·DB 상태를 재검증하고 연결 중단 때 늦은 쓰기를 막는다. 350ms는 재시도 중단 판단 기준이며 동기 native 호출·OS/루프 지연을 포함한 HTTP 상한이 아니다. 소진하면503/Retry-After: 1이다. 한 Node 프로세스의 동기 DB 구간은 직렬이며 다중 API/장시간 용량을 보장하지 않는다.
+
+## 회원 탈퇴
+
+DELETE /api/auth/account는 application/json 본문 {"password":"현재 비밀번호","confirmed":true}를 요구한다. 다른 속성은 거부한다. 쿠키와 X-CSRF-Token이 필요하며 입장권은 필요 없다. 비밀번호 확인은 트랜잭션 밖, 세션·비밀번호 해시·관리자 여부·시작 전 확정 예매 검사는 짧은 BEGIN IMMEDIATE 안에서 재확인한다. 실패 시 회원·세션·좌석·예매 변경은 전부 롤백한다.
+
+성공 시 전체 회차의 선점·현재 연결과 모든 본인 세션을 해제하고, 커밋 직후 모든 본인 대기열 항목을 제거한다. 회원 ID는 FK 이력을 위해 보존하되 이메일은 임의 비식별 주소, 이름은 탈퇴회원, 전화는 01000000000, 비밀번호 해시는 로그인 불가 예약 값으로 교체한다. 예매자 이름/전화도 같은 비식별 값으로 바꾸고 예매 상태·금액·좌석·결제 시도는 유지한다. 이미 시작한 공연의 확정 이력은 보존하며 탈퇴를 막지 않는다. 관리자 집계 회원 수에서 탈퇴 회원은 제외한다. 같은 이메일 재가입은 새 ID이며 과거 이력에 접근할 수 없다.
+
+기존 model v1의 기본 booking_immutable 트리거만 시작 시 데이터 보존 방식으로 갱신한다. 테이블과 user_version은 유지하며 사용자 정의 트리거는 덮어쓰지 않는다. 논리적 비식별화이며 SQLite 이전 페이지·WAL·별도 백업의 물리적 삭제를 보장하지 않는다. 로컬 기본 데모 계정은 재시작 seed에서 다시 생성될 수 있어 새로 가입한 가상 계정으로 검증한다.
 
 ## 중복 확정과 model 선택 키
 
@@ -92,17 +101,17 @@ model의 POST /api/bookings만 선택 Idempotency-Key를 지원한다. 공백 �
 | LIMIT_IP_PER_SECOND | 30 | IP 초당 충전 |
 | LIMIT_USER_BURST | 60 | 회원의 최대 적립 토큰 |
 | LIMIT_USER_PER_SECOND | 15 | 회원 초당 충전 |
-| LIMIT_AUTH_ATTEMPTS | 30 | 로그인/가입 합산 인증 창 횟수 |
+| LIMIT_AUTH_ATTEMPTS | 30 | 로그인/가입/탈퇴 비밀번호 확인 합산 인증 창 횟수 |
 | LIMIT_AUTH_WINDOW_MS | 600000 | 고정 인증 창(ms) |
 | LIMIT_MAX_IPS | 10000 | IP 버킷 Map의 키 상한 |
 | LIMIT_MAX_USERS | 10000 | 회원 버킷 Map의 키 상한 |
 | LIMIT_MAX_AUTH_IPS | 10000 | 인증 창 Map의 키 상한 |
 | LIMIT_IDLE_MS | 600000 | 버킷 회수 판단의 최소 비활성 시간(ms) |
 
-회원 예산은 세션/경로를 합산한다. 인증 창은 IP별 가입/로그인 합산이며 잘못된 JSON/Content-Type도 인증 단계에 도달하면 포함한다. IP 제한은 출처/세션 DB 조회보다 먼저 검사한다. 키 회수는 충분한 유휴 시간과 예산 보충을 함께 고려해 재진입 burst 우회를 막고 상한에서 기존 키를 임의 축출하지 않는다. 초과는429와 Retry-After 초를 반환한다.
+회원 예산은 세션/경로를 합산한다. 인증 창은 IP별 가입/로그인/탈퇴 비밀번호 확인 합산이며 잘못된 JSON/Content-Type도 인증 단계에 도달하면 포함한다. IP 제한은 출처/세션 DB 조회보다 먼저 검사한다. 키 회수는 충분한 유휴 시간과 예산 보충을 함께 고려해 재진입 burst 우회를 막고 상한에서 기존 키를 임의 축출하지 않는다. 초과는429와 Retry-After 초를 반환한다.
 
 ## 오류와 구현 범위
 
 기존 /api 오류는 {error}, 큐/probes는 {error,code}다. 경계/IP 검사 뒤 출처→세션→CSRF→회원 예산→라우트/권한/본문/업무 검증 순서가 적용된다. 타인 hold/예매는404, 세션 부재401, 출처/CSRF/권한403, 충돌/만료/매수/마감409, JSON400·본문 크기413·미디어415, 제한429, BUSY503, 기타 예기치 않은 DB 오류500이다. 미지원 Method/경로는 일반적으로404이며 잘못된 출처/CSRF가 있으면 먼저403일 수 있다.
 
-기존13작업의 /api/v1 별칭·필수 멱등성 키·재반환200·엄격한 본문/통일 오류 code는 구현하지 않았다. 실제 PG·부분 취소·실제 본인인증/QR 발권도 없다. 실행 계약의 원본은 현재 OpenAPI이며, [테스트](../../tests/api-contract.test.mjs)는 두 Store의 현재 성공/오류 응답과 미지원 별칭을 확인한다.
+기존 /api 작업의 /api/v1 별칭·필수 멱등성 키·재반환200·엄격한 본문/통일 오류 code는 구현하지 않았다. 실제 PG·부분 취소·실제 본인인증/QR 발권도 없다. 실행 계약의 원본은 현재 OpenAPI이며, [테스트](../../tests/api-contract.test.mjs)는 두 Store의 현재 성공/오류 응답과 미지원 별칭을 확인한다.

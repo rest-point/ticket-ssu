@@ -7,7 +7,8 @@
 | 파일 | 역할 |
 | --- | --- |
 | [001_model.sql](../../db/migrations/001_model.sql) | 14개 업무 STRICT 테이블·1개 기술 테이블·키·CHECK·FK·인덱스·booking_totals 뷰 |
-| [001_guards.sql](../../db/migrations/001_guards.sql) | 회차·공연장·현재 점유·이력 변경을 보호하는 트리거 |
+| [001_guards.sql](../../db/migrations/001_guards.sql) | 회차·공연장·현재 점유·이력 변경을 보호하는 기본 트리거 |
+| [002_withdrawal_guard.sql](../../db/migrations/002_withdrawal_guard.sql) | 탈퇴 회원의 예매자 비식별화만 허용하는 v1 트리거 개정. 기존 데이터·테이블·user_version 유지 |
 | [model.mjs](../../db/model.mjs) | 연결 설정·빈 DB 생성·오프라인 원자 작업·완성 상태 무결성 검증·출력 경로 보호 |
 | [migrate.mjs](../../db/migrate.mjs) | 기존 스키마 읽기 전용 사전 검사·새 파일 이관·VACUUM INTO 스냅샷 |
 | [demo.mjs](../../db/seeds/demo.mjs) | 별도 새 모델 DB에 넣는 가상 seed |
@@ -15,7 +16,7 @@
 | [model.test.mjs](../../tests/model.test.mjs) | 별도 메모리·OS 임시 DB의 적용·정합성·이관·실패·복원 검증 |
 | [benchmark.mjs](../../db/benchmark.mjs) | 메모리 DB의 실행 계획·조회 시간 측정. HTTP 부하 실험과 구분 |
 
-이관은 원본의 테이블을 DROP/재생성하지 않고 **원본 읽기 전용 → 새 대상 파일** 방식으로 수행한다. 원본과 기존 대상은 덮어쓰지 않는다. 앱의 기본 `data/temp.sqlite` 출력은 명시적으로 거부한다. 프로젝트 내부 출력은 Git 제외 경로인 data/ 또는 test-results/만 허용하며 공개/문서/소스 경로는 거부한다. 부모 경로의 심볼릭 링크를 해석하고 새 파일은 배타적으로 생성한다. 기존 파일·링크·같은 원본 경로는 존재 검사와 배타 생성으로 거부한다.
+이관은 원본의 테이블을 DROP/재생성하지 않고 **원본 읽기 전용 → 새 대상 파일** 방식으로 수행한다. 원본과 기존 대상은 덮어쓰지 않는다. 앱의 기본 `data/ticket-ssu.sqlite` 출력은 명시적으로 거부한다. 프로젝트 내부 출력은 Git 제외 경로인 data/ 또는 test-results/만 허용하며 공개/문서/소스 경로는 거부한다. 부모 경로의 심볼릭 링크를 해석하고 새 파일은 배타적으로 생성한다. 기존 파일·링크·같은 원본 경로는 존재 검사와 배타 생성으로 거부한다.
 
 ## 버전·자료형·데이터 사전
 
@@ -27,7 +28,7 @@
 
 | 테이블 | INTEGER 컬럼 | TEXT 및 선택적 컬럼·기본값 |
 | --- | --- | --- |
-| users | created_at | id·email·name·phone·password_hash·role. role 기본 user, 나머지 기본값 없음 |
+| users | created_at | id·email·name·phone·password_hash·role. role 기본 user. 탈퇴는 ID를 보존하고 이메일/이름/전화 비식별화, password_hash는 32개 0 + 콜론 + 128개 0의 로그인 불가 예약 값 |
 | sessions | expires_at | token_hash·user_id·csrf. NULL 없음 |
 | venues | 없음 | id·name·region. region만 NULL 허용 |
 | physical_seats | number | id·venue_id·seat_code·row_label. NULL 없음 |
@@ -57,6 +58,8 @@ PK·NOT NULL·후보키 UNIQUE는 SQL에 명시한다. holds는 active 회원·�
 | 신규 확정 | 유효 선점·매수·시각 재검사 → 현재 선점 삭제 → hold converted → booking → 항목 → 현재 예매 → 성공 데모 시도 |
 | 전체 취소 | 소유권·공연 시작 전 확인 → 현재 예매 연결 삭제 → booking cancelled·cancelled_at 갱신. 항목·금액·성공 시도는 보존 |
 | 차단/해제 | 관리자 권한·공연 시각 확인 → 점유 없는 inventory.blocked 변경 → 감사 기록 |
+
+model 생성 시 001 뒤 002 트리거를 같은 초기화 트랜잭션으로 적용한다. 기존 v1 앱 시작에서는 기본 001 booking_immutable만 002로 원자 교체하고 사용자 정의 트리거는 거부한다. 탈퇴 비식별화는 회원 해시가 예약 값일 때 예매자 이름/전화의 지정 값 치환만 허용한다. 금액·항목·시각·소유권·상태는 이 예외로 바꿀 수 없다.
 
 트리거는 장소/회차 불일치·점유 충돌·차단 점유·좌석/선점 식별 변경·만료 연장·잘못된 상태 전환·이력 수정/삭제 등을 문장 단위로 거부한다. 스냅샷 단위 유일성·복합 FK로 현재 소유와 예매 항목도 연결한다.
 
@@ -107,7 +110,7 @@ booking_totals 뷰는 항목 가격 SUM과 fee로 ticket_total·total을 파생�
 
 ## 실행·백업·복구 절차
 
-다음은 명시적으로 새 파일을 지정하는 예다. 기존 data/temp.sqlite에 실행하지 않으며, 디렉터리는 미리 준비한다. 기본 경로·덮어쓰기 옵션은 없다.
+다음은 명시적으로 새 파일을 지정하는 예다. 기존 data/ticket-ssu.sqlite에 실행하지 않으며, 디렉터리는 미리 준비한다. 기본 경로·덮어쓰기 옵션은 없다.
 
 ```powershell
 # 새 모델 전용 가상 DB. 재실행 시 기존 파일을 덮어쓰지 않고 실패한다.

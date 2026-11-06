@@ -22,10 +22,10 @@ export async function tlsProxy(dir, token) {
     const headers = { ...req.headers };
     // Emulate the documented single-edge policy: strip caller metadata, set
     // authenticated identity from the TLS socket, preserve Origin and cookies.
-    for (const name of Object.keys(headers)) if (/^(forwarded|x-forwarded-|x-temp-)/.test(name)) delete headers[name];
+    for (const name of Object.keys(headers)) if (/^(forwarded|x-forwarded-|x-ticket-ssu-)/.test(name)) delete headers[name];
     headers.host = `localhost:${server.address().port}`;
-    headers['x-temp-proxy-token'] = token;
-    headers['x-temp-client-ip'] = req.socket.remoteAddress;
+    headers['x-ticket-ssu-proxy-token'] = token;
+    headers['x-ticket-ssu-client-ip'] = req.socket.remoteAddress;
     const upstream = backendRequest({ host: '127.0.0.1', port: backend, method: req.method, path: req.url, headers, agent: false }, response => {
       res.writeHead(response.statusCode, response.headers); response.pipe(res);
     });

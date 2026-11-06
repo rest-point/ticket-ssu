@@ -1,9 +1,9 @@
 {
-  "name": "temp-ticket",
+  "name": "ticket-ssu",
   "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Temp 콘서트 예매 및 좌석 관리",
+  "description": "ticket-ssu 콘서트 예매 및 좌석 관리",
   "engines": {
     "node": ">=24.15.0"
   },
@@ -14,7 +14,7 @@
     "dev": "node --watch server.mjs",
     "test": "node --test tests/*.test.mjs",
     "check:api": "node scripts/check-api.mjs",
-    "check": "node --check server.mjs && node --check lib/store.mjs && node --check lib/model-store.mjs && node --check lib/db-retry.mjs && node --check lib/performance-queue.mjs && node --check lib/admission-service.mjs && node --check lib/request-limiter.mjs && node --check public/app.js && node --check public/polling.mjs && node --check db/model.mjs && node --check db/migrate.mjs && node --check db/cli.mjs && node --check db/seeds/demo.mjs && node --check db/benchmark.mjs && node --check load-tests/traffic-probe.mjs && node --check lib/runtime.mjs && node --check scripts/status.mjs && node --check lib/http-boundary.mjs && node --check db/backup.mjs && node --check db/backup-cli.mjs && node --check scripts/external-smoke.mjs && node --check scripts/cloudflared-release.mjs && node --check scripts/setup-cloudflared.mjs && node --check lib/cloudflared.mjs && node --check lib/quick-tunnel.mjs && node --check scripts/quick-tunnel.mjs && node --check postman/build.mjs && node --check scripts/postman.mjs && node --check postman/runner/runner.test.mjs && node --check load-tests/k6-tool.mjs && node --check scripts/setup-k6.mjs && node --check load-tests/k6-scenarios.js && node --check load-tests/lock-worker.mjs && node --check load-tests/load-fixture.mjs && node --check load-tests/k6-runner.mjs && node --check scripts/check-api.mjs && node --check scripts/check-model.mjs",
+    "check": "node --check server.mjs && node --check lib/store.mjs && node --check lib/model-store.mjs && node --check lib/db-retry.mjs && node --check lib/performance-queue.mjs && node --check lib/admission-service.mjs && node --check lib/request-limiter.mjs && node --check public/app.js && node --check public/polling.mjs && node --check db/model.mjs && node --check db/migrate.mjs && node --check db/cli.mjs && node --check db/seeds/demo.mjs && node --check db/benchmark.mjs && node --check load-tests/traffic-probe.mjs && node --check lib/project-identity.mjs && node --check lib/runtime.mjs && node --check scripts/status.mjs && node --check lib/http-boundary.mjs && node --check db/backup.mjs && node --check db/backup-cli.mjs && node --check scripts/external-smoke.mjs && node --check scripts/cloudflared-release.mjs && node --check scripts/setup-cloudflared.mjs && node --check lib/cloudflared.mjs && node --check lib/quick-tunnel.mjs && node --check scripts/quick-tunnel.mjs && node --check postman/build.mjs && node --check scripts/postman.mjs && node --check postman/runner/runner.test.mjs && node --check load-tests/k6-tool.mjs && node --check scripts/setup-k6.mjs && node --check load-tests/k6-scenarios.js && node --check load-tests/lock-worker.mjs && node --check load-tests/load-fixture.mjs && node --check load-tests/k6-runner.mjs && node --check scripts/check-api.mjs && node --check scripts/check-model.mjs && node --check postman/team-build.mjs && node --check scripts/postman-team-server.mjs && node --check postman/runner/team.test.mjs",
     "verify:traffic": "node --expose-gc load-tests/traffic-probe.mjs",
     "db:backup": "node db/backup-cli.mjs",
     "verify:external": "node scripts/external-smoke.mjs",
@@ -22,11 +22,12 @@
     "setup:tunnel": "node scripts/setup-cloudflared.mjs",
     "start:tunnel": "node --env-file=.env.tunnel scripts/quick-tunnel.mjs",
     "setup:postman": "npm ci --prefix postman/runner --ignore-scripts --no-audit --no-fund",
-    "build:postman": "node postman/build.mjs",
-    "check:postman": "node postman/build.mjs --check",
-    "verify:postman": "node --test postman/runner/runner.test.mjs",
+    "build:postman": "node postman/build.mjs && node postman/team-build.mjs",
+    "check:postman": "node postman/build.mjs --check && node postman/team-build.mjs --check",
+    "verify:postman": "node --test postman/runner/*.test.mjs",
     "setup:k6": "node scripts/setup-k6.mjs",
     "verify:k6": "node load-tests/k6-runner.mjs",
-    "check:model": "node scripts/check-model.mjs"
+    "check:model": "node scripts/check-model.mjs",
+    "start:postman": "node scripts/postman-team-server.mjs"
   }
 }

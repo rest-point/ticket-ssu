@@ -22,9 +22,9 @@ function model(t) {
 }
 async function directory(t) {
   const base = resolve(tmpdir());
-  const dir = await mkdtemp(join(base, 'temp-model-'));
+  const dir = await mkdtemp(join(base, 'ticket-ssu-model-'));
   t.after(async () => {
-    assert.ok(resolve(dir).startsWith(base + sep) && resolve(dir).slice(base.length + 1).startsWith('temp-model-'));
+    assert.ok(resolve(dir).startsWith(base + sep) && resolve(dir).slice(base.length + 1).startsWith('ticket-ssu-model-'));
     await rm(dir, { recursive: true, force: true });
   });
   return dir;
@@ -134,8 +134,8 @@ async function legacy(t) {
   const dir = await directory(t), source = join(dir, 'legacy.sqlite');
   const store = new Store(source, { now: () => now });
   await store.seed();
-  const user = await store.authenticate('demo@temp.local', 'TempDemo123!');
-  const admin = await store.authenticate('admin@temp.local', 'TempAdmin123!');
+  const user = await store.authenticate('demo@ticket-ssu.local', 'TicketSsuDemo123!');
+  const admin = await store.authenticate('admin@ticket-ssu.local', 'TicketSsuAdmin123!');
   const p = store.concerts()[0].performances[0].id;
   const checkout = who => store.checkout(who.id, { holdId: store.setHold(who.id, p, ['A-01']).hold.id, buyerName: '가상예매자', buyerPhone: '01012345678', delivery: 'mobile', paymentMethod: 'demo', agreed: true });
   const cancelled = checkout(user); store.cancel(user.id, cancelled.id);
@@ -199,12 +199,12 @@ test('VACUUM INTO 스냅샷을 다시 열어 검증하고 복구 입력으로 �
   const writer = configure(new DatabaseSync(source));
   try {
     // Leave a committed change in WAL while this connection remains open.
-    writer.prepare("UPDATE users SET name='스냅샷회원' WHERE email='demo@temp.local'").run();
+    writer.prepare("UPDATE users SET name='스냅샷회원' WHERE email='demo@ticket-ssu.local'").run();
     const before = await digest(source);
     assert.equal(snapshotDatabase(source, backup).verified, true);
     assert.equal(await digest(source), before);
     const restored = new DatabaseSync(backup, { readOnly: true });
-    try { assert.equal(scalar(restored, "SELECT name FROM users WHERE email='demo@temp.local'"), '스냅샷회원'); }
+    try { assert.equal(scalar(restored, "SELECT name FROM users WHERE email='demo@ticket-ssu.local'"), '스냅샷회원'); }
     finally { restored.close(); }
   } finally { writer.close(); }
   assert.equal(migrateLegacy(backup, recovered).bookings, 2);
@@ -216,7 +216,7 @@ test('원본 경로·기존 파일을 덮어쓰지 않고 재초기화를 거부
   await writeFile(file, 'user-owned');
   assert.throws(() => withNewDatabase(file, () => {}), /already exists/);
   assert.equal(await readFile(file, 'utf8'), 'user-owned');
-  assert.throws(() => destinationPath(resolve('data/temp.sqlite')), /protected/);
+  assert.throws(() => destinationPath(resolve('data/ticket-ssu.sqlite')), /protected/);
   assert.throws(() => destinationPath(resolve('public/exposed.sqlite')), /tracked/);
   const db = model(t);
   assert.throws(() => applySchema(db), /empty/);

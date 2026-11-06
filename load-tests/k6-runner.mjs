@@ -70,7 +70,7 @@ export async function runK6Profile(schema, profile) {
     if (aborted) throw new Error('LOAD_ABORTED');
     const fixturePath = resolve(fixture.directory, 'fixture.json'), summaryPath = resolve(fixture.directory, 'summary.json'), configPath = resolve(fixture.directory, 'k6-config.json');
     await writeFile(fixturePath, JSON.stringify(fixture.fixture), { flag: 'wx' }); await writeFile(configPath, '{}', { flag: 'wx' });
-    const env = { TEMP_K6_FIXTURE: fixturePath, TEMP_K6_SUMMARY: summaryPath, K6_NO_USAGE_REPORT: 'true', NO_COLOR: '1' };
+    const env = { TICKET_SSU_K6_FIXTURE: fixturePath, TICKET_SSU_K6_SUMMARY: summaryPath, K6_NO_USAGE_REPORT: 'true', NO_COLOR: '1' };
     for (const key of ['PATH', 'Path', 'SystemRoot', 'SYSTEMROOT', 'WINDIR', 'TEMP', 'TMP']) if (process.env[key]) env[key] = process.env[key];
     if (profile === 'busy') locker = await startLockWorker(fixture.dbPath);
     observer = observeLoad(fixture.app);

@@ -14,13 +14,13 @@ import { currentSpec, validateResponse } from '../scripts/check-api.mjs';
 const initialTime = 1800000000000;
 async function fixture(t, schema, { file = false, limits = {}, holdMs = 1000 } = {}) {
   let wall = initialTime, mono = 0, app, worker;
-  const dir = file ? await mkdtemp(join(tmpdir(), 'temp-traffic-')) : null;
+  const dir = file ? await mkdtemp(join(tmpdir(), 'ticket-ssu-traffic-')) : null;
   const path = dir ? join(dir, 'test.sqlite') : ':memory:';
   const stop = async () => { if (app?.store.db.isOpen) await new Promise(ok => app.server.close(ok)); };
   t.after(async () => {
     if (worker && worker.threadId !== -1) await worker.terminate();
     await stop();
-    if (dir) { assert.ok(resolve(dir).startsWith(resolve(tmpdir()) + sep + 'temp-traffic-')); await rm(dir, { recursive: true }); }
+    if (dir) { assert.ok(resolve(dir).startsWith(resolve(tmpdir()) + sep + 'ticket-ssu-traffic-')); await rm(dir, { recursive: true }); }
   });
   const start = async () => {
     app = await createApp({ schema, dbPath: path, now: () => wall, holdMs,
@@ -29,8 +29,8 @@ async function fixture(t, schema, { file = false, limits = {}, holdMs = 1000 } =
     app.server.listen(0, '127.0.0.1'); await once(app.server, 'listening');
   };
   await start();
-  const identity = id => { const session = app.store.createSession(id); return { id, cookie: `temp_session=${session.token}`, csrf: session.csrf }; };
-  const users = ['demo@temp.local', 'admin@temp.local'].map(email => identity(app.store.get('SELECT id FROM users WHERE email=?', email).id));
+  const identity = id => { const session = app.store.createSession(id); return { id, cookie: `ticket_ssu_session=${session.token}`, csrf: session.csrf }; };
+  const users = ['demo@ticket-ssu.local', 'admin@ticket-ssu.local'].map(email => identity(app.store.get('SELECT id FROM users WHERE email=?', email).id));
   const pid = app.store.concerts()[0].performances[0].id;
   const api = async (method, url, user, body, extra = {}) => {
     const response = await fetch(`http://127.0.0.1:${app.server.address().port}${url}`, { method,
@@ -164,8 +164,8 @@ for (const schema of ['legacy', 'model']) {
 }
 
 test('잘못된 요청 제한 설정은 DB를 생성하기 전에 거부한다', async t => {
-  const dir = await mkdtemp(join(tmpdir(), 'temp-limit-config-'));
-  t.after(async () => { assert.ok(resolve(dir).startsWith(resolve(tmpdir()) + sep + 'temp-limit-config-')); await rm(dir, { recursive: true }); });
+  const dir = await mkdtemp(join(tmpdir(), 'ticket-ssu-limit-config-'));
+  t.after(async () => { assert.ok(resolve(dir).startsWith(resolve(tmpdir()) + sep + 'ticket-ssu-limit-config-')); await rm(dir, { recursive: true }); });
   const path = join(dir, 'never-created.sqlite');
   await assert.rejects(createApp({ dbPath: path, limitOptions: { maxIps: 0 } }), /maxIps/);
   await assert.rejects(access(path), { code: 'ENOENT' });

@@ -267,9 +267,9 @@ for (const schema of ['legacy', 'model']) {
 }
 
 test('잘못된 앱 큐 설정은 DB 파일을 생성하기 전에 거부한다', async t => {
-  const dir = await mkdtemp(join(tmpdir(), 'temp-queue-config-'));
+  const dir = await mkdtemp(join(tmpdir(), 'ticket-ssu-queue-config-'));
   t.after(async () => {
-    assert.ok(resolve(dir).startsWith(resolve(tmpdir()) + sep + 'temp-queue-config-'));
+    assert.ok(resolve(dir).startsWith(resolve(tmpdir()) + sep + 'ticket-ssu-queue-config-'));
     await rm(dir, { recursive: true });
   });
   const path = join(dir, 'never-created.sqlite');
