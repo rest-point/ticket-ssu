@@ -14,8 +14,10 @@ const require = createRequire(new URL('../postman/runner/package.json', import.m
 export async function runPostmanCollection({ collection, environment, folder }) {
   let newman;
   try { newman = require('newman'); } catch { throw new Error('POSTMAN_INSTALL_REQUIRED: npm ci --prefix postman/runner --ignore-scripts'); }
-  const names = new Set(collection.item.flatMap(item => item.item.map(step => step.name)));
-  const assertions = new Set(collection.item.flatMap(folder => folder.item.flatMap(item => [...item.event[0].script.exec.join('\n').matchAll(/verify\('([^']+)'/g)].map(match => match[1]))));
+  const flatten = items => items.flatMap(item => item.item ? flatten(item.item) : [item]);
+  const steps = flatten(collection.item);
+  const names = new Set(steps.map(step => step.name));
+  const assertions = new Set(steps.flatMap(item => (item.event ?? []).flatMap(event => [...event.script.exec.join('\n').matchAll(/verify\('([^']+)'/g)].map(match => match[1]))));
   return new Promise((resolveRun, reject) => {
     newman.run({ collection, environment, ...(folder ? { folder } : {}), reporters: [], bail: true, ignoreRedirects: true,
       timeout: 60000, timeoutRequest: 5000, timeoutScript: 5000, iterationCount: 1 }, (error, summary) => {
@@ -32,8 +34,8 @@ export async function runPostmanCollection({ collection, environment, folder }) 
 export async function runIsolatedPostman(schema) {
   if (!['legacy', 'model'].includes(schema) || process.env.NODE_ENV === 'production' || process.env.PUBLIC_ORIGIN || process.env.PROXY_TOKEN) throw new Error('POSTMAN_LOCAL_ENV_REFUSED');
   await checkCollection();
-  const collection = JSON.parse(await readFile(resolve(root, 'postman/temp-ticket.postman_collection.json'), 'utf8'));
-  const directory = await mkdtemp(join(tmpdir(), 'temp-postman-'));
+  const collection = JSON.parse(await readFile(resolve(root, 'postman/ticket-ssu.postman_collection.json'), 'utf8'));
+  const directory = await mkdtemp(join(tmpdir(), 'ticket-ssu-postman-'));
   let app, report;
   try {
     const nonce = randomBytes(6).toString('hex'), password = () => randomBytes(24).toString('base64url');
@@ -55,10 +57,10 @@ export async function runIsolatedPostman(schema) {
     if (schema === 'model') validateModel(app.store.db);
     Object.assign(report, { currentOperationsCovered: covered.size, confirmedBookings: confirmed, activeHolds, sessions,
       temporaryDatabaseOnly: true, externalNetworkVerified: false });
-    report.passed &&= covered.size === 18 && confirmed === 0 && activeHolds === 0 && sessions === 0;
+    report.passed &&= covered.size === 19 && confirmed === 0 && activeHolds === 0 && sessions === 0;
   } finally {
     await app?.shutdown(1000);
-    if (!resolve(directory).startsWith(resolve(tmpdir()) + sep + 'temp-postman-')) throw new Error('POSTMAN_CLEANUP_PATH');
+    if (!resolve(directory).startsWith(resolve(tmpdir()) + sep + 'ticket-ssu-postman-')) throw new Error('POSTMAN_CLEANUP_PATH');
     await rm(directory, { recursive: true, force: true });
   }
   return { ...report, cleanupPassed: true };

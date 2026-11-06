@@ -12,6 +12,7 @@ import { RequestLimiter, limitOptionsFromEnv } from './lib/request-limiter.mjs';
 import { runtimeOptionsFromEnv } from './lib/runtime.mjs';
 import { once } from 'node:events';
 import { HttpBoundary, boundaryOptionsFromEnv } from './lib/http-boundary.mjs';
+import { defaultDatabasePath, isDefaultDatabasePath, PUBLIC_DEMO_EMAILS } from './lib/project-identity.mjs';
 const root = fileURLToPath(new URL('.', import.meta.url));
 const publicDir = resolve(root, 'public');
 const mutating = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
@@ -47,16 +48,16 @@ async function jsonBody(req, optional = false) {
     throw new AppError(400, '요청 내용을 확인해 주세요.');
   }
 }
-const cookieToken = req => /(?:^|;\s*)temp_session=([a-f0-9]{64})(?:;|$)/.exec(req.headers.cookie ?? '')?.[1];
+const cookieToken = req => /(?:^|;\s*)ticket_ssu_session=([a-f0-9]{64})(?:;|$)/.exec(req.headers.cookie ?? '')?.[1];
 export async function createApp({
-  dbPath = process.env.DB_PATH || resolve(root, 'data', 'temp.sqlite'),
+  dbPath = process.env.DB_PATH || defaultDatabasePath(root),
   demo = process.env.DEMO_MODE !== 'false',
   now,
   holdMs,
   schema = process.env.DB_SCHEMA || 'legacy',
   secureCookies = process.env.NODE_ENV === 'production',
-  adminEmail = process.env.TEMP_ADMIN_EMAIL,
-  adminPassword = process.env.TEMP_ADMIN_PASSWORD,
+  adminEmail = process.env.TICKET_SSU_ADMIN_EMAIL,
+  adminPassword = process.env.TICKET_SSU_ADMIN_PASSWORD,
   boundaryOptions = boundaryOptionsFromEnv(),
   queueOptions = queueOptionsFromEnv(),
   limitOptions = limitOptionsFromEnv()
@@ -66,10 +67,10 @@ export async function createApp({
   const deployed = boundary.deployed || process.env.NODE_ENV === 'production';
   if (boundary.deployed && (demo || !secureCookies)) throw new Error('공개 HTTPS 실행은 DEMO_MODE=false와 Secure 쿠키가 필요합니다.');
   if (process.env.NODE_ENV === 'production' && !boundary.deployed) throw new Error('운영 실행은 PUBLIC_ORIGIN과 인증된 로컬 프록시 설정이 필요합니다.');
-  if (deployed && dbPath !== ':memory:' && resolve(dbPath).toLowerCase() === resolve(root, 'data', 'temp.sqlite').toLowerCase()) throw new Error('운영 실행에는 별도 DB_PATH가 필요합니다.');
+  if (deployed && dbPath !== ':memory:' && isDefaultDatabasePath(root, dbPath)) throw new Error('운영 실행에는 별도 DB_PATH가 필요합니다.');
   if (process.env.NODE_ENV === 'production' && demo) throw new Error('운영 실행 시 DEMO_MODE=false 설정이 필요합니다.');
   if (!['legacy', 'model'].includes(schema)) throw new Error('DB_SCHEMA는 legacy 또는 model이어야 합니다.');
-  if (schema === 'model' && dbPath !== ':memory:' && resolve(dbPath).toLowerCase() === resolve(root, 'data', 'temp.sqlite').toLowerCase()) throw new Error('model 모드에는 별도의 DB_PATH가 필요합니다. 기존 기본 DB는 변경하지 않습니다.');
+  if (schema === 'model' && dbPath !== ':memory:' && isDefaultDatabasePath(root, dbPath)) throw new Error('model 모드에는 별도의 DB_PATH가 필요합니다. 기존 기본 DB는 변경하지 않습니다.');
   const queue = new PerformanceQueue({ now, ...queueOptions });
   const limiter = new RequestLimiter(limitOptions);
   const store = new (schema === 'model' ? ModelStore : Store)(dbPath, {
@@ -78,7 +79,7 @@ export async function createApp({
   });
   let admission;
   try {
-    if (deployed && store.get("SELECT id FROM users WHERE email IN ('demo@temp.local','admin@temp.local')")) throw new Error('공개 데모 계정 없는 별도 DB가 필요합니다.');
+    if (deployed && store.get(`SELECT id FROM users WHERE email IN (${PUBLIC_DEMO_EMAILS.map(() => '?').join(',')})`, ...PUBLIC_DEMO_EMAILS)) throw new Error('공개 데모 계정 없는 별도 DB가 필요합니다.');
     await store.seed({
       demo,
       adminEmail,
@@ -163,7 +164,18 @@ export async function createApp({
             user,
             csrf: fresh.csrf
           }, {
-            'Set-Cookie': `temp_session=${fresh.token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=604800${secureCookies ? '; Secure' : ''}`
+            'Set-Cookie': `ticket_ssu_session=${fresh.token}; HttpOnly; SameSite=Lax; Path=/; Max-Age=604800${secureCookies ? '; Secure' : ''}`
+          });
+        }
+        if (req.method === 'DELETE' && path === '/api/auth/account') {
+          const userId = requireUser().id;
+          limiter.auth(clientIp);
+          const body = await jsonBody(req);
+          const verifiedHash = await store.verifyWithdrawal(userId, body);
+          const result = await runDb(() => store.withdrawAccount(requireUser().id, verifiedHash));
+          queue.removeUser(userId);
+          return respond(200, result, {
+            'Set-Cookie': `ticket_ssu_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0${secureCookies ? '; Secure' : ''}`
           });
         }
         if (req.method === 'POST' && path === '/api/auth/logout') {
@@ -172,7 +184,7 @@ export async function createApp({
           return respond(200, {
             ok: true
           }, {
-            'Set-Cookie': `temp_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0${secureCookies ? '; Secure' : ''}`
+            'Set-Cookie': `ticket_ssu_session=; HttpOnly; SameSite=Lax; Path=/; Max-Age=0${secureCookies ? '; Secure' : ''}`
           });
         }
         if (req.method === 'GET' && path === '/api/concerts') return respond(200, {
@@ -309,7 +321,7 @@ export async function startServer({ runtimeEnv = process.env, appOptions, signal
   const stop = () => { app.shutdown(shutdownMs).catch(error => { console.error(error); process.exitCode = 1; }); };
   for (const signal of ['SIGINT', 'SIGTERM']) signalSource.on(signal, stop);
   app.server.once('close', () => { for (const signal of ['SIGINT', 'SIGTERM']) signalSource.off(signal, stop); });
-  log(`Temp 실행 중: http://${host.includes(':') ? `[${host}]` : host}:${app.server.address().port}`);
+  log(`ticket-ssu 실행 중: http://${host.includes(':') ? `[${host}]` : host}:${app.server.address().port}`);
   return app;
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) await startServer();

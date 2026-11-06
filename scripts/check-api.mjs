@@ -137,7 +137,7 @@ export async function verifyApiDocuments() {
     walk(spec, spec);
   }
   const observed = extractCurrentRoutes(server);
-  assert.equal(observed.length, 18);
+  assert.equal(observed.length, 19);
   assert.deepEqual(operations(currentSpec).map(({ method, path }) => `${method} ${path}`).sort(), observed, 'Current router/spec drift');
   for (const table of targetTables) assert.ok(crud.includes(`| ${table} |`), `Missing CRUD table: ${table}`);
   for (const { operation: o } of operations(currentSpec)) {

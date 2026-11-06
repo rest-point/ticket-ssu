@@ -43,7 +43,7 @@ users(id, email, name, phone, password_hash, role, created_at)
 | PK / CK | PK id; CK id / email |
 | 속성 도메인 | id: ID; email: EMAIL; name: PERSON_NAME; phone: PHONE; password_hash: PASSWORD_HASH; role: ROLE; created_at: TIME |
 | nullable / FK | 없음 / 없음 |
-| 유일성·보존 | 이메일 UNIQUE. 이름·전화번호는 후보키가 아님. 관리자도 이 테이블의 역할로 표현 |
+| 유일성·보존 | 이메일 UNIQUE. 이름·전화번호는 후보키가 아님. 관리자도 이 테이블의 역할로 표현. 본인 탈퇴는 ID와 FK 이력을 보존하고 이메일·이름·전화 비식별화 및 비밀번호 해시 예약 값으로 로그인 차단. 같은 이메일 재가입은 새 ID |
 
 ### sessions
 
@@ -247,7 +247,7 @@ detail은 동작의 불변 사건 자료다. 현재처럼 create-concert의 id/t
 | X-05 | current_bookings는 그 예매 항목이며 예매 status=confirmed | 항목에 대한 복합 FK + 상태 트리거/변경 순서. 예매 취소 전에 현재 연결을 해제하고 같은 트랜잭션에서 취소 이력 갱신 |
 | X-06 | payment_attempts가 연결한 예매는 같은 hold이며 성공 금액은 파생 booking.total과 같음 | (booking_id, hold_id) 복합 FK + 결과별 CHECK + 성공 금액/항목 합계 확인 |
 | X-07 | 회원·회차별 확정 항목 수 + 유효 current_holds 수 <=4; active 선점별 현재 좌석 1..4; 예매별 항목 1..4 | 짧은 BEGIN IMMEDIATE 트랜잭션에서 검사·조건부 갱신·변경 행 수 확인. FK나 부분 UNIQUE만으로 집계 제약을 보장하지 않음 |
-| X-08 | 확정 항목·수수료·시각·소유권은 취소 후에도 보존. 새 예매 fee = 항목 수 ×2,000원 | 생성 시 스냅샷·집계 확인. 항목/예매 불변 정보 수정·삭제 차단. 취소는 연결 해제·status/cancelled_at 갱신만 허용 |
+| X-08 | 확정 항목·수수료·시각·소유권은 취소 후에도 보존. 새 예매 fee = 항목 수 ×2,000원 | 생성 시 스냅샷·집계 확인. 항목/예매 불변 정보 수정·삭제 차단. 취소는 연결 해제·status/cancelled_at 갱신만 허용. 별도 탈퇴 트랜잭션은 탈퇴 회원의 예매자 이름/전화 비식별화만 예외 |
 | X-09 | 새 예매에는 성공 결제 시도 정확히 1개, 기존 마이그레이션 예매에는 0개 허용 | 성공 시도 부분 UNIQUE로 최대 1개, 신규 확정 트랜잭션으로 최소 1개. 과거 기록 부재는 마이그레이션 경계에서 구분; 가짜 과거 시도 생성 금지 |
 
 SQLite FK를 쓸 때 참조 부모의 동일 컬럼 조합에 PK 또는 명시적 UNIQUE가 필요하다. 위 두 복합 FK는 각각 booking_items의 복합 PK와 bookings의 추가 UQ를 참조한다. current_holds에는 회차 중복 컬럼이 없으므로 단일 FK만으로 회차 일치를 보장한다고 쓰지 않는다. 트리거·CHECK의 구체적 SQL과 예매 생성/취소 중간 상태 처리 순서는 물리 모델에서 검증해야 한다.

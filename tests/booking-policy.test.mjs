@@ -15,8 +15,8 @@ async function fixture(t, schema) {
   const store = new (schema === 'model' ? ModelStore : Store)(':memory:', { now: () => now });
   t.after(() => store.close());
   await store.seed();
-  const user = await store.authenticate('demo@temp.local', 'TempDemo123!');
-  const other = await store.authenticate('admin@temp.local', 'TempAdmin123!');
+  const user = await store.authenticate('demo@ticket-ssu.local', 'TicketSsuDemo123!');
+  const other = await store.authenticate('admin@ticket-ssu.local', 'TicketSsuAdmin123!');
   const performances = store.concerts()[0].performances;
   const order = hold => ({ holdId: hold.id, buyerName: '가상예매자', buyerPhone: '01012345678', delivery: 'mobile', agreed: true, paymentMethod: 'demo', total: 1 });
   return { store, user, other, pid: performances[0].id, secondPid: performances[1].id,
@@ -162,9 +162,9 @@ for (const schema of ['legacy', 'model']) {
       validateValue(currentSpec, currentSpec.components.schemas[expected >= 400 ? 'Error' : responseSchema], data);
       return { data, cookie: response.headers.get('set-cookie')?.split(';')[0], csrf: data.csrf };
     }
-    const owner = await request('POST', '/api/auth/signup', { expected: 201, responseSchema: 'AuthResult', body: { email: 'policy@temp.local', name: '가상회원', phone: '01012345678', password: 'PolicyDemo123!', terms: true, ageConfirmed: true, role: 'admin' } });
+    const owner = await request('POST', '/api/auth/signup', { expected: 201, responseSchema: 'AuthResult', body: { email: 'policy@ticket-ssu.local', name: '가상회원', phone: '01012345678', password: 'PolicyDemo123!', terms: true, ageConfirmed: true, role: 'admin' } });
     assert.equal(owner.data.user.role, 'user');
-    const admin = await request('POST', '/api/auth/login', { responseSchema: 'AuthResult', body: { email: 'admin@temp.local', password: 'TempAdmin123!' } });
+    const admin = await request('POST', '/api/auth/login', { responseSchema: 'AuthResult', body: { email: 'admin@ticket-ssu.local', password: 'TicketSsuAdmin123!' } });
     const pid = (await request('GET', '/api/concerts', { responseSchema: 'ConcertList' })).data.concerts[0].performances[0].id;
     const held = await request('PUT', `/api/performances/${pid}/hold`, { identity: owner, responseSchema: 'HoldResult', body: { seatIds: ['H-12'] } });
     const order = { holdId: held.data.hold.id, buyerName: '가상예매자', buyerPhone: '01012345678', delivery: 'mobile', agreed: true, paymentMethod: 'demo', total: 1, fee: 0, user_id: admin.data.user.id, performanceId: 'forged' };

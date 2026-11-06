@@ -28,7 +28,7 @@ async function client(t, schema) {
       assert.match(response.headers.get('set-cookie'), /HttpOnly/);
       assert.match(response.headers.get('set-cookie'), /SameSite=Lax/);
       cookie = response.headers.get('set-cookie').split(';')[0];
-      if (id === 'logout') { cookie = ''; csrf = ''; }
+      if (['logout', 'withdrawAccount'].includes(id)) { cookie = ''; csrf = ''; }
     }
     if (data.csrf) csrf = data.csrf;
     if (status < 400) covered.add(id);
@@ -44,12 +44,12 @@ async function client(t, schema) {
 }
 
 for (const schema of ['legacy', 'model']) {
-test(`[${schema}] 현재 18개 API의 실제 성공 응답이 OpenAPI와 일치하고 미지원 v1 별칭은 404다`, async t => {
+test(`[${schema}] 현재 19개 API의 실제 성공 응답이 OpenAPI와 일치하고 미지원 v1 별칭은 404다`, async t => {
   const c = await client(t, schema);
   assert.equal((await c.send('getSession')).user, null);
   assert.deepEqual(await c.send('health'), { status: 'ok' });
   assert.equal((await c.send('readiness')).schema_version, schema === 'model' ? 1 : 0);
-  await c.send('signup', { anonymous: true, status: 201, body: { email: 'contract@temp.local', name: '가상계약회원', phone: '010-1234-5678', password: 'ContractDemo123!', terms: true, ageConfirmed: true } });
+  await c.send('signup', { anonymous: true, status: 201, body: { email: 'contract@ticket-ssu.local', name: '가상계약회원', phone: '010-1234-5678', password: 'ContractDemo123!', terms: true, ageConfirmed: true } });
   const concerts = await c.send('listConcerts');
   const pid = concerts.concerts[0].performances[0].id, pathParams = { performanceId: pid };
   const seats = await c.send('getSeats', { pathParams });
@@ -64,8 +64,10 @@ test(`[${schema}] 현재 18개 API의 실제 성공 응답이 OpenAPI와 일치�
   assert.equal((await c.send('createBooking', { status: 201, body: order })).booking.id, booking.id);
   assert.equal((await c.send('listBookings')).bookings.length, 1);
   assert.equal((await c.send('cancelBooking', { pathParams: { bookingId: booking.id } })).booking.status, 'cancelled');
+  await c.send('withdrawAccount', { body: { password: 'ContractDemo123!', confirmed: true } });
+  await c.send('login', { anonymous: true, body: { email: 'demo@ticket-ssu.local', password: 'TicketSsuDemo123!' } });
   await c.send('logout');
-  await c.send('login', { anonymous: true, body: { email: 'admin@temp.local', password: 'TempAdmin123!' } });
+  await c.send('login', { anonymous: true, body: { email: 'admin@ticket-ssu.local', password: 'TicketSsuAdmin123!' } });
   await c.send('adminSummary');
   await c.send('createConcert', { status: 201, body: { title: '가상 계약 공연', artist: '가상 밴드', venue: '가상 공연장', description: '계약 검증용', basePrice: 50000, dates: [new Date(now + 86400000).toISOString()] } });
   await c.send('blockSeats', { pathParams, body: { seatIds: ['A-03'], blocked: true } });
@@ -77,9 +79,9 @@ test(`[${schema}] 현재 18개 API의 실제 성공 응답이 OpenAPI와 일치�
 test(`[${schema}] 현재 인증·출처·CSRF·입력·충돌·요청 제한 오류가 명세의 상태/형식과 일치한다`, async t => {
   const c = await client(t, schema);
   await c.send('listBookings', { anonymous: true, status: 401 });
-  await c.send('login', { anonymous: true, status: 401, body: { email: 'demo@temp.local', password: 'incorrect' } });
-  await c.send('login', { anonymous: true, status: 403, headers: { Origin: 'https://invalid.example' }, body: { email: 'demo@temp.local', password: 'TempDemo123!' } });
-  await c.send('login', { anonymous: true, body: { email: 'demo@temp.local', password: 'TempDemo123!' } });
+  await c.send('login', { anonymous: true, status: 401, body: { email: 'demo@ticket-ssu.local', password: 'incorrect' } });
+  await c.send('login', { anonymous: true, status: 403, headers: { Origin: 'https://invalid.example' }, body: { email: 'demo@ticket-ssu.local', password: 'TicketSsuDemo123!' } });
+  await c.send('login', { anonymous: true, body: { email: 'demo@ticket-ssu.local', password: 'TicketSsuDemo123!' } });
   await c.send('logout', { csrfMissing: true, status: 403 });
   await c.send('adminSummary', { status: 403 });
   await c.send('getSeats', { pathParams: { performanceId: 'missing' }, status: 404 });

@@ -22,8 +22,8 @@ try {
     if (bytes.length !== release.archiveBytes || createHash('sha256').update(bytes).digest('hex') !== release.archiveSha256) throw new Error('K6_ARCHIVE_MISMATCH');
     const zip = resolve(temporary, 'release.zip'), output = resolve(temporary, 'unpacked');
     await writeFile(zip, bytes, { flag: 'wx' });
-    await promisify(execFile)('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', 'Expand-Archive -LiteralPath $env:TEMP_K6_ZIP -DestinationPath $env:TEMP_K6_OUT'],
-      { env: { ...process.env, TEMP_K6_ZIP: zip, TEMP_K6_OUT: output }, windowsHide: true, timeout: 60000, maxBuffer: 4096 });
+    await promisify(execFile)('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', 'Expand-Archive -LiteralPath $env:TICKET_SSU_K6_ZIP -DestinationPath $env:TICKET_SSU_K6_OUT'],
+      { env: { ...process.env, TICKET_SSU_K6_ZIP: zip, TICKET_SSU_K6_OUT: output }, windowsHide: true, timeout: 60000, maxBuffer: 4096 });
     const executable = resolve(output, release.archiveExecutable);
     if (!executable.startsWith(output + sep) || !validK6(await readFile(executable))) throw new Error('K6_EXECUTABLE_MISMATCH');
     await mkdir(dirname(k6Path), { recursive: true });

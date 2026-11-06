@@ -34,11 +34,11 @@ export function inspectLoadDatabase(store) {
 }
 export async function createLoadFixture(schema, profile) {
   validateLoadSelection(schema, profile);
-  const directory = await mkdtemp(join(tmpdir(), 'temp-k6-'));
+  const directory = await mkdtemp(join(tmpdir(), 'ticket-ssu-k6-'));
   let app;
   const close = async () => {
     await app?.shutdown(1000);
-    if (!resolve(directory).startsWith(resolve(tmpdir()) + sep + 'temp-k6-')) throw new Error('LOAD_CLEANUP_PATH');
+    if (!resolve(directory).startsWith(resolve(tmpdir()) + sep + 'ticket-ssu-k6-')) throw new Error('LOAD_CLEANUP_PATH');
     await rm(directory, { recursive: true, force: true });
   };
   try {
@@ -53,7 +53,7 @@ export async function createLoadFixture(schema, profile) {
     for (let i = 0; i < count; i++) {
       const member = await app.store.register({ email: `load-${randomBytes(6).toString('hex')}@example.test`, password: randomBytes(24).toString('base64url'), name: '가상부하회원', phone: '01000000000', terms: true, ageConfirmed: true });
       const session = app.store.createSession(member.id), seat = `${i < 12 ? 'A' : 'B'}-${String(i % 12 + 1).padStart(2, '0')}`;
-      users.push({ userId: member.id, cookie: `temp_session=${session.token}`, csrf: session.csrf, seat, price: app.store.seatMap(pid).seats.find(s => s.id === seat).price });
+      users.push({ userId: member.id, cookie: `ticket_ssu_session=${session.token}`, csrf: session.csrf, seat, price: app.store.seatMap(pid).seats.find(s => s.id === seat).price });
     }
     if (profile.startsWith('read-')) { app.store.setHold(users[0].userId, pid, ['H-12']); offset = 0; }
     if (profile === 'ticket-cap') {

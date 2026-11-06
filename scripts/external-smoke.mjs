@@ -90,9 +90,9 @@ export async function runExternalSmoke(input) {
     await step('demo-disabled', async () => { const r = (await expected('GET', '/api/session')).data; check(r.demo === false && r.user === null, 'DEDICATED_STAGING_REQUIRED'); });
     await step('login', async () => {
       const r = await expected('POST', '/api/auth/login', 200, { email: config.email, password: config.password });
-      const header = r.headers['set-cookie']?.find(value => value.startsWith('temp_session='));
+      const header = r.headers['set-cookie']?.find(value => value.startsWith('ticket_ssu_session='));
       // Keep an owned session for logout even if a later cookie assertion fails.
-      if (header && /^temp_session=[a-f0-9]{64};/.test(header)) cookie = header.split(';')[0];
+      if (header && /^ticket_ssu_session=[a-f0-9]{64};/.test(header)) cookie = header.split(';')[0];
       if (typeof r.data.csrf === 'string') csrf = r.data.csrf;
       check(cookie && csrf && /;\s*Secure(?:;|$)/i.test(header) && /;\s*HttpOnly(?:;|$)/i.test(header) && /;\s*SameSite=Lax(?:;|$)/i.test(header) && /;\s*Path=\/(?:;|$)/i.test(header) && !/;\s*Domain=/i.test(header), 'INVALID_SESSION_COOKIE');
       check(r.data.user?.role === 'user', 'DEDICATED_MEMBER_REQUIRED');

@@ -9,7 +9,7 @@ export function seedDemo(db, { now = Date.now() } = {}) {
   const salt = randomBytes(16).toString('hex');
   const password = `${salt}:${scryptSync('ModelDemo123!', salt, 64).toString('hex')}`;
   return modelTransaction(db, () => {
-    for (const role of ['user', 'admin']) insertRow(db, 'users', { id: `seed-${role}`, email: `model-${role}@temp.local`, name: role === 'admin' ? '가상관리자' : '가상회원', phone: '01012345678', password_hash: password, role, created_at: now });
+    for (const role of ['user', 'admin']) insertRow(db, 'users', { id: `seed-${role}`, email: `model-${role}@ticket-ssu.local`, name: role === 'admin' ? '가상관리자' : '가상회원', phone: '01012345678', password_hash: password, role, created_at: now });
     insertRow(db, 'concerts', { id: 'seed-concert', title: '가상 모델 검증 공연', artist: '가상 밴드', description: '실제 예매와 무관한 검증용 데이터', theme: 'teal', duration: 120, age: '8세 이상', created_at: now });
     for (const venue of ['north', 'south']) {
       insertRow(db, 'venues', { id: `seed-${venue}`, name: `가상 ${venue} 공연장`, region: null });

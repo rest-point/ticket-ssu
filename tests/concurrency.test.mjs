@@ -19,7 +19,7 @@ const workers = new WeakMap();
 const order = hold => ({ holdId: hold.id, buyerName: '가상예매자', buyerPhone: '01012345678', delivery: 'mobile', paymentMethod: 'demo', agreed: true });
 async function fixture(t, schema) {
   workers.set(t, new Set());
-  const dir = await mkdtemp(join(tmpdir(), 'temp-concurrency-'));
+  const dir = await mkdtemp(join(tmpdir(), 'ticket-ssu-concurrency-'));
   const path = join(dir, 'test.sqlite');
   let now = initialTime, app;
   const start = async () => {
@@ -36,14 +36,14 @@ async function fixture(t, schema) {
   t.after(async () => {
     for (const worker of workers.get(t)) if (worker.threadId !== -1) await worker.terminate();
     await stop();
-    assert.ok(resolve(dir).startsWith(resolve(tmpdir()) + sep + 'temp-concurrency-'));
+    assert.ok(resolve(dir).startsWith(resolve(tmpdir()) + sep + 'ticket-ssu-concurrency-'));
     await rm(dir, { recursive: true });
   });
   await start();
-  const users = ['demo@temp.local', 'admin@temp.local'].map(email => {
+  const users = ['demo@ticket-ssu.local', 'admin@ticket-ssu.local'].map(email => {
     const user = app.store.get('SELECT id FROM users WHERE email=?', email);
     const session = app.store.createSession(user.id);
-    return { id: user.id, cookie: `temp_session=${session.token}`, csrf: session.csrf };
+    return { id: user.id, cookie: `ticket_ssu_session=${session.token}`, csrf: session.csrf };
   });
   const api = async (method, url, user, body, extra = {}) => {
     const base = `http://127.0.0.1:${app.server.address().port}`;

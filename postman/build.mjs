@@ -53,6 +53,10 @@ const smokeCount = items.length;
 step('27 signup isolated second member', 'signup', 201, { localOnly: true, body: { email: '{{otherEmail}}', password: '{{otherPassword}}', name: '다른검증회원', phone: '01000000000', terms: true, ageConfirmed: true, role: 'admin' }, tests: loginTests });
 step('28 other member cancellation denied', 'cancelBooking', 404, { localOnly: true, path: bookingPath });
 step('29 other member logout', 'logout', 200, { localOnly: true, tests: `pm.variables.unset('csrf');` });
+step('29b withdrawal member login', 'login', 200, { localOnly: true, body: { email: '{{otherEmail}}', password: '{{otherPassword}}' }, tests: loginTests });
+step('29c withdraw owned member', 'withdrawAccount', 200, { localOnly: true, body: { password: '{{otherPassword}}', confirmed: true }, tests: check('withdrawal expires cookie', `pm.expect(pm.response.headers.get('Set-Cookie')).match(/Max-Age=0/); pm.variables.unset('csrf');`) });
+step('29d withdrawn session', 'getSession', 200, { localOnly: true, tests: check('withdrawn member is anonymous', `pm.expect(data.user).eql(null); pm.expect(data.csrf).eql(null);`) });
+step('29e withdrawn login denied', 'login', 401, { localOnly: true, body: { email: '{{otherEmail}}', password: '{{otherPassword}}' } });
 step('30 isolated administrator login', 'login', 200, { localOnly: true, body: { email: '{{adminEmail}}', password: '{{adminPassword}}' }, tests: check('administrator authenticated', `pm.expect(data.user.role).eql('admin'); pm.variables.set('csrf', data.csrf);`) });
 step('31 administrator summary', 'adminSummary', 200, { localOnly: true });
 step('32 create fixture concert', 'createConcert', 201, { localOnly: true, body: { title: 'CLI 가상 공연', artist: 'CLI 가상 밴드', venue: 'CLI 가상 공연장', description: '격리된 DB에서만 생성', basePrice: 50000, dates: ['{{futureDate}}'] } });
@@ -115,8 +119,8 @@ function requestItem(item) {
     event: [{ listen: 'test', script: { type: 'text/javascript', exec: lines('(function () {\n' + commonTest + '\n' + item.tests + '\n})();') } }] };
 }
 export function buildCollection() {
-  return { info: { name: 'Temp Ticket current API regression', schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json',
-    description: 'Current 18 operations only. Use a dedicated demo target. Run 01 Booking smoke only on staging. Cookie Jar must be enabled. Failures stop the run and require owned-state review.' },
+  return { info: { name: 'ticket-ssu current API regression', schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json',
+    description: 'Current 19 operations only. Use a dedicated demo target. Run 01 Booking smoke only on staging. Cookie Jar must be enabled. Failures stop the run and require owned-state review.' },
     protocolProfileBehavior: { followRedirects: false },
     variable: [{ key: 'contracts', value: JSON.stringify(contracts) }, { key: 'definitions', value: JSON.stringify(jsonSchema(spec.components.schemas)) }],
     event: [{ listen: 'prerequest', script: { type: 'text/javascript', exec: ['(function () {', ...preRequest, '})();'] } }],
@@ -133,12 +137,12 @@ export async function checkCollection() {
     if (values.mode !== mode || values.allowWrite !== '' || Object.entries(values).some(([key, value]) => /Password|Email/.test(key) && value !== '')) throw new Error('POSTMAN_TEMPLATE_SECRET_OR_SCOPE');
   }
   const expected = JSON.stringify(collection, null, 2) + '\n';
-  if (await readFile(resolve(root, 'postman/temp-ticket.postman_collection.json'), 'utf8') !== expected) throw new Error('POSTMAN_COLLECTION_DRIFT');
+  if (await readFile(resolve(root, 'postman/ticket-ssu.postman_collection.json'), 'utf8') !== expected) throw new Error('POSTMAN_COLLECTION_DRIFT');
   const covered = new Set(items.filter(item => item.status < 400).map(item => item.id));
   if (covered.size !== routes.size || [...routes.keys()].some(id => !covered.has(id))) throw new Error('POSTMAN_OPERATION_COVERAGE');
   return { currentOperations: covered.size, requests: items.length, status: 'passed' };
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   if (process.argv.includes('--check')) console.log(JSON.stringify(await checkCollection()));
-  else { await writeFile(resolve(root, 'postman/temp-ticket.postman_collection.json'), JSON.stringify(buildCollection(), null, 2) + '\n'); console.log('Postman collection generated'); }
+  else { await writeFile(resolve(root, 'postman/ticket-ssu.postman_collection.json'), JSON.stringify(buildCollection(), null, 2) + '\n'); console.log('Postman collection generated'); }
 }

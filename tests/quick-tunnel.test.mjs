@@ -19,10 +19,10 @@ const root = fileURLToPath(new URL('../', import.meta.url));
 const origin = 'https://unit-test-ticket.trycloudflare.com';
 const adminPassword = 'OperatorTestOnly123!';
 const environment = path => ({ NODE_ENV: 'production', HOST: '127.0.0.1', PORT: '0', TUNNEL_PORT: '0', DB_PATH: path, DB_SCHEMA: 'model', DEMO_MODE: 'false',
-  TEMP_ADMIN_EMAIL: 'operator@example.test', TEMP_ADMIN_PASSWORD: adminPassword, SHUTDOWN_TIMEOUT_MS: '100' });
+  TICKET_SSU_ADMIN_EMAIL: 'operator@example.test', TICKET_SSU_ADMIN_PASSWORD: adminPassword, SHUTDOWN_TIMEOUT_MS: '100' });
 async function temporary(t, close = async () => {}) {
-  const dir = await mkdtemp(join(tmpdir(), 'temp-quick-test-'));
-  t.after(async () => { await close(); assert.ok(resolve(dir).startsWith(resolve(tmpdir()) + sep + 'temp-quick-test-')); await rm(dir, { recursive: true, force: true }); });
+  const dir = await mkdtemp(join(tmpdir(), 'ticket-ssu-quick-test-'));
+  t.after(async () => { await close(); assert.ok(resolve(dir).startsWith(resolve(tmpdir()) + sep + 'ticket-ssu-quick-test-')); await rm(dir, { recursive: true, force: true }); });
   return dir;
 }
 async function listen(server) { server.listen(0, '127.0.0.1'); await once(server, 'listening'); return server.address().port; }
@@ -57,8 +57,8 @@ test('Quick Tunnel 출처는 단일 trycloudflare HTTPS 출처로 제한한다',
 test('위험 설정은 DB/네트워크를 열기 전에 거부한다', async t => {
   const dir = await temporary(t), path = join(dir, 'never.sqlite'), env = environment(path);
   for (const change of [{ NODE_ENV: 'development' }, { DEMO_MODE: 'true' }, { HOST: '0.0.0.0' }, { PROXY_IP: '::1' }, { PUBLIC_ORIGIN: origin },
-    { PROXY_TOKEN: 'a'.repeat(64) }, { DB_PATH: 'data/temp.sqlite' }, { DB_PATH: 'public/exposed.sqlite' }, { DB_PATH: ':memory:' }, { DB_SCHEMA: 'wrong' },
-    { TEMP_ADMIN_PASSWORD: '' }, { TEMP_ADMIN_EMAIL: 'admin@temp.local' }, { TUNNEL_PORT: '3', PORT: '3' }, { TUNNEL_PROTOCOL: 'invalid' },
+    { PROXY_TOKEN: 'a'.repeat(64) }, { DB_PATH: 'data/ticket-ssu.sqlite' }, { DB_PATH: 'public/exposed.sqlite' }, { DB_PATH: ':memory:' }, { DB_SCHEMA: 'wrong' },
+    { TICKET_SSU_ADMIN_PASSWORD: '' }, { TICKET_SSU_ADMIN_EMAIL: 'admin@ticket-ssu.local' }, { TUNNEL_PORT: '3', PORT: '3' }, { TUNNEL_PROTOCOL: 'invalid' },
     { TUNNEL_TIMEOUT_MS: '999999' }, { LIMIT_IP_BURST: '0' }, { QUEUE_ACTIVE_LIMIT: '0' }]) {
     let verified = false;
     assert.throws(() => createQuickTunnel({ env: { ...env, ...change }, verify: async () => { verified = true; } }));
@@ -73,7 +73,7 @@ test('DB의 기존 하드 링크·보호 파일의 심볼릭 링크 경로를 �
   // Use a directory junction on Windows: creating a file symlink can require admin.
   const linked = join(dir, 'project-data');
   await symlink(resolve(root, 'data'), linked, process.platform === 'win32' ? 'junction' : 'dir');
-  assert.throws(() => tunnelOptionsFromEnv(environment(join(linked, 'temp.sqlite'))), /TUNNEL_DB_PROTECTED/);
+  assert.throws(() => tunnelOptionsFromEnv(environment(join(linked, 'ticket-ssu.sqlite'))), /TUNNEL_DB_PROTECTED/);
   assert.equal(await readFile(original, 'utf8'), 'owned test bytes');
 });
 
@@ -98,7 +98,7 @@ test('cloudflared는 분할 로그의 URL과 등록을 모두 기다리고 비�
   child = await launchCloudflared({ port: 3001, timeoutMs: 2000, spawnProcess: fakeProcess('ready', (_exe, args, options) => {
     directory = options.cwd;
     assert.ok(args.includes('--no-autoupdate')); assert.ok(args.includes('--config')); assert.ok(args.includes('127.0.0.1:0'));
-    assert.equal(options.env.TEMP_ADMIN_PASSWORD, undefined); assert.equal(options.env.TUNNEL_TOKEN, undefined);
+    assert.equal(options.env.TICKET_SSU_ADMIN_PASSWORD, undefined); assert.equal(options.env.TUNNEL_TOKEN, undefined);
     assert.equal(options.env.HOME, directory); assert.equal(options.shell, false); assert.equal(options.windowsHide, true);
     assert.ok(!JSON.stringify(args).includes(adminPassword));
   }) });
@@ -131,17 +131,17 @@ test('중계는 준비 전503·고정 대상·헤더 제거·Secure 쿠키 전�
   const bridge = createTunnelBridge(); let backend, received;
   t.after(async () => { await bridge.stop(); await close(backend); });
   const port = await listen(bridge.server); assert.equal((await send(port)).status, 503);
-  backend = createServer((req, res) => { received = req.headers; res.writeHead(200, { 'set-cookie': 'temp_session=test; Secure; HttpOnly; SameSite=Lax', 'x-temp-proxy-token': 'hidden' }); res.end('ok'); });
+  backend = createServer((req, res) => { received = req.headers; res.writeHead(200, { 'set-cookie': 'ticket_ssu_session=test; Secure; HttpOnly; SameSite=Lax', 'x-ticket-ssu-proxy-token': 'hidden' }); res.end('ok'); });
   const backendPort = await listen(backend), token = 'a'.repeat(64);
   bridge.activate({ origin, port: backendPort, token });
   const reply = await send(port, 'POST', '/api/auth/login', { body: {}, headers: { host: 'evil.test', origin, cookie: 'example=one', 'x-csrf-token': 'preserved',
-    forwarded: 'for=1.2.3.4', 'x-forwarded-for': '5.6.7.8', 'cf-connecting-ip': '9.10.11.12', 'x-temp-client-ip': '9.9.9.9', 'x-temp-proxy-token': 'forged',
+    forwarded: 'for=1.2.3.4', 'x-forwarded-for': '5.6.7.8', 'cf-connecting-ip': '9.10.11.12', 'x-ticket-ssu-client-ip': '9.9.9.9', 'x-ticket-ssu-proxy-token': 'forged',
     connection: 'x-remove-me', 'x-remove-me': 'private' } });
   assert.equal(reply.status, 200); assert.equal(received.host, new URL(origin).host);
-  assert.equal(received['x-temp-client-ip'], '127.0.0.1'); assert.equal(received['x-temp-proxy-token'], token);
+  assert.equal(received['x-ticket-ssu-client-ip'], '127.0.0.1'); assert.equal(received['x-ticket-ssu-proxy-token'], token);
   assert.equal(received.origin, origin); assert.equal(received['x-csrf-token'], 'preserved'); assert.equal(received.cookie, 'example=one');
   for (const name of ['forwarded', 'x-forwarded-for', 'cf-connecting-ip', 'x-remove-me']) assert.equal(received[name], undefined);
-  assert.match(reply.headers['set-cookie'][0], /Secure/); assert.equal(reply.headers['x-temp-proxy-token'], undefined);
+  assert.match(reply.headers['set-cookie'][0], /Secure/); assert.equal(reply.headers['x-ticket-ssu-proxy-token'], undefined);
   for (const path of ['http://evil.test/api', '//evil.test/api', '/\\evil']) assert.equal((await send(port, 'GET', path)).status, 400);
   assert.equal((await send(port, 'TRACE')).status, 400);
   bridge.gate(); assert.equal((await send(port)).status, 503);
@@ -178,7 +178,7 @@ for (const schema of ['legacy', 'model']) {
     assert.equal((await f.send('POST', '/api/auth/logout', { headers, body: {} })).status, 200);
     const login = await f.send('POST', '/api/auth/login', { headers: { origin }, body: { email: 'member@example.test', password: 'MemberTestOnly123!' } });
     assert.equal(login.status, 200); cookie = login.headers['set-cookie'][0].split(';')[0]; csrf = login.body.csrf;
-    headers = { origin, cookie, 'x-csrf-token': csrf, 'x-temp-proxy-token': 'forged', 'x-forwarded-for': '203.0.113.9' };
+    headers = { origin, cookie, 'x-csrf-token': csrf, 'x-ticket-ssu-proxy-token': 'forged', 'x-forwarded-for': '203.0.113.9' };
     const concerts = await f.send('GET', '/api/concerts', { headers }), pid = concerts.body.concerts[0].performances[0].id;
     const queue = await f.send('POST', `/api/v1/performances/${pid}/queue`, { headers, body: {} });
     assert.equal(queue.status, 200); headers['x-admission-token'] = queue.body.admission_token;

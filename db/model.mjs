@@ -2,6 +2,7 @@ import { DatabaseSync } from 'node:sqlite';
 import { readFileSync, openSync, closeSync, realpathSync, statSync, unlinkSync, existsSync } from 'node:fs';
 import { dirname, resolve, relative, isAbsolute, extname } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { isDefaultDatabasePath } from '../lib/project-identity.mjs';
 
 const project = fileURLToPath(new URL('../', import.meta.url));
 const sql = name => readFileSync(new URL(`migrations/${name}`, import.meta.url), 'utf8');
@@ -13,6 +14,25 @@ export function configure(db, { readOnly = false } = {}) {
   return db;
 }
 
+// Replace only the shipped v1 guard; never overwrite a custom database trigger.
+export function enableAccountWithdrawal(db) {
+  const original = sql('001_guards.sql').match(/CREATE TRIGGER booking_immutable[\s\S]*?END;/)[0];
+  const revision = sql('002_withdrawal_guard.sql');
+  const updated = revision.slice(revision.indexOf('CREATE TRIGGER'));
+  const normalize = value => value.trim().replace(/;$/, '').replace(/\s+/g, ' ');
+  const current = db.prepare("SELECT sql FROM sqlite_schema WHERE type='trigger' AND name='booking_immutable'").get()?.sql;
+  if (current && normalize(current) === normalize(updated)) return;
+  if (!current || normalize(current) !== normalize(original)) throw new Error('unrecognized booking guard; explicit review required');
+  db.exec('BEGIN IMMEDIATE');
+  try {
+    db.exec(revision);
+    db.exec('COMMIT');
+  } catch (error) {
+    if (db.isTransaction) db.exec('ROLLBACK');
+    throw error;
+  }
+}
+
 export function applySchema(db) {
   if (db.prepare("SELECT COUNT(*) AS n FROM sqlite_schema WHERE name NOT LIKE 'sqlite_%'").get().n !== 0 || db.prepare('PRAGMA user_version').get().user_version !== 0) {
     throw new Error('schema initialization requires an empty database');
@@ -22,6 +42,7 @@ export function applySchema(db) {
   try {
     db.exec(sql('001_model.sql'));
     db.exec(sql('001_guards.sql'));
+    db.exec(sql('002_withdrawal_guard.sql'));
     db.exec(`PRAGMA user_version=${MODEL_VERSION}; COMMIT;`);
   } catch (error) {
     if (db.isTransaction) db.exec('ROLLBACK');
@@ -82,7 +103,7 @@ export function destinationPath(file) {
   if (extname(file).toLowerCase() !== '.sqlite') throw new Error('destination must use .sqlite');
   const requested = resolve(file);
   const lexicalRoot = resolve(project);
-  if (requested.toLowerCase() === resolve(lexicalRoot, 'data', 'temp.sqlite').toLowerCase()) throw new Error('project database is protected');
+  if (isDefaultDatabasePath(lexicalRoot, requested)) throw new Error('project database is protected');
   if (inside(lexicalRoot, requested) && !['data', 'test-results'].some(dir => inside(resolve(lexicalRoot, dir), requested))) {
     throw new Error('database output must stay outside tracked/static/document paths');
   }
@@ -90,8 +111,7 @@ export function destinationPath(file) {
   const root = realpathSync(project);
   const allowed = ['data', 'test-results'].some(dir => inside(resolve(root, dir), path));
   if (inside(root, path) && !allowed) throw new Error('database output must stay outside tracked/static/document paths');
-  const protectedPath = resolve(root, 'data', 'temp.sqlite');
-  if (path.toLowerCase() === protectedPath.toLowerCase()) throw new Error('project database is protected');
+  if (isDefaultDatabasePath(root, path)) throw new Error('project database is protected');
   if (existsSync(path)) throw new Error('destination already exists; refusing overwrite');
   // Also reject file aliases by exclusive creation; parent symlinks were resolved above.
   return path;

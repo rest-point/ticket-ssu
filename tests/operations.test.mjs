@@ -18,8 +18,8 @@ const now = 1800000000000, email = 'operator@example.test', password = 'TestOnly
 const credentials = { adminEmail: email, adminPassword: password };
 const payload = hold => ({ holdId: hold.id, buyerName: '가상회원', buyerPhone: '01012345678', delivery: 'mobile', agreed: true, paymentMethod: 'demo' });
 async function directory(t, cleanup = async () => {}) {
-  const dir = await mkdtemp(join(tmpdir(), 'temp-ops-'));
-  t.after(async () => { await cleanup(); assert.ok(resolve(dir).startsWith(resolve(tmpdir()) + sep + 'temp-ops-')); await rm(dir, { recursive: true, force: true }); });
+  const dir = await mkdtemp(join(tmpdir(), 'ticket-ssu-ops-'));
+  t.after(async () => { await cleanup(); assert.ok(resolve(dir).startsWith(resolve(tmpdir()) + sep + 'ticket-ssu-ops-')); await rm(dir, { recursive: true, force: true }); });
   return dir;
 }
 async function deployed(t, schema, limits = {}) {
@@ -44,10 +44,10 @@ test('관리자 설정은 완전한 이메일/비밀번호 쌍과 길이를 검�
 test('공개 프록시는 정확한 출처·loopback·비밀 토큰·단일 IP 형식만 수용한다', () => {
   const token = randomBytes(32).toString('hex');
   const boundary = new HttpBoundary({ publicOrigin: 'https://tickets.example.test', proxyToken: token });
-  const request = (headers = {}, peer = '127.0.0.1') => ({ socket: { remoteAddress: peer }, headers: { host: 'tickets.example.test', 'x-temp-proxy-token': token, 'x-temp-client-ip': '192.0.2.1', ...headers } });
+  const request = (headers = {}, peer = '127.0.0.1') => ({ socket: { remoteAddress: peer }, headers: { host: 'tickets.example.test', 'x-ticket-ssu-proxy-token': token, 'x-ticket-ssu-client-ip': '192.0.2.1', ...headers } });
   assert.equal(boundary.clientIp(request()), '192.0.2.1');
   assert.equal(boundary.clientIp(request({}, '::ffff:127.0.0.1')), '192.0.2.1');
-  for (const headers of [{ 'x-temp-proxy-token': 'x'.repeat(64) }, { 'x-temp-proxy-token': '가'.repeat(64) }, { 'x-temp-client-ip': '192.0.2.1, 192.0.2.2' }, { 'x-temp-client-ip': ['192.0.2.1'] }, { host: 'evil.example' }]) assert.throws(() => boundary.clientIp(request(headers)), { status: 403 });
+  for (const headers of [{ 'x-ticket-ssu-proxy-token': 'x'.repeat(64) }, { 'x-ticket-ssu-proxy-token': '가'.repeat(64) }, { 'x-ticket-ssu-client-ip': '192.0.2.1, 192.0.2.2' }, { 'x-ticket-ssu-client-ip': ['192.0.2.1'] }, { host: 'evil.example' }]) assert.throws(() => boundary.clientIp(request(headers)), { status: 403 });
   assert.throws(() => boundary.clientIp(request({}, '192.0.2.2')), { status: 403 });
   assert.equal(boundary.allowsOrigin('https://tickets.example.test'), true);
   assert.equal(boundary.allowsOrigin('http://tickets.example.test'), false);
@@ -93,13 +93,13 @@ for (const schema of ['legacy', 'model']) {
     assert.equal((await send('POST', `/api/bookings/${booked.body.booking.id}/cancel`, { headers: buyer })).body.booking.status, 'cancelled');
     const logout = await send('POST', '/api/auth/logout', { headers: buyer }); assert.equal(logout.status, 200); assert.match(logout.headers['set-cookie'][0], /Max-Age=0; Secure/);
     assert.equal((await send('GET', '/api/bookings', { headers: buyer })).status, 401);
-    for (const path of ['/.env.tunnel', '/source.sqlite', '/data/temp.sqlite', '/scripts/external-smoke.mjs', '/test.key']) assert.equal((await send('GET', path)).status, 404);
+    for (const path of ['/.env.tunnel', '/source.sqlite', '/data/ticket-ssu.sqlite', '/scripts/external-smoke.mjs', '/test.key']) assert.equal((await send('GET', path)).status, 404);
     assert.equal((await fetch(`http://127.0.0.1:${f.app.server.address().port}/api/concerts`)).status, 403);
     assert.equal((await fetch(`http://127.0.0.1:${f.app.server.address().port}/api/v1/readiness`)).status, 200);
   });
   test(`[${schema}] HTTPS 프록시는 전달 헤더 위조를 제거하고 실제 TLS 소켓별 요청/인증 예산을 분리한다`, async t => {
     const f = await deployed(t, schema, { ipBurst: 4, ipPerSecond: 1, authAttempts: 1, authWindowMs: 600000, monotonic: () => 0 });
-    for (let i = 0; i < 4; i++) assert.equal((await f.edge.send('GET', '/api/session', { headers: { 'X-Forwarded-For': `192.0.2.${i}`, 'X-Temp-Client-IP': `192.0.2.${i}`, 'X-Temp-Proxy-Token': 'fake' } })).status, 200);
+    for (let i = 0; i < 4; i++) assert.equal((await f.edge.send('GET', '/api/session', { headers: { 'X-Forwarded-For': `192.0.2.${i}`, 'X-Ticket-Ssu-Client-IP': `192.0.2.${i}`, 'X-Ticket-Ssu-Proxy-Token': 'fake' } })).status, 200);
     assert.equal((await f.edge.send('GET', '/api/session')).status, 429);
     assert.equal((await f.edge.send('POST', '/api/auth/login', { localAddress: '127.0.0.2', body: { email, password: 'incorrect' } })).status, 401);
     const limited = await f.edge.send('POST', '/api/auth/login', { localAddress: '127.0.0.2', body: { email, password } }); assert.equal(limited.status, 429); assert.equal(limited.headers['retry-after'], '600');
@@ -143,7 +143,7 @@ for (const schema of ['legacy', 'model']) {
     assert.equal((await f.edge.send('POST', `/api/bookings/${confirmed.body.booking.id}/cancel`, { headers: auth })).status, 200);
     const bytes = await readFile(backup);
     assert.throws(() => restoreDatabase(backup, candidate), /already exists/); assert.throws(() => backupDatabase(candidate, backup), /already exists/);
-    assert.deepEqual(await readFile(backup), bytes); assert.throws(() => restoreDatabase(backup, resolve('data/temp.sqlite')), /protected|already exists/);
+    assert.deepEqual(await readFile(backup), bytes); assert.throws(() => restoreDatabase(backup, resolve('data/ticket-ssu.sqlite')), /protected|already exists/);
     assert.throws(() => restoreDatabase(backup, resolve('public/exposed.sqlite')), /tracked/);
     const cli = await promisify(execFile)(process.execPath, ['db/backup-cli.mjs', 'verify', backup], { windowsHide: true }); assert.equal(JSON.parse(cli.stdout).schema, schema);
   });

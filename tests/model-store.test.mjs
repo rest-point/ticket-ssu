@@ -17,8 +17,8 @@ async function fixture(t) {
   const store = new ModelStore(':memory:', { now: () => now, holdMs: 1000 });
   t.after(() => { try { validateModel(store.db); } finally { store.close(); } });
   await store.seed();
-  const user = await store.authenticate('demo@temp.local', 'TempDemo123!');
-  const admin = await store.authenticate('admin@temp.local', 'TempAdmin123!');
+  const user = await store.authenticate('demo@ticket-ssu.local', 'TicketSsuDemo123!');
+  const admin = await store.authenticate('admin@ticket-ssu.local', 'TicketSsuAdmin123!');
   const pid = store.concerts()[0].performances[0].id;
   const checkout = (id, hold) => store.checkout(id, { holdId: hold.id, buyerName: '가상예매자', buyerPhone: '01012345678', delivery: 'mobile', agreed: true, paymentMethod: 'demo', total: 1 });
   return { store, user, admin, pid, checkout, advance: n => { now += n; } };
@@ -126,11 +126,11 @@ test('모델 요청 경로는 오프라인 전체 무결성 스캔을 호출하�
 });
 
 test('이관한 파일의 원래 쿠키·CSRF·공개 ID·선점·예매를 HTTP에서 이어 쓴다', async t => {
-  const root = resolve(tmpdir()), dir = await mkdtemp(join(root, 'temp-integration-'));
+  const root = resolve(tmpdir()), dir = await mkdtemp(join(root, 'ticket-ssu-integration-'));
   let serving;
   t.after(async () => {
     if (serving) await new Promise(r => serving.close(r));
-    assert.ok(resolve(dir).startsWith(root + sep) && resolve(dir).slice(root.length + 1).startsWith('temp-integration-'));
+    assert.ok(resolve(dir).startsWith(root + sep) && resolve(dir).slice(root.length + 1).startsWith('ticket-ssu-integration-'));
     await rm(dir, { recursive: true, force: true });
   });
   const source = join(dir, 'legacy.sqlite'), target = join(dir, 'model.sqlite'), now = 1800000000000;
@@ -138,7 +138,7 @@ test('이관한 파일의 원래 쿠키·CSRF·공개 ID·선점·예매를 HTTP
   let user, pid, held, session, before;
   try {
     await legacy.seed();
-    user = await legacy.authenticate('demo@temp.local', 'TempDemo123!');
+    user = await legacy.authenticate('demo@ticket-ssu.local', 'TicketSsuDemo123!');
     pid = legacy.concerts()[0].performances[0].id;
     const old = legacy.checkout(user.id, { holdId: legacy.setHold(user.id, pid, ['A-01']).hold.id, buyerName: '가상예매자', buyerPhone: '01012345678', delivery: 'mobile', agreed: true, paymentMethod: 'demo' });
     legacy.cancel(user.id, old.id);
@@ -155,7 +155,7 @@ test('이관한 파일의 원래 쿠키·CSRF·공개 ID·선점·예매를 HTTP
   serving = server;
   await new Promise(r => server.listen(0, '127.0.0.1', r));
   const base = `http://127.0.0.1:${server.address().port}`;
-  const headers = { Cookie: `temp_session=${session.token}`, 'X-CSRF-Token': session.csrf };
+  const headers = { Cookie: `ticket_ssu_session=${session.token}`, 'X-CSRF-Token': session.csrf };
   const request = async (method, path, body, expected, schema) => {
     const admitted = await admissionHeaders(store, base, { ...headers, ...(body ? { 'Content-Type': 'application/json' } : {}) }, method, path, body);
     const response = await fetch(base + path, { method, headers: admitted, body: body ? JSON.stringify(body) : undefined });
@@ -194,7 +194,7 @@ test('이관한 파일의 원래 쿠키·CSRF·공개 ID·선점·예매를 HTTP
 });
 
 test('model 모드는 기존 기본 DB·잘못된 모드·기존 스키마의 자동 전환을 거부한다', async () => {
-  await assert.rejects(createApp({ schema: 'model', dbPath: resolve('data/temp.sqlite'), demo: false }), /별도의 DB_PATH/);
+  await assert.rejects(createApp({ schema: 'model', dbPath: resolve('data/ticket-ssu.sqlite'), demo: false }), /별도의 DB_PATH/);
   await assert.rejects(createApp({ schema: 'unknown', dbPath: ':memory:' }), /DB_SCHEMA/);
   assert.throws(() => new Store(':memory:', { schema: 'model' }), /ModelStore/);
 });
