@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
+export const collectionPath = resolve(root, 'postman/ticket-ssu.regression.postman_collection.json');
 const spec = JSON.parse(await readFile(resolve(root, 'docs/openapi.yaml'), 'utf8'));
 const routes = new Map(Object.entries(spec.paths).flatMap(([path, methods]) => Object.entries(methods)
   .filter(([, operation]) => operation.operationId).map(([method, operation]) => [operation.operationId, { path, method, operation }])));
@@ -115,7 +116,7 @@ function requestItem(item) {
     event: [{ listen: 'test', script: { type: 'text/javascript', exec: lines('(function () {\n' + commonTest + '\n' + item.tests + '\n})();') } }] };
 }
 export function buildCollection() {
-  return { info: { name: 'Temp Ticket current API regression', schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json',
+  return { info: { name: 'ticket-ssu current API regression', schema: 'https://schema.getpostman.com/json/collection/v2.1.0/collection.json',
     description: 'Current 18 operations only. Use a dedicated demo target. Run 01 Booking smoke only on staging. Cookie Jar must be enabled. Failures stop the run and require owned-state review.' },
     protocolProfileBehavior: { followRedirects: false },
     variable: [{ key: 'contracts', value: JSON.stringify(contracts) }, { key: 'definitions', value: JSON.stringify(jsonSchema(spec.components.schemas)) }],
@@ -133,12 +134,12 @@ export async function checkCollection() {
     if (values.mode !== mode || values.allowWrite !== '' || Object.entries(values).some(([key, value]) => /Password|Email/.test(key) && value !== '')) throw new Error('POSTMAN_TEMPLATE_SECRET_OR_SCOPE');
   }
   const expected = JSON.stringify(collection, null, 2) + '\n';
-  if (await readFile(resolve(root, 'postman/temp-ticket.postman_collection.json'), 'utf8') !== expected) throw new Error('POSTMAN_COLLECTION_DRIFT');
+  if (await readFile(collectionPath, 'utf8') !== expected) throw new Error('POSTMAN_COLLECTION_DRIFT');
   const covered = new Set(items.filter(item => item.status < 400).map(item => item.id));
   if (covered.size !== routes.size || [...routes.keys()].some(id => !covered.has(id))) throw new Error('POSTMAN_OPERATION_COVERAGE');
   return { currentOperations: covered.size, requests: items.length, status: 'passed' };
 }
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   if (process.argv.includes('--check')) console.log(JSON.stringify(await checkCollection()));
-  else { await writeFile(resolve(root, 'postman/temp-ticket.postman_collection.json'), JSON.stringify(buildCollection(), null, 2) + '\n'); console.log('Postman collection generated'); }
+  else { await writeFile(collectionPath, JSON.stringify(buildCollection(), null, 2) + '\n'); console.log('Postman collection generated'); }
 }

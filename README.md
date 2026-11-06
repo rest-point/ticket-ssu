@@ -116,7 +116,7 @@ npm run verify:postman
 npm run build:postman
 ```
 
-GUI에서는 postman/temp-ticket.postman_collection.json과 environments 예시를 import한다. 실제 자격증명은 공유 파일에 저장하지 않고 Cookie Jar를 사용한다. staging은 전용 일반 회원/미래 회차/빈 좌석을 지정한 Booking smoke 폴더만 실행한다. 본인 전용 가상 환경에만 allowWrite=dedicated-demo를 설정한다. 리다이렉트/인증서 검증을 우회하지 않는다.
+자동 회귀용 [postman/ticket-ssu.regression.postman_collection.json](postman/ticket-ssu.regression.postman_collection.json)은 npm run build:postman으로 생성한다. 팀원이 개별 요청을 보내는 ticket-ssu.postman_collection.json·ticket-ssu.postman_environment.json과 별도로 유지한다. GUI에서 자동 회귀 컬렉션을 사용할 때는 postman/environments의 예시 환경을 import한다. 실제 자격증명은 공유 파일에 저장하지 않고 Cookie Jar를 사용한다. staging은 전용 일반 회원/미래 회차/빈 좌석을 지정한 Booking smoke 폴더만 실행한다. 본인 전용 가상 환경에만 allowWrite=dedicated-demo를 설정한다. 리다이렉트/인증서 검증을 우회하지 않는다.
 
 실제 HTTPS의 소수 요청 smoke는 .env.smoke.example을 기존 파일을 보존하며 준비하고 새 SMOKE_ORIGIN·전용 일반 회원/회차/좌석을 로컬에서 채운 뒤 npm run verify:external:env로 실행한다. 관리자/공개 데모 계정·기존 선점/확정 예매/큐를 거부한다. 수동 시연과 같은 계정을 동시에 사용하지 않는다. manualReviewRequired이면 본인 내역을 확인하고 새로 만든 상태만 정리한다. 자동 보고서의 externalNetworkVerified=false는 별도 망 접속 증명이 아니다.
 

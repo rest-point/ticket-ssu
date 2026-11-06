@@ -7,9 +7,8 @@ import { once } from 'node:events';
 import { randomBytes } from 'node:crypto';
 import { createApp } from '../server.mjs';
 import { validateModel } from '../db/model.mjs';
-import { checkCollection } from '../postman/build.mjs';
+import { checkCollection, collectionPath } from '../postman/build.mjs';
 
-const root = fileURLToPath(new URL('../', import.meta.url));
 const require = createRequire(new URL('../postman/runner/package.json', import.meta.url));
 export async function runPostmanCollection({ collection, environment, folder }) {
   let newman;
@@ -32,7 +31,7 @@ export async function runPostmanCollection({ collection, environment, folder }) 
 export async function runIsolatedPostman(schema) {
   if (!['legacy', 'model'].includes(schema) || process.env.NODE_ENV === 'production' || process.env.PUBLIC_ORIGIN || process.env.PROXY_TOKEN) throw new Error('POSTMAN_LOCAL_ENV_REFUSED');
   await checkCollection();
-  const collection = JSON.parse(await readFile(resolve(root, 'postman/temp-ticket.postman_collection.json'), 'utf8'));
+  const collection = JSON.parse(await readFile(collectionPath, 'utf8'));
   const directory = await mkdtemp(join(tmpdir(), 'temp-postman-'));
   let app, report;
   try {

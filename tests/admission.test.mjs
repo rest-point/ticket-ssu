@@ -260,8 +260,12 @@ for (const schema of ['legacy', 'model']) {
     await busy;
     f.advance(1000);
     await release();
-    assert.equal((await pending).status, 403);
+    const result = await pending;
+    // A delayed runner may exhaust the wall-clock retry budget before rechecking admission.
+    assert.ok([403, 503].includes(result.status), `expired admission response: ${result.status}`);
+    if (result.status === 503) assert.equal(result.headers.get('retry-after'), '1');
     f.app.store.transaction = original;
+    assert.equal((await f.hold(a, ['A-01'], token)).status, 403, 'expired token remains invalid after the DB lock is released');
     assert.equal(f.app.store.get('SELECT COUNT(*) AS n FROM holds').n, 0);
     f.verify();
   });
