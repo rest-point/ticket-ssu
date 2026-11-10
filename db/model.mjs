@@ -33,16 +33,13 @@ export function enableAccountWithdrawal(db) {
   }
 }
 
-// Adds concerts.booking_opens_at once; shared by fresh model/legacy and existing files.
+const hasBookingOpening = db => db.prepare('PRAGMA table_info(concerts)').all().some(column => column.name === 'booking_opens_at');
 export function enableBookingOpening(db) {
-  const hasColumn = () => db.prepare('PRAGMA table_info(concerts)').all().some(c => c.name === 'booking_opens_at');
-  if (hasColumn()) return;
+  if (hasBookingOpening(db)) return;
   const startedHere = !db.isTransaction;
   if (startedHere) db.exec('BEGIN IMMEDIATE');
   try {
-    // Re-check under the write lock: another process may have added it after the first check.
-    if (startedHere && hasColumn()) { db.exec('ROLLBACK'); return; }
-    db.exec(sql('003_booking_opens_at.sql'));
+    if (!hasBookingOpening(db)) db.exec(sql('003_booking_opens_at.sql'));
     if (startedHere) db.exec('COMMIT');
   } catch (error) {
     if (startedHere && db.isTransaction) db.exec('ROLLBACK');
@@ -61,12 +58,80 @@ export function applySchema(db) {
     db.exec(sql('001_guards.sql'));
     db.exec(sql('002_withdrawal_guard.sql'));
     enableBookingOpening(db);
+    enableAdminBookingCancellations(db);
+    enableMemberBookingRestrictions(db);
+    enablePerformanceSales(db);
     db.exec(`PRAGMA user_version=${MODEL_VERSION}; COMMIT;`);
   } catch (error) {
     if (db.isTransaction) db.exec('ROLLBACK');
     throw error;
   }
   return db;
+}
+
+export function enableAdminBookingCancellations(db) {
+  db.exec(sql('003_admin_booking_cancellations.sql'));
+}
+
+export function enableMemberBookingRestrictions(db) {
+  db.exec(sql('004_member_booking_restrictions.sql'));
+}
+
+export function enablePerformanceSales(db) {
+  if (performanceSalesTableCount(db) === 2) return;
+  const ddl = sql('005_performance_sales.sql');
+  if (db.isTransaction) { db.exec(ddl); return; }
+  db.exec('BEGIN IMMEDIATE');
+  try {
+    db.exec(ddl);
+    db.exec('COMMIT');
+  } catch (error) {
+    if (db.isTransaction) db.exec('ROLLBACK');
+    throw error;
+  }
+}
+
+function performanceSalesTableCount(db) {
+  return db.prepare("SELECT COUNT(*) AS n FROM sqlite_schema WHERE type='table' AND name IN ('performance_sales_events','performance_cancelled_bookings')").get().n;
+}
+export function validatePerformanceSales(db) {
+  const tables = performanceSalesTableCount(db);
+  if (!tables) return;
+  if (tables !== 2) throw new Error('incomplete performance sales schema');
+  const invalid = db.prepare(`SELECT 1 FROM performance_cancelled_bookings c
+    JOIN performance_sales_events e ON e.performance_id=c.performance_id AND e.revision=c.revision
+    JOIN bookings b ON b.id=c.booking_id JOIN holds h ON h.id=b.hold_id
+    WHERE e.state!='cancelled' OR b.status!='cancelled' OR b.cancelled_at IS NOT e.created_at OR h.performance_id!=c.performance_id
+    UNION ALL
+    SELECT 1 FROM performance_sales_events e JOIN users u ON u.id=e.admin_id
+    WHERE u.role!='admin' OR (e.state!='open' AND NOT EXISTS (
+      SELECT 1 FROM performance_sales_events newer WHERE newer.performance_id=e.performance_id AND newer.revision>e.revision)
+      AND EXISTS (SELECT 1 FROM holds h LEFT JOIN bookings b ON b.hold_id=h.id
+        WHERE h.performance_id=e.performance_id AND (h.status='active' OR (e.state='cancelled' AND b.status='confirmed'))))
+    LIMIT 1`).get();
+  if (invalid) throw new Error('invalid performance sales history');
+}
+
+export function validateMemberBookingRestrictions(db) {
+  if (!db.prepare("SELECT 1 FROM sqlite_schema WHERE type='table' AND name='member_booking_restrictions'").get()) return;
+  const invalid = db.prepare(`SELECT 1 FROM member_booking_restrictions m
+    JOIN users member ON member.id=m.member_id JOIN users operator ON operator.id=m.admin_id
+    WHERE member.role!='user' OR operator.role!='admin' OR (m.restricted=1
+      AND NOT EXISTS (SELECT 1 FROM member_booking_restrictions newer WHERE newer.member_id=m.member_id AND newer.revision>m.revision)
+      AND EXISTS (SELECT 1 FROM holds h WHERE h.user_id=m.member_id AND h.status='active')) LIMIT 1`).get();
+  if (invalid) throw new Error('invalid member booking restriction history');
+}
+
+export function hasAdminBookingCancellations(db) {
+  return Boolean(db.prepare("SELECT 1 FROM sqlite_schema WHERE type='table' AND name='admin_booking_cancellations'").get());
+}
+
+export function validateAdminBookingCancellations(db) {
+  if (hasAdminBookingCancellations(db) && db.prepare(`SELECT 1 FROM admin_booking_cancellations a
+    JOIN bookings b ON b.id=a.booking_id JOIN users u ON u.id=a.admin_id
+    WHERE b.status!='cancelled' OR b.cancelled_at IS NOT a.created_at OR u.role!='admin' LIMIT 1`).get()) {
+    throw new Error('invalid administrator cancellation history');
+  }
 }
 
 export function validateModel(db) {
@@ -76,10 +141,13 @@ export function validateModel(db) {
   if (db.prepare('PRAGMA user_version').get().user_version !== MODEL_VERSION) throw new Error('unsupported model version');
   if (db.prepare('PRAGMA foreign_keys').get().foreign_keys !== 1) throw new Error('foreign keys must be enabled');
   if (db.prepare('PRAGMA integrity_check').all().some(r => r.integrity_check !== 'ok') || db.prepare('PRAGMA foreign_key_check').all().length) throw new Error('database integrity check failed');
+  validateAdminBookingCancellations(db);
+  validateMemberBookingRestrictions(db);
+  validatePerformanceSales(db);
   failIf(`SELECT 1 FROM inventory i JOIN performances p ON p.id=i.performance_id JOIN physical_seats s ON s.id=i.physical_seat_id WHERE p.venue_id!=s.venue_id LIMIT 1`, 'inventory venue');
   failIf(`SELECT 1 FROM concerts c WHERE NOT EXISTS(SELECT 1 FROM performances p WHERE p.concert_id=c.id) LIMIT 1`, 'concert without performance');
   failIf(`SELECT 1 FROM performances p WHERE NOT EXISTS(SELECT 1 FROM inventory i WHERE i.performance_id=p.id) LIMIT 1`, 'performance without inventory');
-  failIf(`SELECT 1 FROM concerts c WHERE c.booking_opens_at IS NOT NULL
+  if (hasBookingOpening(db)) failIf(`SELECT 1 FROM concerts c WHERE c.booking_opens_at IS NOT NULL
     AND c.booking_opens_at >= (SELECT MIN(p.starts_at) FROM performances p WHERE p.concert_id=c.id) LIMIT 1`, 'booking opens after first performance');
   failIf(`SELECT 1 FROM current_holds ch JOIN inventory i ON i.id=ch.inventory_id JOIN holds h ON h.id=ch.hold_id
     WHERE i.blocked!=0 OR h.status!='active' OR h.performance_id!=i.performance_id OR EXISTS(SELECT 1 FROM current_bookings cb WHERE cb.inventory_id=i.id) LIMIT 1`, 'current hold');

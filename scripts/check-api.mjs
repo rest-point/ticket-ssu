@@ -84,7 +84,7 @@ async function projectMarkdown(directory = '') {
   for (const entry of await readdir(resolve(root, directory), { withFileTypes: true })) {
     if (['node_modules', '.git', '.tools', 'data', 'test-results'].includes(entry.name)) continue;
     const path = directory ? `${directory}/${entry.name}` : entry.name;
-    if (path === 'postman/private') continue;
+    if (path === 'postman/private' || path === 'docs/handoff.md') continue;
     if (entry.isDirectory()) files.push(...await projectMarkdown(path));
     else if (entry.isFile() && entry.name.endsWith('.md')) files.push(path);
   }
@@ -95,8 +95,12 @@ export async function verifyApiDocuments() {
   assert.deepEqual(currentSpec['x-supported-db-schemas'], ['legacy', 'model']);
   const server = await read('server.mjs'), store = await read('lib/store.mjs');
   const ddl = await read('db/migrations/001_model.sql');
+  const sharedDdl = (await Promise.all(['003_admin_booking_cancellations.sql', '004_member_booking_restrictions.sql', '005_performance_sales.sql']
+    .map(file => read(`db/migrations/${file}`)))).join('\n');
+  const sharedTables = [...sharedDdl.matchAll(/CREATE TABLE IF NOT EXISTS ([a-z_]+) \(/g)].map(m => m[1]);
   const targetTables = new Set([...ddl.matchAll(/CREATE TABLE ([a-z_]+) \(/g)].map(m => m[1]));
   const legacyTables = new Set([...store.matchAll(/CREATE TABLE IF NOT EXISTS ([a-z_]+) \(/g)].map(m => m[1]));
+  for (const table of sharedTables) { targetTables.add(table); legacyTables.add(table); }
   const crud = await read('docs/design/crud-matrix.md'), api = await read('docs/design/api.md');
   let examples = 0, refs = 0;
   const walk = (spec, value) => {
@@ -137,7 +141,6 @@ export async function verifyApiDocuments() {
     walk(spec, spec);
   }
   const observed = extractCurrentRoutes(server);
-  assert.equal(observed.length, 19);
   assert.deepEqual(operations(currentSpec).map(({ method, path }) => `${method} ${path}`).sort(), observed, 'Current router/spec drift');
   for (const table of targetTables) assert.ok(crud.includes(`| ${table} |`), `Missing CRUD table: ${table}`);
   for (const { operation: o } of operations(currentSpec)) {

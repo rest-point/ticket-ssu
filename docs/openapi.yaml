@@ -3,7 +3,7 @@
   "info": {
     "title": "ticket-ssu 현재 구현 API",
     "version": "1.0.0-current",
-    "description": "현재 구현된 API 19개 작업의 입출력·권한·오류 계약. 단일 Node API와 로컬 SQLite, legacy 기본 및 별도 model 명시 선택을 지원한다. 자세한 설명은 docs/design/api.md를 따른다."
+    "description": "현재 구현된 API 25개 작업의 입출력·권한·오류 계약. 단일 Node API와 로컬 SQLite, legacy 기본 및 별도 model 명시 선택을 지원한다. 자세한 설명은 docs/design/api.md를 따른다."
   },
   "servers": [
     {
@@ -706,16 +706,17 @@
                       "duration": 120,
                       "age": "8세 이상",
                       "created_at": 1800000000000,
-                      "booking_opens_at": null,
                       "performances": [
                         {
                           "id": "performance-example",
                           "concert_id": "concert-example",
                           "starts_at": 1801814400000,
                           "available": 96,
-                          "min_price": 90000
+                          "min_price": 90000,
+                          "sale_state": "open"
                         }
-                      ]
+                      ],
+                      "booking_opens_at": null
                     }
                   ]
                 }
@@ -805,13 +806,15 @@
           "inventory",
           "holds",
           "current_holds",
-          "current_bookings"
+          "current_bookings",
+          "performance_sales_events"
         ],
         "x-legacy-tables": [
           "concerts",
           "performances",
           "seats",
-          "holds"
+          "holds",
+          "performance_sales_events"
         ]
       }
     },
@@ -963,13 +966,15 @@
           "physical_seats",
           "holds",
           "current_holds",
-          "current_bookings"
+          "current_bookings",
+          "performance_sales_events"
         ],
         "x-legacy-tables": [
           "performances",
           "concerts",
           "holds",
-          "seats"
+          "seats",
+          "performance_sales_events"
         ]
       }
     },
@@ -980,7 +985,7 @@
         "tags": [
           "concerts"
         ],
-        "description": "seatIds 전체를 원자적으로 교체한다. 빈 배열이면 hold=null. 변경마다 hold ID가 교체되지만 기존 만료 시각은 유지한다. 성공 재호출도 새 ID이므로 일반 PUT 멱등 응답을 보장하지 않는다. SQLite 트랜잭션 안에서 세션 결합 X-Admission-Token을 검사한다. 기존 경로도 큐 우회를 허용하지 않는다. 예매 오픈 전 회차는 409로 거부한다.",
+        "description": "seatIds 전체를 원자적으로 교체한다. 빈 배열이면 hold=null. 변경마다 hold ID가 교체되지만 기존 만료 시각은 유지한다. 성공 재호출도 새 ID이므로 일반 PUT 멱등 응답을 보장하지 않는다. SQLite 트랜잭션 안에서 세션 결합 X-Admission-Token을 검사한다. 기존 경로도 큐 우회를 허용하지 않는다. 예매 오픈 전에는 새 선점을 409로 거부한다.",
         "security": [
           {
             "cookieAuth": [],
@@ -1073,14 +1078,14 @@
             }
           },
           "409": {
-            "description": "좌석 충돌·매수 제한·만료·마감·중복 이메일",
+            "description": "좌석 충돌, 매수 제한, 선점 만료, 예매 오픈 전, 공연 마감 또는 회차 판매 중단·취소",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 },
                 "example": {
-                  "error": "좌석 충돌·매수 제한·만료·마감·중복 이메일"
+                  "error": "아직 예매가 열리지 않았습니다. 예매 오픈 시각 이후 다시 시도해 주세요."
                 }
               }
             }
@@ -1184,7 +1189,9 @@
           "performances",
           "concerts",
           "venues",
-          "physical_seats"
+          "physical_seats",
+          "member_booking_restrictions",
+          "performance_sales_events"
         ],
         "x-legacy-tables": [
           "holds",
@@ -1192,7 +1199,9 @@
           "bookings",
           "booking_seats",
           "performances",
-          "concerts"
+          "concerts",
+          "member_booking_restrictions",
+          "performance_sales_events"
         ],
         "requestBody": {
           "required": true,
@@ -1219,7 +1228,7 @@
         "tags": [
           "bookings"
         ],
-        "description": "실제 금액 청구 없음. 서버가 금액을 계산하고 클라이언트 total을 무시한다. hold_id로 기존 예매를 재반환하며 반복도 201이다. 헤더 생략은 hold 기반 호환 재시도이고 model은 선택 키를 지원한다. 유효 입력 검사 후 기존 결과를 찾으므로 잘못된 재시도 본문은 400일 수 있다. 확정 직전에 좌석 수 1~4, 모든 좌석의 회차 일치, 기존 confirmed 수와 이번 좌석 합계 4매 이하를 같은 쓰기 트랜잭션에서 재검사한다. model 모드의 선택 Idempotency-Key는 소유권 확인 후 영속 성공/업무 실패 재사용과 본문 충돌 409를 적용한다. legacy 모드는 키를 거부한다. 입력/인증/DB 장애는 실패 시도로 기록하지 않는다. SQLite 트랜잭션 안에서 세션 결합 X-Admission-Token을 검사한다. 기존 경로도 큐 우회를 허용하지 않는다.",
+        "description": "실제 금액 청구 없음. 서버가 금액을 계산하고 클라이언트 total을 무시한다. hold_id로 기존 예매를 재반환하며 반복도 201이다. 헤더 생략은 hold 기반 호환 재시도이고 model은 선택 키를 지원한다. 유효 입력 검사 후 기존 결과를 찾으므로 잘못된 재시도 본문은 400일 수 있다. 확정 직전에 좌석 수 1~4, 모든 좌석의 회차 일치, 기존 confirmed 수와 이번 좌석 합계 4매 이하를 같은 쓰기 트랜잭션에서 재검사한다. model 모드의 선택 Idempotency-Key는 소유권 확인 후 영속 성공/업무 실패 재사용과 본문 충돌 409를 적용한다. legacy 모드는 키를 거부한다. 입력/인증/DB 장애는 실패 시도로 기록하지 않는다. SQLite 트랜잭션 안에서 세션 결합 X-Admission-Token을 검사한다. 기존 경로도 큐 우회를 허용하지 않는다. 오픈 전 신규 확정을 409로 거부한다.",
         "security": [
           {
             "cookieAuth": [],
@@ -1343,14 +1352,14 @@
             }
           },
           "409": {
-            "description": "좌석 충돌·매수 제한·만료·마감·중복 이메일",
+            "description": "좌석 충돌, 매수 제한, 선점 만료, 예매 오픈 전, 공연 마감 또는 회차 판매 중단·취소. model 모드에서는 멱등성 키와 요청 본문의 충돌도 포함한다.",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/Error"
                 },
                 "example": {
-                  "error": "좌석 충돌·매수 제한·만료·마감·중복 이메일"
+                  "error": "아직 예매가 열리지 않았습니다. 예매 오픈 시각 이후 다시 시도해 주세요."
                 }
               }
             }
@@ -1455,7 +1464,11 @@
           "performances",
           "physical_seats",
           "concerts",
-          "venues"
+          "venues",
+          "admin_booking_cancellations",
+          "member_booking_restrictions",
+          "performance_sales_events",
+          "performance_cancelled_bookings"
         ],
         "x-legacy-tables": [
           "holds",
@@ -1463,7 +1476,11 @@
           "bookings",
           "booking_seats",
           "performances",
-          "concerts"
+          "concerts",
+          "admin_booking_cancellations",
+          "member_booking_restrictions",
+          "performance_sales_events",
+          "performance_cancelled_bookings"
         ],
         "requestBody": {
           "required": true,
@@ -1637,13 +1654,19 @@
           "physical_seats",
           "performances",
           "concerts",
-          "venues"
+          "venues",
+          "admin_booking_cancellations",
+          "performance_sales_events",
+          "performance_cancelled_bookings"
         ],
         "x-legacy-tables": [
           "bookings",
           "booking_seats",
           "performances",
-          "concerts"
+          "concerts",
+          "admin_booking_cancellations",
+          "performance_sales_events",
+          "performance_cancelled_bookings"
         ]
       }
     },
@@ -1830,14 +1853,20 @@
           "inventory",
           "physical_seats",
           "concerts",
-          "venues"
+          "venues",
+          "admin_booking_cancellations",
+          "performance_sales_events",
+          "performance_cancelled_bookings"
         ],
         "x-legacy-tables": [
           "bookings",
           "seats",
           "performances",
           "concerts",
-          "booking_seats"
+          "booking_seats",
+          "admin_booking_cancellations",
+          "performance_sales_events",
+          "performance_cancelled_bookings"
         ]
       }
     },
@@ -1877,7 +1906,11 @@
                       "total": 96,
                       "blocked": 0,
                       "booked": 1,
-                      "held": 0
+                      "held": 0,
+                      "concert_id": "concert-example",
+                      "sale_state": "open",
+                      "sale_revision": 0,
+                      "booking_count": 1
                     }
                   ],
                   "audit": []
@@ -1984,7 +2017,10 @@
           "inventory",
           "performances",
           "concerts",
-          "audit_events"
+          "audit_events",
+          "admin_booking_cancellations",
+          "member_booking_restrictions",
+          "performance_sales_events"
         ],
         "x-legacy-tables": [
           "users",
@@ -1993,18 +2029,21 @@
           "seats",
           "performances",
           "concerts",
-          "audit"
+          "audit",
+          "admin_booking_cancellations",
+          "member_booking_restrictions",
+          "performance_sales_events"
         ]
       }
     },
-    "/api/admin/concerts": {
+    "/api/admin/performance-sales": {
       "post": {
-        "operationId": "createConcert",
-        "summary": "공연·회차·96석 등록",
+        "operationId": "adminChangePerformanceSales",
+        "summary": "관리자 회차 판매 중단·재개 또는 공연 취소",
         "tags": [
           "admin"
         ],
-        "description": "공연·회차·96석 등록. bookingOpensAt으로 예매 오픈 일시를 함께 지정할 수 있다(생략 시 즉시 오픈).",
+        "description": "선택한 회차를 한 트랜잭션으로 변경한다. 공연 취소는 최종 상태이며, 전체 확정 예매 취소와 선점 해제 후 공개 목록에서 숨긴다.",
         "security": [
           {
             "cookieAuth": [],
@@ -2013,15 +2052,19 @@
         ],
         "parameters": [],
         "responses": {
-          "201": {
-            "description": "생성 또는 기존 예매 재반환",
+          "200": {
+            "description": "회차 처리 완료",
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/IdResult"
+                  "$ref": "#/components/schemas/PerformanceSalesResult"
                 },
                 "example": {
-                  "id": "concert-example"
+                  "state": "cancelled",
+                  "performance_ids": [
+                    "performance-example"
+                  ],
+                  "cancelled_bookings": 1
                 }
               }
             }
@@ -2061,6 +2104,1110 @@
                 },
                 "example": {
                   "error": "CSRF·출처·역할 오류"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "회차·본인 소유 선점/예매·API를 찾을 수 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "회차·본인 소유 선점/예매·API를 찾을 수 없음"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "회차 마감, 변경된 상태 또는 확정 예매 건수",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "확정 예매 건수가 바뀌었습니다. 새로고침 후 다시 확인해 주세요."
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "본문 16 KiB 초과",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "본문 16 KiB 초과"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "JSON Content-Type 필요",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "JSON Content-Type 필요"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "IP/회원 요청 제한·인증 시도 제한 또는 큐/제한 키 상한. Retry-After 초 뒤 재시도.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string",
+                  "pattern": "^[1-9][0-9]*$"
+                },
+                "description": "최소 재시도 대기 초"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "요청이 너무 많습니다. 잠시 후 다시 이용해 주세요."
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "예상하지 못한 오류. 현재 SQLITE_BUSY도 일반 500일 수 있음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "예상하지 못한 오류. 현재 SQLITE_BUSY도 일반 500일 수 있음"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "SQLite 잠금 재시도 예산 소진. 같은 요청으로 1초 뒤 재시도. 비동기 인증 중 잠금은 즉시 같은 503.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "1"
+                  ]
+                },
+                "description": "재시도 전 최소 초"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "데이터베이스가 사용 중입니다. 잠시 후 같은 요청으로 다시 시도해 주세요."
+                }
+              }
+            }
+          }
+        },
+        "x-implementation": "implemented-legacy",
+        "x-role": "admin",
+        "x-admission": "none-current",
+        "x-tables": [
+          "users",
+          "performances",
+          "concerts",
+          "venues",
+          "holds",
+          "current_holds",
+          "bookings",
+          "current_bookings",
+          "booking_items",
+          "inventory",
+          "physical_seats",
+          "performance_sales_events",
+          "performance_cancelled_bookings"
+        ],
+        "x-legacy-tables": [
+          "users",
+          "performances",
+          "concerts",
+          "holds",
+          "seats",
+          "bookings",
+          "booking_seats",
+          "performance_sales_events",
+          "performance_cancelled_bookings"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PerformanceSalesChange"
+              },
+              "example": {
+                "action": "cancel",
+                "targets": [
+                  {
+                    "performance_id": "performance-example",
+                    "revision": 0,
+                    "booking_count": 1
+                  }
+                ],
+                "reason": "공연장 사정"
+              }
+            }
+          },
+          "x-max-bytes": 16384
+        }
+      }
+    },
+    "/api/admin/bookings/{bookingId}": {
+      "get": {
+        "operationId": "adminGetBooking",
+        "summary": "관리자 예매번호 조회",
+        "tags": [
+          "admin"
+        ],
+        "description": "예매번호로 공연·회차·좌석·금액·취소 가능 여부 조회. 예매자 이름·연락처·회원 ID 미포함.",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/BookingId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminBookingResult"
+                },
+                "example": {
+                  "booking": {
+                    "id": "T0123456789AB",
+                    "performance_id": "performance-example",
+                    "title": "가상 공연",
+                    "starts_at": 1801814400000,
+                    "status": "confirmed",
+                    "total": 132000,
+                    "seats": [
+                      {
+                        "seat_id": "A-01",
+                        "grade": "VIP",
+                        "price": 130000
+                      }
+                    ],
+                    "cancelled_at": null,
+                    "can_cancel": true
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "입력 형식·필수 동의 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "입력 형식·필수 동의 오류"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "로그인 필요 또는 인증 실패",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "로그인 필요 또는 인증 실패"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "CSRF·출처·역할 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "CSRF·출처·역할 오류"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "회차·본인 소유 선점/예매·API를 찾을 수 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "회차·본인 소유 선점/예매·API를 찾을 수 없음"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "IP/회원 요청 제한·인증 시도 제한 또는 큐/제한 키 상한. Retry-After 초 뒤 재시도.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string",
+                  "pattern": "^[1-9][0-9]*$"
+                },
+                "description": "최소 재시도 대기 초"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "요청이 너무 많습니다. 잠시 후 다시 이용해 주세요."
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "예상하지 못한 오류. 현재 SQLITE_BUSY도 일반 500일 수 있음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "예상하지 못한 오류. 현재 SQLITE_BUSY도 일반 500일 수 있음"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "SQLite 잠금 재시도 예산 소진. 같은 요청으로 1초 뒤 재시도. 비동기 인증 중 잠금은 즉시 같은 503.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "1"
+                  ]
+                },
+                "description": "재시도 전 최소 초"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "데이터베이스가 사용 중입니다. 잠시 후 같은 요청으로 다시 시도해 주세요."
+                }
+              }
+            }
+          }
+        },
+        "x-implementation": "implemented-legacy",
+        "x-role": "admin",
+        "x-admission": "none-current",
+        "x-tables": [
+          "bookings",
+          "holds",
+          "booking_items",
+          "inventory",
+          "physical_seats",
+          "performances",
+          "concerts",
+          "venues",
+          "admin_booking_cancellations",
+          "performance_sales_events",
+          "performance_cancelled_bookings"
+        ],
+        "x-legacy-tables": [
+          "bookings",
+          "booking_seats",
+          "performances",
+          "concerts",
+          "admin_booking_cancellations",
+          "holds",
+          "performance_sales_events",
+          "performance_cancelled_bookings"
+        ]
+      }
+    },
+    "/api/admin/bookings/{bookingId}/cancel": {
+      "post": {
+        "operationId": "adminCancelBooking",
+        "summary": "관리자 고객 요청 예매 취소",
+        "tags": [
+          "admin"
+        ],
+        "description": "고객 요청 확인 후 시작 전 예매 건 전체를 취소한다. 좌석 해제·상태 변경·관리자 이력은 원자적으로 저장한다. 이미 취소된 예매는 기존 상태를 반환한다.",
+        "security": [
+          {
+            "cookieAuth": [],
+            "csrfToken": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/BookingId"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminBookingResult"
+                },
+                "example": {
+                  "booking": {
+                    "id": "T0123456789AB",
+                    "performance_id": "performance-example",
+                    "title": "가상 공연",
+                    "starts_at": 1801814400000,
+                    "status": "cancelled",
+                    "total": 132000,
+                    "seats": [
+                      {
+                        "seat_id": "A-01",
+                        "grade": "VIP",
+                        "price": 130000
+                      }
+                    ],
+                    "cancelled_at": 1801714400000,
+                    "can_cancel": false,
+                    "admin_cancel_reason": "customer_request"
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "입력 형식·필수 동의 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "입력 형식·필수 동의 오류"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "로그인 필요 또는 인증 실패",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "로그인 필요 또는 인증 실패"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "CSRF·출처·역할 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "CSRF·출처·역할 오류"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "회차·본인 소유 선점/예매·API를 찾을 수 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "회차·본인 소유 선점/예매·API를 찾을 수 없음"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "좌석 충돌·매수 제한·만료·마감·중복 이메일",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "좌석 충돌·매수 제한·만료·마감·중복 이메일"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "본문 16 KiB 초과",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "본문 16 KiB 초과"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "JSON Content-Type 필요",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "JSON Content-Type 필요"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "IP/회원 요청 제한·인증 시도 제한 또는 큐/제한 키 상한. Retry-After 초 뒤 재시도.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string",
+                  "pattern": "^[1-9][0-9]*$"
+                },
+                "description": "최소 재시도 대기 초"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "요청이 너무 많습니다. 잠시 후 다시 이용해 주세요."
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "예상하지 못한 오류. 현재 SQLITE_BUSY도 일반 500일 수 있음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "예상하지 못한 오류. 현재 SQLITE_BUSY도 일반 500일 수 있음"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "SQLite 잠금 재시도 예산 소진. 같은 요청으로 1초 뒤 재시도. 비동기 인증 중 잠금은 즉시 같은 503.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "1"
+                  ]
+                },
+                "description": "재시도 전 최소 초"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "데이터베이스가 사용 중입니다. 잠시 후 같은 요청으로 다시 시도해 주세요."
+                }
+              }
+            }
+          }
+        },
+        "x-implementation": "implemented-legacy",
+        "x-role": "admin",
+        "x-admission": "none-current",
+        "x-tables": [
+          "bookings",
+          "holds",
+          "current_bookings",
+          "performances",
+          "booking_items",
+          "inventory",
+          "physical_seats",
+          "concerts",
+          "venues",
+          "admin_booking_cancellations",
+          "performance_sales_events",
+          "performance_cancelled_bookings"
+        ],
+        "x-legacy-tables": [
+          "bookings",
+          "seats",
+          "performances",
+          "concerts",
+          "booking_seats",
+          "admin_booking_cancellations",
+          "holds",
+          "performance_sales_events",
+          "performance_cancelled_bookings"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AdminBookingCancel"
+              },
+              "example": {
+                "reason": "customer_request",
+                "confirmed": true
+              }
+            }
+          },
+          "x-max-bytes": 16384
+        }
+      }
+    },
+    "/api/admin/member-restrictions/lookup": {
+      "post": {
+        "operationId": "adminLookupMemberRestriction",
+        "summary": "관리자 예매 제한 회원 조회",
+        "tags": [
+          "admin"
+        ],
+        "description": "이메일이 일치하는 활성 일반 회원만 조회한다. 관리자 전용 응답에 현재 제한과 마지막 처리 사유를 제공한다.",
+        "security": [
+          {
+            "cookieAuth": [],
+            "csrfToken": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberRestrictionResult"
+                },
+                "example": {
+                  "member": {
+                    "member_id": "member-example",
+                    "email": "member@example.test",
+                    "name": "가상 회원",
+                    "restricted": false,
+                    "revision": 0,
+                    "reason": null,
+                    "changed_at": null
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "입력 형식·필수 동의 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "입력 형식·필수 동의 오류"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "로그인 필요 또는 인증 실패",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "로그인 필요 또는 인증 실패"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "CSRF·출처·역할 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "CSRF·출처·역할 오류"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "회차·본인 소유 선점/예매·API를 찾을 수 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "회차·본인 소유 선점/예매·API를 찾을 수 없음"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "본문 16 KiB 초과",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "본문 16 KiB 초과"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "JSON Content-Type 필요",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "JSON Content-Type 필요"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "IP/회원 요청 제한·인증 시도 제한 또는 큐/제한 키 상한. Retry-After 초 뒤 재시도.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string",
+                  "pattern": "^[1-9][0-9]*$"
+                },
+                "description": "최소 재시도 대기 초"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "요청이 너무 많습니다. 잠시 후 다시 이용해 주세요."
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "예상하지 못한 오류. 현재 SQLITE_BUSY도 일반 500일 수 있음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "예상하지 못한 오류. 현재 SQLITE_BUSY도 일반 500일 수 있음"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "SQLite 잠금 재시도 예산 소진. 같은 요청으로 1초 뒤 재시도. 비동기 인증 중 잠금은 즉시 같은 503.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "1"
+                  ]
+                },
+                "description": "재시도 전 최소 초"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "데이터베이스가 사용 중입니다. 잠시 후 같은 요청으로 다시 시도해 주세요."
+                }
+              }
+            }
+          }
+        },
+        "x-implementation": "implemented-legacy",
+        "x-role": "admin",
+        "x-admission": "none-current",
+        "x-tables": [
+          "users",
+          "member_booking_restrictions"
+        ],
+        "x-legacy-tables": [
+          "users",
+          "member_booking_restrictions"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MemberRestrictionLookup"
+              },
+              "example": {
+                "email": "member@example.test"
+              }
+            }
+          },
+          "x-max-bytes": 16384
+        }
+      }
+    },
+    "/api/admin/member-restrictions": {
+      "put": {
+        "operationId": "adminSetMemberRestriction",
+        "summary": "관리자 회원 예매 제한 및 해제",
+        "tags": [
+          "admin"
+        ],
+        "description": "일반 회원의 신규 예매 권한을 제한하거나 해제한다. 제한할 때 모든 선점을 해제하고 커밋 뒤 큐를 정리한다. 같은 상태로 반복 요청하면 기존 결과를 반환하며, 다른 상태로 바꿀 때 조회한 revision이 달라지면 409를 반환한다.",
+        "security": [
+          {
+            "cookieAuth": [],
+            "csrfToken": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "성공",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberRestrictionResult"
+                },
+                "example": {
+                  "member": {
+                    "member_id": "member-example",
+                    "email": "member@example.test",
+                    "name": "가상 회원",
+                    "restricted": true,
+                    "revision": 1,
+                    "reason": "운영 정책 위반 확인",
+                    "changed_at": 1801714400000
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "입력 형식·필수 동의 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "입력 형식·필수 동의 오류"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "로그인 필요 또는 인증 실패",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "로그인 필요 또는 인증 실패"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "CSRF·출처·역할 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "CSRF·출처·역할 오류"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "회차·본인 소유 선점/예매·API를 찾을 수 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "회차·본인 소유 선점/예매·API를 찾을 수 없음"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "좌석 충돌·매수 제한·만료·마감·중복 이메일",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "좌석 충돌·매수 제한·만료·마감·중복 이메일"
+                }
+              }
+            }
+          },
+          "413": {
+            "description": "본문 16 KiB 초과",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "본문 16 KiB 초과"
+                }
+              }
+            }
+          },
+          "415": {
+            "description": "JSON Content-Type 필요",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "JSON Content-Type 필요"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "IP/회원 요청 제한·인증 시도 제한 또는 큐/제한 키 상한. Retry-After 초 뒤 재시도.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string",
+                  "pattern": "^[1-9][0-9]*$"
+                },
+                "description": "최소 재시도 대기 초"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "요청이 너무 많습니다. 잠시 후 다시 이용해 주세요."
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "예상하지 못한 오류. 현재 SQLITE_BUSY도 일반 500일 수 있음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "예상하지 못한 오류. 현재 SQLITE_BUSY도 일반 500일 수 있음"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "SQLite 잠금 재시도 예산 소진. 같은 요청으로 1초 뒤 재시도. 비동기 인증 중 잠금은 즉시 같은 503.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "1"
+                  ]
+                },
+                "description": "재시도 전 최소 초"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "데이터베이스가 사용 중입니다. 잠시 후 같은 요청으로 다시 시도해 주세요."
+                }
+              }
+            }
+          }
+        },
+        "x-implementation": "implemented-legacy",
+        "x-role": "admin",
+        "x-admission": "none-current",
+        "x-tables": [
+          "users",
+          "holds",
+          "current_holds",
+          "member_booking_restrictions"
+        ],
+        "x-legacy-tables": [
+          "users",
+          "holds",
+          "seats",
+          "member_booking_restrictions"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/MemberRestrictionChange"
+              },
+              "example": {
+                "member_id": "member-example",
+                "restricted": true,
+                "revision": 0,
+                "reason": "운영 정책 위반 확인"
+              }
+            }
+          },
+          "x-max-bytes": 16384
+        }
+      }
+    },
+    "/api/admin/concerts": {
+      "post": {
+        "operationId": "createConcert",
+        "summary": "공연·회차·96석 등록",
+        "tags": [
+          "admin"
+        ],
+        "description": "공연·회차·96석 등록. 모든 회차는 서버의 등록 시각보다 최소 24시간 뒤여야 한다. 공연명·아티스트·장소·소개·S석 기본가·전체 회차 시각이 모두 같으면 409. 문자열 앞뒤 공백, 회차 순서와 동일 시각의 시간대 표기 차이는 무시한다. bookingOpensAt은 선택값이며 첫 회차 시작 전으로 지정한다. 생략하면 즉시 오픈한다.",
+        "security": [
+          {
+            "cookieAuth": [],
+            "csrfToken": []
+          }
+        ],
+        "parameters": [],
+        "responses": {
+          "201": {
+            "description": "생성 또는 기존 예매 재반환",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/IdResult"
+                },
+                "example": {
+                  "id": "concert-example"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "입력 오류 또는 시작까지 24시간이 남지 않은 회차 포함",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "모든 회차는 등록 시점부터 최소 24시간 뒤에 시작해야 합니다."
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "로그인 필요 또는 인증 실패",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "로그인 필요 또는 인증 실패"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "CSRF·출처·역할 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "CSRF·출처·역할 오류"
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "동일한 공연 정보와 전체 회차가 이미 등록됨",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "공연 정보와 회차가 모두 같은 공연이 이미 등록되어 있습니다."
                 }
               }
             }
@@ -2160,13 +3307,15 @@
           "physical_seats",
           "performances",
           "inventory",
-          "audit_events"
+          "audit_events",
+          "performance_sales_events"
         ],
         "x-legacy-tables": [
           "concerts",
           "performances",
           "seats",
-          "audit"
+          "audit",
+          "performance_sales_events"
         ],
         "requestBody": {
           "required": true,
@@ -2193,6 +3342,185 @@
       }
     },
     "/api/admin/performances/{performanceId}/seats": {
+      "get": {
+        "operationId": "adminGetSeatOccupant",
+        "summary": "관리자 좌석 점유 회원 조회",
+        "tags": [
+          "admin"
+        ],
+        "description": "한 회차의 좌석 하나를 조회한다. 유효한 선점이나 확정 예매의 회원 이름·이메일을 관리자에게만 제공한다. 선점에는 만료 시각, 확정 예매에는 예매번호를 포함한다.",
+        "security": [
+          {
+            "cookieAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "$ref": "#/components/parameters/PerformanceId"
+          },
+          {
+            "name": "seatId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "$ref": "#/components/schemas/Id"
+            },
+            "example": "A-01"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "현재 좌석 점유 상태",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AdminSeatOccupant"
+                },
+                "example": {
+                  "seat_id": "A-01",
+                  "state": "booked",
+                  "member": {
+                    "name": "가상 회원",
+                    "email": "member@example.test"
+                  },
+                  "booking_id": "T0123456789AB"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "입력 형식·필수 동의 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "입력 형식·필수 동의 오류"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "로그인 필요 또는 인증 실패",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "로그인 필요 또는 인증 실패"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "CSRF·출처·역할 오류",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "CSRF·출처·역할 오류"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "회차·본인 소유 선점/예매·API를 찾을 수 없음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "회차·본인 소유 선점/예매·API를 찾을 수 없음"
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "IP/회원 요청 제한·인증 시도 제한 또는 큐/제한 키 상한. Retry-After 초 뒤 재시도.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string",
+                  "pattern": "^[1-9][0-9]*$"
+                },
+                "description": "최소 재시도 대기 초"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "요청이 너무 많습니다. 잠시 후 다시 이용해 주세요."
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "예상하지 못한 오류. 현재 SQLITE_BUSY도 일반 500일 수 있음",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "예상하지 못한 오류. 현재 SQLITE_BUSY도 일반 500일 수 있음"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "SQLite 잠금 재시도 예산 소진. 같은 요청으로 1초 뒤 재시도. 비동기 인증 중 잠금은 즉시 같은 503.",
+            "headers": {
+              "Retry-After": {
+                "schema": {
+                  "type": "string",
+                  "enum": [
+                    "1"
+                  ]
+                },
+                "description": "재시도 전 최소 초"
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                },
+                "example": {
+                  "error": "데이터베이스가 사용 중입니다. 잠시 후 같은 요청으로 다시 시도해 주세요."
+                }
+              }
+            }
+          }
+        },
+        "x-implementation": "implemented-legacy",
+        "x-role": "admin",
+        "x-admission": "none-current",
+        "x-tables": [
+          "users",
+          "bookings",
+          "holds",
+          "performances",
+          "inventory",
+          "physical_seats",
+          "current_bookings",
+          "current_holds"
+        ],
+        "x-legacy-tables": [
+          "users",
+          "bookings",
+          "holds",
+          "performances",
+          "seats"
+        ]
+      },
       "patch": {
         "operationId": "blockSeats",
         "summary": "판매 차단·해제",
@@ -2420,7 +3748,7 @@
         "tags": [
           "queue"
         ],
-        "description": "로그인·변경 요청 CSRF/출처. 회원·회차·현재 세션 결합 입장권. 유효 DB hold는 정원에 포함하며 일반 기한 후/재시작 뒤에는 해당 hold 확정/전체 해제만 허용한다. GET은 본인 메모리 상태, DELETE는 DB hold를 취소하지 않는다. 예매 오픈 전 회차는 409 BOOKING_NOT_OPEN으로 진입을 거부한다.",
+        "description": "로그인·변경 요청 CSRF/출처. 회원·회차·현재 세션 결합 입장권. 유효 DB hold는 정원에 포함하며 일반 기한 후/재시작 뒤에는 해당 hold 확정/전체 해제만 허용한다. GET은 본인 메모리 상태, DELETE는 DB hold를 취소하지 않는다. 예매 이용 제한 회원은 BOOKING_RESTRICTED(403)를 반환한다. 판매 중단 또는 취소된 회차는 PERFORMANCE_UNAVAILABLE(409)를 반환한다. 예매 오픈 전 회차는 409 BOOKING_NOT_OPEN으로 진입을 거부한다.",
         "security": [
           {
             "cookieAuth": [],
@@ -2440,7 +3768,9 @@
           "concerts",
           "venues",
           "holds",
-          "current_holds"
+          "current_holds",
+          "member_booking_restrictions",
+          "performance_sales_events"
         ],
         "x-state-store": "process-memory",
         "responses": {
@@ -2526,15 +3856,15 @@
             }
           },
           "409": {
-            "description": "요청/복구 충돌 또는 DB 일시 오류",
+            "description": "대기열·복구 요청 충돌, 회차 판매 중단·취소 또는 예매 오픈 전",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/QueueError"
                 },
                 "example": {
-                  "error": "요청 상태를 확인해 주세요.",
-                  "code": "QUEUE_CONFLICT"
+                  "error": "아직 예매가 열리지 않았습니다. 예매 오픈 시각 이후 다시 시도해 주세요.",
+                  "code": "BOOKING_NOT_OPEN"
                 }
               }
             }
@@ -2643,7 +3973,9 @@
           "performances",
           "concerts",
           "holds",
-          "seats"
+          "seats",
+          "member_booking_restrictions",
+          "performance_sales_events"
         ]
       },
       "get": {
@@ -2652,7 +3984,7 @@
         "tags": [
           "queue"
         ],
-        "description": "로그인·변경 요청 CSRF/출처. 회원·회차·현재 세션 결합 입장권. 유효 DB hold는 정원에 포함하며 일반 기한 후/재시작 뒤에는 해당 hold 확정/전체 해제만 허용한다. GET은 본인 메모리 상태, DELETE는 DB hold를 취소하지 않는다.",
+        "description": "로그인·변경 요청 CSRF/출처. 회원·회차·현재 세션 결합 입장권. 유효 DB hold는 정원에 포함하며 일반 기한 후/재시작 뒤에는 해당 hold 확정/전체 해제만 허용한다. GET은 본인 메모리 상태, DELETE는 DB hold를 취소하지 않는다. 예매 이용 제한 회원은 BOOKING_RESTRICTED(403)를 반환한다. 판매 중단 또는 취소된 회차는 PERFORMANCE_UNAVAILABLE(409)를 반환한다.",
         "security": [
           {
             "cookieAuth": []
@@ -2666,7 +3998,10 @@
         "x-implementation": "implemented-queue",
         "x-role": "user",
         "x-admission": "none",
-        "x-tables": [],
+        "x-tables": [
+          "member_booking_restrictions",
+          "performance_sales_events"
+        ],
         "x-state-store": "process-memory",
         "responses": {
           "200": {
@@ -2751,15 +4086,15 @@
             }
           },
           "409": {
-            "description": "요청/복구 충돌 또는 DB 일시 오류",
+            "description": "회차 판매 중단 또는 취소",
             "content": {
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/QueueError"
                 },
                 "example": {
-                  "error": "요청 상태를 확인해 주세요.",
-                  "code": "QUEUE_CONFLICT"
+                  "error": "이 회차는 판매가 중단되었습니다.",
+                  "code": "PERFORMANCE_UNAVAILABLE"
                 }
               }
             }
@@ -2852,7 +4187,10 @@
             }
           }
         },
-        "x-legacy-tables": []
+        "x-legacy-tables": [
+          "member_booking_restrictions",
+          "performance_sales_events"
+        ]
       },
       "delete": {
         "operationId": "leaveQueue",
@@ -3681,7 +5019,8 @@
           "concert_id",
           "starts_at",
           "available",
-          "min_price"
+          "min_price",
+          "sale_state"
         ],
         "properties": {
           "id": {
@@ -3700,6 +5039,13 @@
           },
           "min_price": {
             "$ref": "#/components/schemas/Money"
+          },
+          "sale_state": {
+            "type": "string",
+            "enum": [
+              "open",
+              "paused"
+            ]
           }
         },
         "additionalProperties": false
@@ -3716,8 +5062,8 @@
           "duration",
           "age",
           "created_at",
-          "booking_opens_at",
-          "performances"
+          "performances",
+          "booking_opens_at"
         ],
         "properties": {
           "id": {
@@ -3755,19 +5101,19 @@
           "created_at": {
             "$ref": "#/components/schemas/Time"
           },
-          "booking_opens_at": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 9007199254740991,
-            "nullable": true,
-            "description": "예매 오픈 시각(epoch ms). null이면 제한 없음(기능 추가 전 등록 공연). 이 시각 이전에는 대기열 진입·좌석 선점을 409 BOOKING_NOT_OPEN으로 거부한다."
-          },
           "performances": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/PerformanceSummary"
             },
             "minItems": 1
+          },
+          "booking_opens_at": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "nullable": true,
+            "description": "예매 오픈 시각(epoch ms). null이면 제한 없음(기능 추가 전 등록 공연). 이 시각 이전에는 대기열 진입·좌석 선점을 409 BOOKING_NOT_OPEN으로 거부한다."
           }
         },
         "additionalProperties": false
@@ -4107,6 +5453,17 @@
             },
             "minItems": 1,
             "maxItems": 4
+          },
+          "admin_cancel_reason": {
+            "type": "string",
+            "enum": [
+              "customer_request"
+            ]
+          },
+          "performance_cancel_reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
           }
         },
         "additionalProperties": false
@@ -4195,7 +5552,7 @@
             "items": {
               "type": "string",
               "format": "date-time",
-              "description": "시간대가 명시된 서로 다른 미래 일시."
+              "description": "시간대가 명시된 서로 다른 일시. 모든 회차는 서버의 등록 시각보다 최소 24시간 뒤여야 한다."
             },
             "minItems": 1,
             "maxItems": 10,
@@ -4205,7 +5562,7 @@
             "type": "string",
             "format": "date-time",
             "nullable": true,
-            "description": "선택. 시간대가 명시된 예매 오픈 일시. 현재 이후이고 첫 회차 시작 전이어야 한다. 생략/null이면 등록 즉시 오픈."
+            "description": "선택. 시간대가 명시된 첫 회차 시작 전의 예매 오픈 일시. 생략, null 또는 등록 시각보다 최대 60초 이전이면 즉시 오픈한다."
           }
         },
         "additionalProperties": true
@@ -4301,7 +5658,11 @@
                 "total",
                 "blocked",
                 "booked",
-                "held"
+                "held",
+                "concert_id",
+                "sale_state",
+                "sale_revision",
+                "booking_count"
               ],
               "properties": {
                 "id": {
@@ -4332,6 +5693,27 @@
                   "type": "integer",
                   "minimum": 0,
                   "maximum": 9007199254740991
+                },
+                "concert_id": {
+                  "$ref": "#/components/schemas/Id"
+                },
+                "sale_state": {
+                  "type": "string",
+                  "enum": [
+                    "open",
+                    "paused",
+                    "cancelled"
+                  ]
+                },
+                "sale_revision": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "booking_count": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
                 }
               },
               "additionalProperties": false
@@ -4353,7 +5735,13 @@
                   "enum": [
                     "block",
                     "unblock",
-                    "create-concert"
+                    "create-concert",
+                    "cancel-booking",
+                    "restrict-member",
+                    "restore-member",
+                    "pause-performance",
+                    "resume-performance",
+                    "cancel-performance"
                   ]
                 },
                 "detail": {
@@ -4534,6 +5922,332 @@
             "enum": [
               true
             ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "AdminBooking": {
+        "type": "object",
+        "required": [
+          "id",
+          "performance_id",
+          "title",
+          "starts_at",
+          "status",
+          "total",
+          "seats",
+          "cancelled_at",
+          "can_cancel"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "performance_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "title": {
+            "type": "string"
+          },
+          "starts_at": {
+            "$ref": "#/components/schemas/Time"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "confirmed",
+              "cancelled"
+            ]
+          },
+          "total": {
+            "$ref": "#/components/schemas/Money"
+          },
+          "seats": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BookingSeat"
+            },
+            "minItems": 1,
+            "maxItems": 4
+          },
+          "cancelled_at": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "nullable": true
+          },
+          "can_cancel": {
+            "type": "boolean"
+          },
+          "admin_cancel_reason": {
+            "type": "string",
+            "enum": [
+              "customer_request"
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "AdminBookingResult": {
+        "type": "object",
+        "required": [
+          "booking"
+        ],
+        "properties": {
+          "booking": {
+            "$ref": "#/components/schemas/AdminBooking"
+          }
+        },
+        "additionalProperties": false
+      },
+      "AdminBookingCancel": {
+        "type": "object",
+        "required": [
+          "reason",
+          "confirmed"
+        ],
+        "properties": {
+          "reason": {
+            "type": "string",
+            "enum": [
+              "customer_request"
+            ]
+          },
+          "confirmed": {
+            "type": "boolean",
+            "enum": [
+              true
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "MemberRestriction": {
+        "type": "object",
+        "required": [
+          "member_id",
+          "email",
+          "name",
+          "restricted",
+          "revision",
+          "reason",
+          "changed_at"
+        ],
+        "properties": {
+          "member_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "email": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 254
+          },
+          "name": {
+            "type": "string"
+          },
+          "restricted": {
+            "type": "boolean"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200,
+            "nullable": true
+          },
+          "changed_at": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991,
+            "nullable": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "MemberRestrictionResult": {
+        "type": "object",
+        "required": [
+          "member"
+        ],
+        "properties": {
+          "member": {
+            "$ref": "#/components/schemas/MemberRestriction"
+          }
+        },
+        "additionalProperties": false
+      },
+      "MemberRestrictionLookup": {
+        "type": "object",
+        "required": [
+          "email"
+        ],
+        "properties": {
+          "email": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 254
+          }
+        },
+        "additionalProperties": false
+      },
+      "MemberRestrictionChange": {
+        "type": "object",
+        "required": [
+          "member_id",
+          "restricted",
+          "revision",
+          "reason"
+        ],
+        "properties": {
+          "member_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "restricted": {
+            "type": "boolean"
+          },
+          "revision": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "additionalProperties": false
+      },
+      "AdminSeatOccupant": {
+        "type": "object",
+        "required": [
+          "seat_id",
+          "state",
+          "member"
+        ],
+        "properties": {
+          "seat_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "available",
+              "blocked",
+              "held",
+              "booked"
+            ]
+          },
+          "member": {
+            "type": "object",
+            "nullable": true,
+            "required": [
+              "name",
+              "email"
+            ],
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "email": {
+                "type": "string"
+              }
+            },
+            "additionalProperties": false
+          },
+          "booking_id": {
+            "$ref": "#/components/schemas/Id"
+          },
+          "hold_expires_at": {
+            "$ref": "#/components/schemas/Time"
+          }
+        },
+        "additionalProperties": false
+      },
+      "PerformanceSalesChange": {
+        "type": "object",
+        "required": [
+          "action",
+          "targets",
+          "reason"
+        ],
+        "properties": {
+          "action": {
+            "type": "string",
+            "enum": [
+              "pause",
+              "resume",
+              "cancel"
+            ]
+          },
+          "targets": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 50,
+            "items": {
+              "type": "object",
+              "required": [
+                "performance_id",
+                "revision",
+                "booking_count"
+              ],
+              "properties": {
+                "performance_id": {
+                  "$ref": "#/components/schemas/Id"
+                },
+                "revision": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                },
+                "booking_count": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 9007199254740991
+                }
+              },
+              "additionalProperties": false
+            }
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          }
+        },
+        "additionalProperties": false
+      },
+      "PerformanceSalesResult": {
+        "type": "object",
+        "required": [
+          "state",
+          "performance_ids",
+          "cancelled_bookings"
+        ],
+        "properties": {
+          "state": {
+            "type": "string",
+            "enum": [
+              "open",
+              "paused",
+              "cancelled"
+            ]
+          },
+          "performance_ids": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "$ref": "#/components/schemas/Id"
+            }
+          },
+          "cancelled_bookings": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 9007199254740991
           }
         },
         "additionalProperties": false

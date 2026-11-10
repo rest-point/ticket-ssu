@@ -10,4 +10,29 @@
 
 /* ticket-ssu wordmark fits the existing responsive header. */
 .header .logo{font-size:28px;letter-spacing:-1.3px;white-space:nowrap}.auth-art>span{font-size:32px;letter-spacing:-1px}@media(max-width:560px){.header .logo{font-size:24px}}
+
+.admin-booking{margin-bottom:24px;padding:24px}
+#admin-booking-search{display:flex;align-items:end;flex-wrap:wrap;gap:12px;margin:16px 0}
+#admin-booking-search label{display:grid;gap:5px;flex:1 1 260px;max-width:460px;font-weight:600}
+#admin-booking-search input{min-width:0;padding:9px 12px;border:1px solid var(--line);border-radius:7px}
+#admin-booking-result dd{overflow-wrap:anywhere;min-width:0}
+
+.admin-member-form{display:flex;align-items:end;flex-wrap:wrap;gap:12px;margin:16px 0}
+.admin-member-form label:not(.check-label){display:grid;gap:5px;flex:1 1 260px;max-width:460px;font-weight:600}
+.admin-member-form input:not([type=checkbox]){min-width:0;padding:9px 12px;border:1px solid var(--line);border-radius:7px}
+.admin-member-form .check-label{align-self:center}
+#admin-member-result dd{overflow-wrap:anywhere;min-width:0}
+
+.seat[data-inspect-seat]{color:#465545}
+.seat[data-inspect-seat]:hover{box-shadow:inset 0 0 0 2px var(--green)}
+.admin-seat-occupant{margin-top:16px;padding:16px;border:1px solid var(--line);border-radius:8px;overflow-wrap:anywhere}
+.admin-seat-occupant p{margin-top:5px}
+.admin-seat-occupant .button{margin-top:10px}
+
+.performance-sales{display:grid;gap:12px;max-width:720px;margin-top:14px}
+.performance-sales>label:not(.check-label){display:grid;gap:5px;font-weight:600}
+.performance-sales select,.performance-sales input:not([type=checkbox]){width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:7px;background:#fff}
+.performance-sales fieldset{min-width:0;border:1px solid var(--line);border-radius:7px;padding:12px}
+.performance-sales fieldset label{margin:5px 0}
+.performance-sales>.button{justify-self:start}
 .available-dot.soon{color:#a2611f}.available-dot.soon:before{background:#c47a2c}

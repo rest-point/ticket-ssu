@@ -1,6 +1,6 @@
 import { DatabaseSync } from 'node:sqlite';
 import { realpathSync } from 'node:fs';
-import { configure, destinationPath, validateModel, modelTransaction, withNewDatabase } from './model.mjs';
+import { configure, destinationPath, validateModel, modelTransaction, withNewDatabase, hasAdminBookingCancellations, validateAdminBookingCancellations, validateMemberBookingRestrictions, validatePerformanceSales } from './model.mjs';
 
 const legacyColumns = {
   users: 'id email name phone password_hash role created_at',
@@ -13,7 +13,6 @@ const legacyColumns = {
   booking_seats: 'booking_id seat_id grade price',
   audit: 'id user_id action detail created_at'
 };
-// Additive legacy columns: files created before the addition still migrate (value NULL).
 const optionalLegacyColumns = { concerts: 'booking_opens_at' };
 
 export function insertRow(db, table, row) {
@@ -28,16 +27,21 @@ const reject = message => { throw new Error(`legacy preflight failed: ${message}
 export function readLegacy(db) {
   if (db.prepare('PRAGMA user_version').get().user_version !== 0) reject('unsupported source version');
   const actual = db.prepare("SELECT name FROM sqlite_schema WHERE type='table' AND name NOT LIKE 'sqlite_%' ORDER BY name").all().map(r => r.name);
-  if (JSON.stringify(actual) !== JSON.stringify(Object.keys(legacyColumns).sort())) reject('unknown source tables');
+  const columnsByTable = { ...legacyColumns };
+  if (hasAdminBookingCancellations(db)) columnsByTable.admin_booking_cancellations = 'booking_id admin_id reason created_at';
+  if (actual.includes('member_booking_restrictions')) columnsByTable.member_booking_restrictions = 'member_id revision admin_id restricted reason created_at';
+  if (actual.includes('performance_sales_events')) columnsByTable.performance_sales_events = 'performance_id revision admin_id state reason created_at';
+  if (actual.includes('performance_cancelled_bookings')) columnsByTable.performance_cancelled_bookings = 'booking_id performance_id revision';
+  if (JSON.stringify(actual) !== JSON.stringify(Object.keys(columnsByTable).sort())) reject('unknown source tables');
   if (db.prepare("SELECT 1 FROM sqlite_schema WHERE type IN ('view','trigger') LIMIT 1").get()) reject('custom source view/trigger requires review');
   const indexes = db.prepare("SELECT name FROM sqlite_schema WHERE type='index' AND sql IS NOT NULL").all();
   if (indexes.some(r => !['one_active_hold', 'seats_hold', 'bookings_user'].includes(r.name))) reject('custom source index requires review');
   const payload = {};
-  for (const [table, columns] of Object.entries(legacyColumns)) {
+  for (const [table, columns] of Object.entries(columnsByTable)) {
     const info = db.prepare(`PRAGMA table_info(${table})`).all();
     const layout = info.map(c => c.name).join(' ');
     if (layout !== columns && !(optionalLegacyColumns[table] && layout === `${columns} ${optionalLegacyColumns[table]}`)) reject('unexpected source column layout');
-    const integers = new Set('created_at expires_at starts_at cancelled_at ticket_total fee total number price blocked duration booking_opens_at'.split(' '));
+    const integers = new Set('created_at expires_at starts_at cancelled_at ticket_total fee total number price blocked duration revision restricted booking_opens_at'.split(' '));
     if (info.some(c => c.type !== (integers.has(c.name) || (table === 'audit' && c.name === 'id') ? 'INTEGER' : 'TEXT'))) reject('unexpected source declared type');
     payload[table] = db.prepare(`SELECT * FROM ${table}`).all();
     for (const row of payload[table]) for (const col of info) {
@@ -46,6 +50,9 @@ export function readLegacy(db) {
     }
   }
   if (db.prepare('PRAGMA integrity_check').all().some(r => r.integrity_check !== 'ok') || db.prepare('PRAGMA foreign_key_check').all().length) reject('source integrity');
+  validateAdminBookingCancellations(db);
+  validateMemberBookingRestrictions(db);
+  validatePerformanceSales(db);
   const forbid = (query, message) => { if (db.prepare(query).get()) reject(message); };
   forbid(`SELECT 1 FROM bookings b JOIN holds h ON h.id=b.hold_id WHERE b.user_id!=h.user_id OR b.performance_id!=h.performance_id OR h.status!='converted' LIMIT 1`, 'booking owner/performance/hold');
   forbid(`SELECT 1 FROM bookings b LEFT JOIN booking_seats s ON s.booking_id=b.id GROUP BY b.id
@@ -89,6 +96,10 @@ function importLegacy(db, data) {
     if (s.booking_id) insertRow(db, 'current_bookings', { inventory_id: inv, booking_id: s.booking_id });
   }
   for (const row of data.audit) insertRow(db, 'audit_events', row);
+  for (const row of data.admin_booking_cancellations ?? []) insertRow(db, 'admin_booking_cancellations', row);
+  for (const row of data.member_booking_restrictions ?? []) insertRow(db, 'member_booking_restrictions', row);
+  for (const row of data.performance_sales_events ?? []) insertRow(db, 'performance_sales_events', row);
+  for (const row of data.performance_cancelled_bookings ?? []) insertRow(db, 'performance_cancelled_bookings', row);
   // Compare exact values, not just row counts. No real data is printed on failure.
   for (const original of data.bookings) {
     const migrated = db.prepare('SELECT * FROM booking_totals WHERE id=?').get(original.id);

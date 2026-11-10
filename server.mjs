@@ -49,6 +49,10 @@ async function jsonBody(req, optional = false) {
   }
 }
 const cookieToken = req => /(?:^|;\s*)ticket_ssu_session=([a-f0-9]{64})(?:;|$)/.exec(req.headers.cookie ?? '')?.[1];
+function decodePathId(value, message = '예매번호를 확인해 주세요.') {
+  try { return decodeURIComponent(value); }
+  catch { throw new AppError(400, message); }
+}
 export async function createApp({
   dbPath = process.env.DB_PATH || defaultDatabasePath(root),
   demo = process.env.DEMO_MODE !== 'false',
@@ -199,7 +203,8 @@ export async function createApp({
         if (req.method === 'GET' && queueMatch) return respond(200, await runDb(() => admission.status(requireUser().id, queueMatch[1], sessionKey)));
         if (req.method === 'DELETE' && queueMatch) return respond(200, await runDb(() => admission.leave(requireUser().id, queueMatch[1])));
         const seatsMatch = /^\/api\/performances\/([^/]+)\/seats$/.exec(path);
-        if (req.method === 'GET' && seatsMatch) return respond(200, await runDb(() => store.seatMap(seatsMatch[1], session?.user.id)));
+        if (req.method === 'GET' && seatsMatch) return respond(200, await runDb(() => store.seatMap(seatsMatch[1], session?.user.id,
+          { includeCancelled: session?.user.role === 'admin' })));
         const holdMatch = /^\/api\/performances\/([^/]+)\/hold$/.exec(path);
         if (req.method === 'PUT' && holdMatch) {
           requireUser();
@@ -221,15 +226,47 @@ export async function createApp({
         if (path.startsWith('/api/admin/')) {
           const user = requireUser();
           store.requireAdmin(user.id);
+          if (req.method === 'POST' && path === '/api/admin/member-restrictions/lookup') {
+            const body = await jsonBody(req);
+            return respond(200, { member: await runDb(() => store.adminGetMemberRestriction(requireUser().id, body)) });
+          }
+          if (req.method === 'PUT' && path === '/api/admin/member-restrictions') {
+            const body = await jsonBody(req);
+            const member = await runDb(() => {
+              const result = store.adminSetMemberRestriction(requireUser().id, body);
+              if (result.restricted) queue.removeUser(result.member_id);
+              return result;
+            });
+            return respond(200, { member });
+          }
+          const adminBookingMatch = /^\/api\/admin\/bookings\/([^/]+)$/.exec(path);
+          if (req.method === 'GET' && adminBookingMatch) return respond(200, {
+            booking: await runDb(() => store.adminBooking(requireUser().id, decodePathId(adminBookingMatch[1])))
+          });
+          const adminCancelMatch = /^\/api\/admin\/bookings\/([^/]+)\/cancel$/.exec(path);
+          if (req.method === 'POST' && adminCancelMatch) {
+            const body = await jsonBody(req);
+            return respond(200, { booking: await runDb(() => store.cancelAsAdmin(requireUser().id, decodePathId(adminCancelMatch[1]), body)) });
+          }
           if (req.method === 'GET' && path === '/api/admin/summary') return respond(200, await runDb(() => store.adminSummary(requireUser().id)));
+          if (req.method === 'POST' && path === '/api/admin/performance-sales') {
+            const body = await jsonBody(req);
+            return respond(200, await runDb(() => {
+              const result = store.changePerformanceSales(requireUser().id, body);
+              if (result.state !== 'open') for (const id of result.performance_ids) queue.removePerformance(id);
+              return result;
+            }));
+          }
           if (req.method === 'POST' && path === '/api/admin/concerts') {
             const body = await jsonBody(req);
             return respond(201, await runDb(() => store.createConcert(requireUser().id, body)));
           }
-          const block = /^\/api\/admin\/performances\/([^/]+)\/seats$/.exec(path);
-          if (req.method === 'PATCH' && block) {
+          const adminSeats = /^\/api\/admin\/performances\/([^/]+)\/seats$/.exec(path);
+          if (req.method === 'GET' && adminSeats) return respond(200,
+            await runDb(() => store.adminSeatOccupant(requireUser().id, decodePathId(adminSeats[1], '회차를 확인해 주세요.'), url.searchParams.get('seatId'))));
+          if (req.method === 'PATCH' && adminSeats) {
             const body = await jsonBody(req);
-            return respond(200, await runDb(() => store.blockSeats(requireUser().id, block[1], body.seatIds, body.blocked)));
+            return respond(200, await runDb(() => store.blockSeats(requireUser().id, adminSeats[1], body.seatIds, body.blocked)));
           }
         }
         throw new AppError(404, '요청한 API를 찾을 수 없습니다.');

@@ -234,6 +234,17 @@ audit_events(id, user_id, action, detail, created_at)
 
 detail은 동작의 불변 사건 자료다. 현재처럼 create-concert의 id/title, block/unblock의 performanceId/ids를 보존한다. 좌석 목록은 판매 관계를 저장하는 컬럼이 아니라 감사 사건의 원문 상세다. 관계 조회·FK 검증·매수 집계에 detail을 사용하지 않는다. 범용 target_id를 여러 테이블에 거짓 FK로 연결하지 않으며 감사 대상 FK가 필요해지면 별도 대상 관계를 설계한다.
 
+## 관리자 기능 이력
+
+다음 이력은 model과 legacy에 공통으로 추가된다. 현재 상태를 결정하는 최신 revision과 기존 예매의 연결을 보존한다. 자료형·FK 삭제 정책은 [물리 모델](physical.md)을 따른다.
+
+| 릴레이션 | 키 | 보존 내용 |
+| --- | --- | --- |
+| admin_booking_cancellations | booking_id | 예매당 대리 취소 한 건. 처리 관리자·사유·시각을 보존한다. |
+| member_booking_restrictions | (member_id, revision) | 회원별 제한·해제 이력. 최신 revision을 현재 상태로 사용한다. |
+| performance_sales_events | (performance_id, revision) | 회차별 판매 중단·재개·최종 취소 이력. 최신 revision을 현재 상태로 사용한다. |
+| performance_cancelled_bookings | booking_id | 최종 취소된 예매를 해당 (performance_id, revision)의 판매 이력에 연결한다. |
+
 ## 릴레이션 간 무결성 계약
 
 아래는 model의 필수 무결성 계약이다. “FK로 직접 표현”과 “트리거·트랜잭션으로 보완”을 구분하며 물리 DDL/요청 처리에 적용한다. 참조되는 부모의 식별 정보는 기존 데이터 보존 이후 불변으로 두어 자식 검증을 부모 갱신으로 우회하지 못하게 한다.

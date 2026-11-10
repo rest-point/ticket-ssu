@@ -86,10 +86,28 @@ for (const schema of ['legacy', 'model']) {
     f.verify();
   });
 
+  test(`[${schema}] 존재하지 않는 공연일과 오픈일을 거부하고 유효한 윤일과 시간대를 허용한다`, async t => {
+    const f = await fixture(t, schema);
+    const before = f.store.concerts().length;
+    for (const invalid of ['2027-02-29T19:00:00+09:00', '2027-02-30T19:00:00+09:00', '2027-04-31T00:30:00Z']) {
+      assert.throws(() => f.create({ dates: [invalid] }), { status: 400 });
+      assert.throws(() => f.create({ dates: ['2027-05-02T19:00:00+09:00'], bookingOpensAt: invalid }), { status: 400 });
+    }
+    assert.equal(f.store.concerts().length, before);
+
+    const { concert } = f.create({ dates: ['2028-03-01T23:15-05:00'], bookingOpensAt: '2028-02-29T00:30:00.125+09:00' });
+    assert.equal(concert.performances[0].starts_at, Date.UTC(2028, 2, 2, 4, 15));
+    assert.equal(concert.booking_opens_at, Date.UTC(2028, 1, 28, 15, 30, 0, 125));
+    f.verify();
+  });
+
   test(`[${schema}] 오픈 전에는 좌석을 선점할 수 없고 오픈 시각부터 가능하다`, async t => {
     const f = await fixture(t, schema);
     const opensAt = initialTime + HOUR;
     const { pid } = f.create({ bookingOpensAt: iso(opensAt) });
+    const target = revision => ({ performance_id: pid, revision, booking_count: 0 });
+    f.store.changePerformanceSales(f.admin.id, { action: 'pause', targets: [target(0)], reason: '통합 검증' });
+    f.store.changePerformanceSales(f.admin.id, { action: 'resume', targets: [target(1)], reason: '통합 검증' });
     f.setTime(opensAt - 1);
     assert.throws(() => f.store.setHold(f.user.id, pid, ['A-01']), e => e.status === 409 && e.code === 'BOOKING_NOT_OPEN');
     assert.equal(f.store.seatMap(pid, f.user.id).hold, null);

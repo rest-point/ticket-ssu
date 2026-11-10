@@ -2,7 +2,7 @@
   "info": {
     "name": "ticket-ssu current API regression",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-    "description": "Current 19 operations only. Use a dedicated demo target. Run 01 Booking smoke only on staging. Cookie Jar must be enabled. Failures stop the run and require owned-state review."
+    "description": "Current API operations only. Use a dedicated demo target. Run 01 Booking smoke only on staging. Cookie Jar must be enabled. Failures stop the run and require owned-state review."
   },
   "protocolProfileBehavior": {
     "followRedirects": false
@@ -10,11 +10,11 @@
   "variable": [
     {
       "key": "contracts",
-      "value": "{\"01 health\":{\"id\":\"health\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/Health\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"02 readiness\":{\"id\":\"readiness\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/Readiness\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"03 anonymous session\":{\"id\":\"getSession\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/Session\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"04 anonymous booking denied\":{\"id\":\"listBookings\",\"status\":401,\"schema\":{\"$ref\":\"#/definitions/Error\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"05 incorrect password denied\":{\"id\":\"login\",\"status\":401,\"schema\":{\"$ref\":\"#/definitions/Error\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"06 foreign origin denied\":{\"id\":\"login\",\"status\":403,\"schema\":{\"$ref\":\"#/definitions/Error\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"07 member login\":{\"id\":\"login\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/AuthResult\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"08 authenticated session\":{\"id\":\"getSession\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/Session\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"09 member admin access denied\":{\"id\":\"adminSummary\",\"status\":403,\"schema\":{\"$ref\":\"#/definitions/Error\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"10 missing csrf denied\":{\"id\":\"logout\",\"status\":403,\"schema\":{\"$ref\":\"#/definitions/Error\"},\"localOnly\":false,\"noCsrf\":true,\"admission\":false},\"11 concerts\":{\"id\":\"listConcerts\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/ConcertList\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"12 seat preflight\":{\"id\":\"getSeats\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/SeatMap\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"13 booking preflight\":{\"id\":\"listBookings\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/BookingList\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"14 queue preflight\":{\"id\":\"getQueue\",\"status\":404,\"schema\":{\"$ref\":\"#/definitions/QueueError\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"15 admission bypass denied\":{\"id\":\"replaceHold\",\"status\":403,\"schema\":{\"$ref\":\"#/definitions/Error\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"16 enter queue\":{\"id\":\"enterQueue\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/QueueStatus\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"17 queue status\":{\"id\":\"getQueue\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/QueueStatus\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"18 reserve one seat\":{\"id\":\"replaceHold\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/HoldResult\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":true},\"18b owned hold readback\":{\"id\":\"getSeats\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/SeatMap\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"19 demo checkout\":{\"id\":\"createBooking\",\"status\":201,\"schema\":{\"$ref\":\"#/definitions/BookingResult\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":true},\"20 booking query\":{\"id\":\"listBookings\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/BookingList\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"21 cancel owned booking\":{\"id\":\"cancelBooking\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/BookingResult\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"22 cancelled history\":{\"id\":\"listBookings\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/BookingList\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"23 released inventory\":{\"id\":\"getSeats\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/SeatMap\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"24 leave queue\":{\"id\":\"leaveQueue\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/Ok\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"25 member logout\":{\"id\":\"logout\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/Ok\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"26 revoked session\":{\"id\":\"getSession\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/Session\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"27 signup isolated second member\":{\"id\":\"signup\",\"status\":201,\"schema\":{\"$ref\":\"#/definitions/AuthResult\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"28 other member cancellation denied\":{\"id\":\"cancelBooking\",\"status\":404,\"schema\":{\"$ref\":\"#/definitions/Error\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"29 other member logout\":{\"id\":\"logout\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/Ok\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"29b withdrawal member login\":{\"id\":\"login\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/AuthResult\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"29c withdraw owned member\":{\"id\":\"withdrawAccount\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/Ok\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"29d withdrawn session\":{\"id\":\"getSession\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/Session\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"29e withdrawn login denied\":{\"id\":\"login\",\"status\":401,\"schema\":{\"$ref\":\"#/definitions/Error\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"30 isolated administrator login\":{\"id\":\"login\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/AuthResult\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"31 administrator summary\":{\"id\":\"adminSummary\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/AdminSummary\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"32 create fixture concert\":{\"id\":\"createConcert\",\"status\":201,\"schema\":{\"$ref\":\"#/definitions/IdResult\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"33 administrator blocks one seat\":{\"id\":\"blockSeats\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/Updated\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"34 blocked seat visible\":{\"id\":\"getSeats\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/SeatMap\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"35 administrator restores seat\":{\"id\":\"blockSeats\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/Updated\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"36 administrator logout\":{\"id\":\"logout\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/Ok\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false}}"
+      "value": "{\"01 health\":{\"id\":\"health\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/Health\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"02 readiness\":{\"id\":\"readiness\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/Readiness\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"03 anonymous session\":{\"id\":\"getSession\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/Session\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"04 anonymous booking denied\":{\"id\":\"listBookings\",\"status\":401,\"schema\":{\"$ref\":\"#/definitions/Error\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"05 incorrect password denied\":{\"id\":\"login\",\"status\":401,\"schema\":{\"$ref\":\"#/definitions/Error\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"06 foreign origin denied\":{\"id\":\"login\",\"status\":403,\"schema\":{\"$ref\":\"#/definitions/Error\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"07 member login\":{\"id\":\"login\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/AuthResult\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"08 authenticated session\":{\"id\":\"getSession\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/Session\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"09 member admin access denied\":{\"id\":\"adminSummary\",\"status\":403,\"schema\":{\"$ref\":\"#/definitions/Error\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"10 missing csrf denied\":{\"id\":\"logout\",\"status\":403,\"schema\":{\"$ref\":\"#/definitions/Error\"},\"localOnly\":false,\"noCsrf\":true,\"admission\":false},\"11 concerts\":{\"id\":\"listConcerts\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/ConcertList\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"12 seat preflight\":{\"id\":\"getSeats\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/SeatMap\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"13 booking preflight\":{\"id\":\"listBookings\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/BookingList\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"14 queue preflight\":{\"id\":\"getQueue\",\"status\":404,\"schema\":{\"$ref\":\"#/definitions/QueueError\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"15 admission bypass denied\":{\"id\":\"replaceHold\",\"status\":403,\"schema\":{\"$ref\":\"#/definitions/Error\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"16 enter queue\":{\"id\":\"enterQueue\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/QueueStatus\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"17 queue status\":{\"id\":\"getQueue\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/QueueStatus\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"18 reserve one seat\":{\"id\":\"replaceHold\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/HoldResult\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":true},\"18b owned hold readback\":{\"id\":\"getSeats\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/SeatMap\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"19 demo checkout\":{\"id\":\"createBooking\",\"status\":201,\"schema\":{\"$ref\":\"#/definitions/BookingResult\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":true},\"20 booking query\":{\"id\":\"listBookings\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/BookingList\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"21 cancel owned booking\":{\"id\":\"cancelBooking\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/BookingResult\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"22 cancelled history\":{\"id\":\"listBookings\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/BookingList\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"23 released inventory\":{\"id\":\"getSeats\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/SeatMap\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"24 leave queue\":{\"id\":\"leaveQueue\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/Ok\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"25 member logout\":{\"id\":\"logout\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/Ok\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"26 revoked session\":{\"id\":\"getSession\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/Session\"},\"localOnly\":false,\"noCsrf\":false,\"admission\":false},\"27 signup isolated second member\":{\"id\":\"signup\",\"status\":201,\"schema\":{\"$ref\":\"#/definitions/AuthResult\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"28 other member cancellation denied\":{\"id\":\"cancelBooking\",\"status\":404,\"schema\":{\"$ref\":\"#/definitions/Error\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"29 other member logout\":{\"id\":\"logout\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/Ok\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"29b withdrawal member login\":{\"id\":\"login\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/AuthResult\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"29c withdraw owned member\":{\"id\":\"withdrawAccount\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/Ok\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"29d withdrawn session\":{\"id\":\"getSession\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/Session\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"29e withdrawn login denied\":{\"id\":\"login\",\"status\":401,\"schema\":{\"$ref\":\"#/definitions/Error\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"29f member login for cancellation fixture\":{\"id\":\"login\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/AuthResult\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"29g enter queue for cancellation fixture\":{\"id\":\"enterQueue\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/QueueStatus\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"29h reserve cancellation fixture\":{\"id\":\"replaceHold\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/HoldResult\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":true},\"29i confirm cancellation fixture\":{\"id\":\"createBooking\",\"status\":201,\"schema\":{\"$ref\":\"#/definitions/BookingResult\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":true},\"29j leave cancellation fixture queue\":{\"id\":\"leaveQueue\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/Ok\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"29k logout cancellation fixture member\":{\"id\":\"logout\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/Ok\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"30 isolated administrator login\":{\"id\":\"login\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/AuthResult\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"31 administrator summary\":{\"id\":\"adminSummary\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/AdminSummary\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"31 seat occupant lookup\":{\"id\":\"adminGetSeatOccupant\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/AdminSeatOccupant\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"31a administrator finds member booking\":{\"id\":\"adminGetBooking\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/AdminBookingResult\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"31b administrator cancels member booking\":{\"id\":\"adminCancelBooking\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/AdminBookingResult\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"31c administrator finds member for restriction\":{\"id\":\"adminLookupMemberRestriction\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/MemberRestrictionResult\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"31d administrator restricts member booking\":{\"id\":\"adminSetMemberRestriction\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/MemberRestrictionResult\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"31e administrator restores member booking\":{\"id\":\"adminSetMemberRestriction\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/MemberRestrictionResult\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"32 create fixture concert\":{\"id\":\"createConcert\",\"status\":201,\"schema\":{\"$ref\":\"#/definitions/IdResult\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"32a identical concert rejected\":{\"id\":\"createConcert\",\"status\":409,\"schema\":{\"$ref\":\"#/definitions/Error\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"32b performance inside 24-hour window rejected\":{\"id\":\"createConcert\",\"status\":400,\"schema\":{\"$ref\":\"#/definitions/Error\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"32c scheduled opening readback\":{\"id\":\"listConcerts\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/ConcertList\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"33 administrator blocks one seat\":{\"id\":\"blockSeats\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/Updated\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"34 blocked seat visible\":{\"id\":\"getSeats\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/SeatMap\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"35 administrator restores seat\":{\"id\":\"blockSeats\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/Updated\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"35a pause performance sales\":{\"id\":\"adminChangePerformanceSales\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/PerformanceSalesResult\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"35b resume performance sales\":{\"id\":\"adminChangePerformanceSales\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/PerformanceSalesResult\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"35c cancel performance\":{\"id\":\"adminChangePerformanceSales\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/PerformanceSalesResult\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"35d cancelled performance hidden\":{\"id\":\"listConcerts\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/ConcertList\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"36 administrator logout\":{\"id\":\"logout\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/Ok\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"37 member login for scheduled opening\":{\"id\":\"login\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/AuthResult\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"38 queue denied before opening\":{\"id\":\"enterQueue\",\"status\":409,\"schema\":{\"$ref\":\"#/definitions/QueueError\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"39 seat hold denied before opening\":{\"id\":\"replaceHold\",\"status\":409,\"schema\":{\"$ref\":\"#/definitions/Error\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false},\"40 scheduled opening member logout\":{\"id\":\"logout\",\"status\":200,\"schema\":{\"$ref\":\"#/definitions/Ok\"},\"localOnly\":true,\"noCsrf\":false,\"admission\":false}}"
     },
     {
       "key": "definitions",
-      "value": "{\"Id\":{\"type\":\"string\",\"minLength\":1},\"Time\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":9007199254740991},\"Money\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":9007199254740991},\"Error\":{\"type\":\"object\",\"required\":[\"error\"],\"properties\":{\"error\":{\"type\":\"string\",\"minLength\":1}},\"additionalProperties\":false},\"User\":{\"type\":\"object\",\"required\":[\"id\",\"email\",\"name\",\"phone\",\"role\"],\"properties\":{\"id\":{\"$ref\":\"#/definitions/Id\"},\"email\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"phone\":{\"type\":\"string\"},\"role\":{\"type\":\"string\",\"enum\":[\"user\",\"admin\"]}},\"additionalProperties\":false},\"NullableUser\":{\"type\":[\"object\",\"null\"],\"required\":[\"id\",\"email\",\"name\",\"phone\",\"role\"],\"properties\":{\"id\":{\"$ref\":\"#/definitions/Id\"},\"email\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"phone\":{\"type\":\"string\"},\"role\":{\"type\":\"string\",\"enum\":[\"user\",\"admin\"]}},\"additionalProperties\":false},\"Hold\":{\"type\":\"object\",\"required\":[\"id\",\"expires_at\"],\"properties\":{\"id\":{\"$ref\":\"#/definitions/Id\"},\"expires_at\":{\"$ref\":\"#/definitions/Time\"}},\"additionalProperties\":false},\"NullableHold\":{\"type\":[\"object\",\"null\"],\"required\":[\"id\",\"expires_at\"],\"properties\":{\"id\":{\"$ref\":\"#/definitions/Id\"},\"expires_at\":{\"$ref\":\"#/definitions/Time\"}},\"additionalProperties\":false},\"Session\":{\"type\":\"object\",\"required\":[\"user\",\"csrf\",\"demo\"],\"properties\":{\"user\":{\"$ref\":\"#/definitions/NullableUser\"},\"csrf\":{\"type\":[\"string\",\"null\"],\"pattern\":\"^[a-f0-9]{48}$\"},\"demo\":{\"type\":\"boolean\"}},\"additionalProperties\":false},\"AuthResult\":{\"type\":\"object\",\"required\":[\"user\",\"csrf\"],\"properties\":{\"user\":{\"$ref\":\"#/definitions/User\"},\"csrf\":{\"type\":\"string\",\"pattern\":\"^[a-f0-9]{48}$\"}},\"additionalProperties\":false},\"Login\":{\"type\":\"object\",\"required\":[\"email\",\"password\"],\"properties\":{\"email\":{\"type\":\"string\",\"description\":\"trim 후 소문자로 조회한다.\"},\"password\":{\"type\":\"string\",\"maxLength\":128}},\"additionalProperties\":true},\"Signup\":{\"type\":\"object\",\"required\":[\"email\",\"name\",\"phone\",\"password\",\"terms\",\"ageConfirmed\"],\"properties\":{\"email\":{\"type\":\"string\",\"maxLength\":254},\"name\":{\"type\":\"string\",\"minLength\":2,\"maxLength\":40},\"phone\":{\"type\":\"string\",\"description\":\"하이픈·공백 제거 후 01[016789]와 7~8자리 숫자.\"},\"password\":{\"type\":\"string\",\"minLength\":10,\"maxLength\":128},\"terms\":{\"type\":\"boolean\",\"enum\":[true]},\"ageConfirmed\":{\"type\":\"boolean\",\"enum\":[true]}},\"additionalProperties\":true},\"Performance\":{\"type\":\"object\",\"required\":[\"id\",\"concert_id\",\"starts_at\"],\"properties\":{\"id\":{\"$ref\":\"#/definitions/Id\"},\"concert_id\":{\"$ref\":\"#/definitions/Id\"},\"starts_at\":{\"$ref\":\"#/definitions/Time\"}},\"additionalProperties\":false},\"PerformanceSummary\":{\"type\":\"object\",\"required\":[\"id\",\"concert_id\",\"starts_at\",\"available\",\"min_price\"],\"properties\":{\"id\":{\"$ref\":\"#/definitions/Id\"},\"concert_id\":{\"$ref\":\"#/definitions/Id\"},\"starts_at\":{\"$ref\":\"#/definitions/Time\"},\"available\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":96},\"min_price\":{\"$ref\":\"#/definitions/Money\"}},\"additionalProperties\":false},\"Concert\":{\"type\":\"object\",\"required\":[\"id\",\"title\",\"artist\",\"venue\",\"description\",\"theme\",\"duration\",\"age\",\"created_at\",\"booking_opens_at\",\"performances\"],\"properties\":{\"id\":{\"$ref\":\"#/definitions/Id\"},\"title\":{\"type\":\"string\"},\"artist\":{\"type\":\"string\"},\"venue\":{\"type\":\"string\"},\"description\":{\"type\":\"string\"},\"theme\":{\"type\":\"string\",\"enum\":[\"teal\",\"purple\",\"orange\",\"blue\"]},\"duration\":{\"type\":\"integer\",\"minimum\":1,\"maximum\":9007199254740991},\"age\":{\"type\":\"string\"},\"created_at\":{\"$ref\":\"#/definitions/Time\"},\"booking_opens_at\":{\"type\":[\"integer\",\"null\"],\"minimum\":0,\"maximum\":9007199254740991,\"description\":\"예매 오픈 시각(epoch ms). null이면 제한 없음(기능 추가 전 등록 공연). 이 시각 이전에는 대기열 진입·좌석 선점을 409 BOOKING_NOT_OPEN으로 거부한다.\"},\"performances\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/definitions/PerformanceSummary\"},\"minItems\":1}},\"additionalProperties\":false},\"ConcertList\":{\"type\":\"object\",\"required\":[\"concerts\"],\"properties\":{\"concerts\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/definitions/Concert\"}}},\"additionalProperties\":false},\"Seat\":{\"type\":\"object\",\"required\":[\"id\",\"row\",\"number\",\"grade\",\"price\",\"state\"],\"properties\":{\"id\":{\"$ref\":\"#/definitions/Id\"},\"row\":{\"type\":\"string\"},\"number\":{\"type\":\"integer\",\"minimum\":1,\"maximum\":9007199254740991},\"grade\":{\"type\":\"string\",\"enum\":[\"VIP\",\"R\",\"S\"]},\"price\":{\"$ref\":\"#/definitions/Money\"},\"state\":{\"type\":\"string\",\"enum\":[\"available\",\"selected\",\"held\",\"booked\",\"blocked\"]}},\"additionalProperties\":false},\"SeatMap\":{\"type\":\"object\",\"required\":[\"performance\",\"seats\",\"hold\",\"server_now\",\"max_tickets\"],\"properties\":{\"performance\":{\"type\":\"object\",\"required\":[\"id\",\"concert_id\",\"starts_at\",\"title\",\"venue\",\"booking_opens_at\"],\"properties\":{\"id\":{\"$ref\":\"#/definitions/Id\"},\"concert_id\":{\"$ref\":\"#/definitions/Id\"},\"starts_at\":{\"$ref\":\"#/definitions/Time\"},\"title\":{\"type\":\"string\"},\"venue\":{\"type\":\"string\"},\"booking_opens_at\":{\"type\":[\"integer\",\"null\"],\"minimum\":0,\"maximum\":9007199254740991,\"description\":\"예매 오픈 시각(epoch ms). null이면 제한 없음(기능 추가 전 등록 공연). 이 시각 이전에는 대기열 진입·좌석 선점을 409 BOOKING_NOT_OPEN으로 거부한다.\"}},\"additionalProperties\":false},\"seats\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/definitions/Seat\"}},\"hold\":{\"$ref\":\"#/definitions/NullableHold\"},\"server_now\":{\"$ref\":\"#/definitions/Time\"},\"max_tickets\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":9007199254740991,\"enum\":[4]}},\"additionalProperties\":false},\"HoldRequest\":{\"type\":\"object\",\"required\":[\"seatIds\"],\"properties\":{\"seatIds\":{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"maxItems\":4,\"uniqueItems\":true,\"description\":\"빈 배열은 선택 전체 해제. 문자열의 유효 좌석 여부는 서버가 검사한다.\"}},\"additionalProperties\":true},\"HoldResult\":{\"type\":\"object\",\"required\":[\"hold\",\"server_now\"],\"properties\":{\"hold\":{\"$ref\":\"#/definitions/NullableHold\"},\"server_now\":{\"$ref\":\"#/definitions/Time\"}},\"additionalProperties\":false},\"Checkout\":{\"type\":\"object\",\"required\":[\"holdId\",\"buyerName\",\"buyerPhone\",\"delivery\",\"paymentMethod\",\"agreed\"],\"properties\":{\"holdId\":{\"$ref\":\"#/definitions/Id\"},\"buyerName\":{\"type\":\"string\",\"minLength\":2,\"maxLength\":40},\"buyerPhone\":{\"type\":\"string\"},\"delivery\":{\"type\":\"string\",\"enum\":[\"mobile\",\"onsite\"]},\"paymentMethod\":{\"type\":\"string\",\"enum\":[\"demo\"]},\"agreed\":{\"type\":\"boolean\",\"enum\":[true]}},\"additionalProperties\":true},\"BookingSeat\":{\"type\":\"object\",\"required\":[\"seat_id\",\"grade\",\"price\"],\"properties\":{\"seat_id\":{\"$ref\":\"#/definitions/Id\"},\"grade\":{\"type\":\"string\",\"enum\":[\"VIP\",\"R\",\"S\"]},\"price\":{\"$ref\":\"#/definitions/Money\"}},\"additionalProperties\":false},\"Booking\":{\"type\":\"object\",\"required\":[\"id\",\"user_id\",\"performance_id\",\"hold_id\",\"status\",\"ticket_total\",\"fee\",\"total\",\"buyer_name\",\"buyer_phone\",\"delivery\",\"created_at\",\"cancelled_at\",\"starts_at\",\"title\",\"artist\",\"venue\",\"theme\",\"seats\"],\"properties\":{\"id\":{\"$ref\":\"#/definitions/Id\"},\"user_id\":{\"$ref\":\"#/definitions/Id\"},\"performance_id\":{\"$ref\":\"#/definitions/Id\"},\"hold_id\":{\"$ref\":\"#/definitions/Id\"},\"status\":{\"type\":\"string\",\"enum\":[\"confirmed\",\"cancelled\"]},\"ticket_total\":{\"$ref\":\"#/definitions/Money\"},\"fee\":{\"$ref\":\"#/definitions/Money\"},\"total\":{\"$ref\":\"#/definitions/Money\"},\"buyer_name\":{\"type\":\"string\"},\"buyer_phone\":{\"type\":\"string\"},\"delivery\":{\"type\":\"string\",\"enum\":[\"mobile\",\"onsite\"]},\"created_at\":{\"$ref\":\"#/definitions/Time\"},\"cancelled_at\":{\"type\":[\"integer\",\"null\"],\"minimum\":0,\"maximum\":9007199254740991},\"starts_at\":{\"$ref\":\"#/definitions/Time\"},\"title\":{\"type\":\"string\"},\"artist\":{\"type\":\"string\"},\"venue\":{\"type\":\"string\"},\"theme\":{\"type\":\"string\",\"enum\":[\"teal\",\"purple\",\"orange\",\"blue\"]},\"seats\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/definitions/BookingSeat\"},\"minItems\":1,\"maxItems\":4}},\"additionalProperties\":false},\"BookingResult\":{\"type\":\"object\",\"required\":[\"booking\"],\"properties\":{\"booking\":{\"$ref\":\"#/definitions/Booking\"}},\"additionalProperties\":false},\"BookingList\":{\"type\":\"object\",\"required\":[\"bookings\"],\"properties\":{\"bookings\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/definitions/Booking\"}}},\"additionalProperties\":false},\"Ok\":{\"type\":\"object\",\"required\":[\"ok\"],\"properties\":{\"ok\":{\"type\":\"boolean\",\"enum\":[true]}},\"additionalProperties\":false},\"CreateConcert\":{\"type\":\"object\",\"required\":[\"title\",\"artist\",\"venue\",\"description\",\"basePrice\",\"dates\"],\"properties\":{\"title\":{\"type\":\"string\",\"minLength\":1,\"maxLength\":120},\"artist\":{\"type\":\"string\",\"minLength\":1,\"maxLength\":120},\"venue\":{\"type\":\"string\",\"minLength\":1,\"maxLength\":120},\"description\":{\"type\":\"string\",\"minLength\":1,\"maxLength\":2000},\"basePrice\":{\"type\":\"integer\",\"minimum\":1000,\"maximum\":1000000,\"description\":\"실제 서버는 Number로 변환하므로 수치 문자열도 수용한다. 정수 JSON 사용을 권장한다.\"},\"dates\":{\"type\":\"array\",\"items\":{\"type\":\"string\",\"format\":\"date-time\",\"description\":\"시간대가 명시된 서로 다른 미래 일시.\"},\"minItems\":1,\"maxItems\":10,\"uniqueItems\":true},\"bookingOpensAt\":{\"type\":[\"string\",\"null\"],\"format\":\"date-time\",\"description\":\"선택. 시간대가 명시된 예매 오픈 일시. 현재 이후이고 첫 회차 시작 전이어야 한다. 생략/null이면 등록 즉시 오픈.\"}},\"additionalProperties\":true},\"IdResult\":{\"type\":\"object\",\"required\":[\"id\"],\"properties\":{\"id\":{\"$ref\":\"#/definitions/Id\"}},\"additionalProperties\":false},\"BlockRequest\":{\"type\":\"object\",\"required\":[\"seatIds\",\"blocked\"],\"properties\":{\"seatIds\":{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"minItems\":1,\"maxItems\":96,\"uniqueItems\":true},\"blocked\":{\"type\":\"boolean\"}},\"additionalProperties\":true},\"Updated\":{\"type\":\"object\",\"required\":[\"updated\"],\"properties\":{\"updated\":{\"type\":\"integer\",\"minimum\":1,\"maximum\":96}},\"additionalProperties\":false},\"AdminSummary\":{\"type\":\"object\",\"required\":[\"stats\",\"users\",\"performances\",\"audit\"],\"properties\":{\"stats\":{\"type\":\"object\",\"required\":[\"bookings\",\"revenue\"],\"properties\":{\"bookings\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":9007199254740991},\"revenue\":{\"$ref\":\"#/definitions/Money\"}},\"additionalProperties\":false},\"users\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":9007199254740991},\"performances\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"required\":[\"id\",\"starts_at\",\"title\",\"total\",\"blocked\",\"booked\",\"held\"],\"properties\":{\"id\":{\"$ref\":\"#/definitions/Id\"},\"starts_at\":{\"$ref\":\"#/definitions/Time\"},\"title\":{\"type\":\"string\"},\"total\":{\"type\":\"integer\",\"minimum\":1,\"maximum\":9007199254740991},\"blocked\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":9007199254740991},\"booked\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":9007199254740991},\"held\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":9007199254740991}},\"additionalProperties\":false}},\"audit\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"required\":[\"action\",\"detail\",\"created_at\",\"name\"],\"properties\":{\"action\":{\"type\":\"string\",\"enum\":[\"block\",\"unblock\",\"create-concert\"]},\"detail\":{\"type\":\"string\",\"description\":\"감사 상세 JSON을 담은 문자열. 토큰·비밀번호는 포함하지 않는다.\"},\"created_at\":{\"$ref\":\"#/definitions/Time\"},\"name\":{\"type\":\"string\"}},\"additionalProperties\":false},\"maxItems\":15}},\"additionalProperties\":false},\"QueueError\":{\"type\":\"object\",\"required\":[\"error\",\"code\"],\"properties\":{\"error\":{\"type\":\"string\"},\"code\":{\"type\":\"string\",\"pattern\":\"^[A-Z][A-Z0-9_]{0,63}$\"}},\"additionalProperties\":false},\"QueueRequest\":{\"type\":\"object\",\"required\":[],\"properties\":{\"resumeHoldId\":{\"type\":\"string\",\"minLength\":1}},\"additionalProperties\":false},\"QueueStatus\":{\"type\":\"object\",\"required\":[\"performance_id\",\"entry_id\",\"sequence\",\"state\",\"position\",\"estimated_wait_ms\",\"entry_expires_at\",\"server_now\",\"restart_epoch\",\"admission_token\",\"admission_expires_at\",\"mode\",\"ahead\"],\"properties\":{\"performance_id\":{\"$ref\":\"#/definitions/Id\"},\"entry_id\":{\"$ref\":\"#/definitions/Id\"},\"sequence\":{\"type\":\"integer\",\"minimum\":1},\"state\":{\"type\":\"string\",\"enum\":[\"waiting\",\"admitted\"]},\"position\":{\"type\":\"integer\",\"minimum\":0},\"estimated_wait_ms\":{\"type\":[\"integer\",\"null\"],\"minimum\":0},\"entry_expires_at\":{\"$ref\":\"#/definitions/Time\"},\"server_now\":{\"$ref\":\"#/definitions/Time\"},\"restart_epoch\":{\"type\":\"string\"},\"admission_token\":{\"type\":[\"string\",\"null\"]},\"admission_expires_at\":{\"type\":[\"integer\",\"null\"],\"minimum\":0},\"mode\":{\"type\":\"string\",\"enum\":[\"general\",\"hold-recovery\"]},\"ahead\":{\"type\":\"integer\",\"minimum\":0}},\"additionalProperties\":false},\"Health\":{\"type\":\"object\",\"required\":[\"status\"],\"properties\":{\"status\":{\"type\":\"string\",\"enum\":[\"ok\"]}},\"additionalProperties\":false},\"Readiness\":{\"type\":\"object\",\"required\":[\"status\",\"schema_version\"],\"properties\":{\"status\":{\"type\":\"string\",\"enum\":[\"ready\"]},\"schema_version\":{\"type\":\"integer\",\"enum\":[0,1]}},\"additionalProperties\":false},\"Withdrawal\":{\"type\":\"object\",\"required\":[\"password\",\"confirmed\"],\"properties\":{\"password\":{\"type\":\"string\",\"minLength\":10,\"maxLength\":128,\"description\":\"현재 로그인한 회원의 비밀번호\"},\"confirmed\":{\"type\":\"boolean\",\"enum\":[true]}},\"additionalProperties\":false}}"
+      "value": "{\"Id\":{\"type\":\"string\",\"minLength\":1},\"Time\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":9007199254740991},\"Money\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":9007199254740991},\"Error\":{\"type\":\"object\",\"required\":[\"error\"],\"properties\":{\"error\":{\"type\":\"string\",\"minLength\":1}},\"additionalProperties\":false},\"User\":{\"type\":\"object\",\"required\":[\"id\",\"email\",\"name\",\"phone\",\"role\"],\"properties\":{\"id\":{\"$ref\":\"#/definitions/Id\"},\"email\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"phone\":{\"type\":\"string\"},\"role\":{\"type\":\"string\",\"enum\":[\"user\",\"admin\"]}},\"additionalProperties\":false},\"NullableUser\":{\"type\":[\"object\",\"null\"],\"required\":[\"id\",\"email\",\"name\",\"phone\",\"role\"],\"properties\":{\"id\":{\"$ref\":\"#/definitions/Id\"},\"email\":{\"type\":\"string\"},\"name\":{\"type\":\"string\"},\"phone\":{\"type\":\"string\"},\"role\":{\"type\":\"string\",\"enum\":[\"user\",\"admin\"]}},\"additionalProperties\":false},\"Hold\":{\"type\":\"object\",\"required\":[\"id\",\"expires_at\"],\"properties\":{\"id\":{\"$ref\":\"#/definitions/Id\"},\"expires_at\":{\"$ref\":\"#/definitions/Time\"}},\"additionalProperties\":false},\"NullableHold\":{\"type\":[\"object\",\"null\"],\"required\":[\"id\",\"expires_at\"],\"properties\":{\"id\":{\"$ref\":\"#/definitions/Id\"},\"expires_at\":{\"$ref\":\"#/definitions/Time\"}},\"additionalProperties\":false},\"Session\":{\"type\":\"object\",\"required\":[\"user\",\"csrf\",\"demo\"],\"properties\":{\"user\":{\"$ref\":\"#/definitions/NullableUser\"},\"csrf\":{\"type\":[\"string\",\"null\"],\"pattern\":\"^[a-f0-9]{48}$\"},\"demo\":{\"type\":\"boolean\"}},\"additionalProperties\":false},\"AuthResult\":{\"type\":\"object\",\"required\":[\"user\",\"csrf\"],\"properties\":{\"user\":{\"$ref\":\"#/definitions/User\"},\"csrf\":{\"type\":\"string\",\"pattern\":\"^[a-f0-9]{48}$\"}},\"additionalProperties\":false},\"Login\":{\"type\":\"object\",\"required\":[\"email\",\"password\"],\"properties\":{\"email\":{\"type\":\"string\",\"description\":\"trim 후 소문자로 조회한다.\"},\"password\":{\"type\":\"string\",\"maxLength\":128}},\"additionalProperties\":true},\"Signup\":{\"type\":\"object\",\"required\":[\"email\",\"name\",\"phone\",\"password\",\"terms\",\"ageConfirmed\"],\"properties\":{\"email\":{\"type\":\"string\",\"maxLength\":254},\"name\":{\"type\":\"string\",\"minLength\":2,\"maxLength\":40},\"phone\":{\"type\":\"string\",\"description\":\"하이픈·공백 제거 후 01[016789]와 7~8자리 숫자.\"},\"password\":{\"type\":\"string\",\"minLength\":10,\"maxLength\":128},\"terms\":{\"type\":\"boolean\",\"enum\":[true]},\"ageConfirmed\":{\"type\":\"boolean\",\"enum\":[true]}},\"additionalProperties\":true},\"Performance\":{\"type\":\"object\",\"required\":[\"id\",\"concert_id\",\"starts_at\"],\"properties\":{\"id\":{\"$ref\":\"#/definitions/Id\"},\"concert_id\":{\"$ref\":\"#/definitions/Id\"},\"starts_at\":{\"$ref\":\"#/definitions/Time\"}},\"additionalProperties\":false},\"PerformanceSummary\":{\"type\":\"object\",\"required\":[\"id\",\"concert_id\",\"starts_at\",\"available\",\"min_price\",\"sale_state\"],\"properties\":{\"id\":{\"$ref\":\"#/definitions/Id\"},\"concert_id\":{\"$ref\":\"#/definitions/Id\"},\"starts_at\":{\"$ref\":\"#/definitions/Time\"},\"available\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":96},\"min_price\":{\"$ref\":\"#/definitions/Money\"},\"sale_state\":{\"type\":\"string\",\"enum\":[\"open\",\"paused\"]}},\"additionalProperties\":false},\"Concert\":{\"type\":\"object\",\"required\":[\"id\",\"title\",\"artist\",\"venue\",\"description\",\"theme\",\"duration\",\"age\",\"created_at\",\"performances\",\"booking_opens_at\"],\"properties\":{\"id\":{\"$ref\":\"#/definitions/Id\"},\"title\":{\"type\":\"string\"},\"artist\":{\"type\":\"string\"},\"venue\":{\"type\":\"string\"},\"description\":{\"type\":\"string\"},\"theme\":{\"type\":\"string\",\"enum\":[\"teal\",\"purple\",\"orange\",\"blue\"]},\"duration\":{\"type\":\"integer\",\"minimum\":1,\"maximum\":9007199254740991},\"age\":{\"type\":\"string\"},\"created_at\":{\"$ref\":\"#/definitions/Time\"},\"performances\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/definitions/PerformanceSummary\"},\"minItems\":1},\"booking_opens_at\":{\"type\":[\"integer\",\"null\"],\"minimum\":0,\"maximum\":9007199254740991,\"description\":\"예매 오픈 시각(epoch ms). null이면 제한 없음(기능 추가 전 등록 공연). 이 시각 이전에는 대기열 진입·좌석 선점을 409 BOOKING_NOT_OPEN으로 거부한다.\"}},\"additionalProperties\":false},\"ConcertList\":{\"type\":\"object\",\"required\":[\"concerts\"],\"properties\":{\"concerts\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/definitions/Concert\"}}},\"additionalProperties\":false},\"Seat\":{\"type\":\"object\",\"required\":[\"id\",\"row\",\"number\",\"grade\",\"price\",\"state\"],\"properties\":{\"id\":{\"$ref\":\"#/definitions/Id\"},\"row\":{\"type\":\"string\"},\"number\":{\"type\":\"integer\",\"minimum\":1,\"maximum\":9007199254740991},\"grade\":{\"type\":\"string\",\"enum\":[\"VIP\",\"R\",\"S\"]},\"price\":{\"$ref\":\"#/definitions/Money\"},\"state\":{\"type\":\"string\",\"enum\":[\"available\",\"selected\",\"held\",\"booked\",\"blocked\"]}},\"additionalProperties\":false},\"SeatMap\":{\"type\":\"object\",\"required\":[\"performance\",\"seats\",\"hold\",\"server_now\",\"max_tickets\"],\"properties\":{\"performance\":{\"type\":\"object\",\"required\":[\"id\",\"concert_id\",\"starts_at\",\"title\",\"venue\",\"booking_opens_at\"],\"properties\":{\"id\":{\"$ref\":\"#/definitions/Id\"},\"concert_id\":{\"$ref\":\"#/definitions/Id\"},\"starts_at\":{\"$ref\":\"#/definitions/Time\"},\"title\":{\"type\":\"string\"},\"venue\":{\"type\":\"string\"},\"booking_opens_at\":{\"type\":[\"integer\",\"null\"],\"minimum\":0,\"maximum\":9007199254740991,\"description\":\"예매 오픈 시각(epoch ms). null이면 제한 없음(기능 추가 전 등록 공연). 이 시각 이전에는 대기열 진입·좌석 선점을 409 BOOKING_NOT_OPEN으로 거부한다.\"}},\"additionalProperties\":false},\"seats\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/definitions/Seat\"}},\"hold\":{\"$ref\":\"#/definitions/NullableHold\"},\"server_now\":{\"$ref\":\"#/definitions/Time\"},\"max_tickets\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":9007199254740991,\"enum\":[4]}},\"additionalProperties\":false},\"HoldRequest\":{\"type\":\"object\",\"required\":[\"seatIds\"],\"properties\":{\"seatIds\":{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"maxItems\":4,\"uniqueItems\":true,\"description\":\"빈 배열은 선택 전체 해제. 문자열의 유효 좌석 여부는 서버가 검사한다.\"}},\"additionalProperties\":true},\"HoldResult\":{\"type\":\"object\",\"required\":[\"hold\",\"server_now\"],\"properties\":{\"hold\":{\"$ref\":\"#/definitions/NullableHold\"},\"server_now\":{\"$ref\":\"#/definitions/Time\"}},\"additionalProperties\":false},\"Checkout\":{\"type\":\"object\",\"required\":[\"holdId\",\"buyerName\",\"buyerPhone\",\"delivery\",\"paymentMethod\",\"agreed\"],\"properties\":{\"holdId\":{\"$ref\":\"#/definitions/Id\"},\"buyerName\":{\"type\":\"string\",\"minLength\":2,\"maxLength\":40},\"buyerPhone\":{\"type\":\"string\"},\"delivery\":{\"type\":\"string\",\"enum\":[\"mobile\",\"onsite\"]},\"paymentMethod\":{\"type\":\"string\",\"enum\":[\"demo\"]},\"agreed\":{\"type\":\"boolean\",\"enum\":[true]}},\"additionalProperties\":true},\"BookingSeat\":{\"type\":\"object\",\"required\":[\"seat_id\",\"grade\",\"price\"],\"properties\":{\"seat_id\":{\"$ref\":\"#/definitions/Id\"},\"grade\":{\"type\":\"string\",\"enum\":[\"VIP\",\"R\",\"S\"]},\"price\":{\"$ref\":\"#/definitions/Money\"}},\"additionalProperties\":false},\"Booking\":{\"type\":\"object\",\"required\":[\"id\",\"user_id\",\"performance_id\",\"hold_id\",\"status\",\"ticket_total\",\"fee\",\"total\",\"buyer_name\",\"buyer_phone\",\"delivery\",\"created_at\",\"cancelled_at\",\"starts_at\",\"title\",\"artist\",\"venue\",\"theme\",\"seats\"],\"properties\":{\"id\":{\"$ref\":\"#/definitions/Id\"},\"user_id\":{\"$ref\":\"#/definitions/Id\"},\"performance_id\":{\"$ref\":\"#/definitions/Id\"},\"hold_id\":{\"$ref\":\"#/definitions/Id\"},\"status\":{\"type\":\"string\",\"enum\":[\"confirmed\",\"cancelled\"]},\"ticket_total\":{\"$ref\":\"#/definitions/Money\"},\"fee\":{\"$ref\":\"#/definitions/Money\"},\"total\":{\"$ref\":\"#/definitions/Money\"},\"buyer_name\":{\"type\":\"string\"},\"buyer_phone\":{\"type\":\"string\"},\"delivery\":{\"type\":\"string\",\"enum\":[\"mobile\",\"onsite\"]},\"created_at\":{\"$ref\":\"#/definitions/Time\"},\"cancelled_at\":{\"type\":[\"integer\",\"null\"],\"minimum\":0,\"maximum\":9007199254740991},\"starts_at\":{\"$ref\":\"#/definitions/Time\"},\"title\":{\"type\":\"string\"},\"artist\":{\"type\":\"string\"},\"venue\":{\"type\":\"string\"},\"theme\":{\"type\":\"string\",\"enum\":[\"teal\",\"purple\",\"orange\",\"blue\"]},\"seats\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/definitions/BookingSeat\"},\"minItems\":1,\"maxItems\":4},\"admin_cancel_reason\":{\"type\":\"string\",\"enum\":[\"customer_request\"]},\"performance_cancel_reason\":{\"type\":\"string\",\"minLength\":1,\"maxLength\":200}},\"additionalProperties\":false},\"BookingResult\":{\"type\":\"object\",\"required\":[\"booking\"],\"properties\":{\"booking\":{\"$ref\":\"#/definitions/Booking\"}},\"additionalProperties\":false},\"BookingList\":{\"type\":\"object\",\"required\":[\"bookings\"],\"properties\":{\"bookings\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/definitions/Booking\"}}},\"additionalProperties\":false},\"Ok\":{\"type\":\"object\",\"required\":[\"ok\"],\"properties\":{\"ok\":{\"type\":\"boolean\",\"enum\":[true]}},\"additionalProperties\":false},\"CreateConcert\":{\"type\":\"object\",\"required\":[\"title\",\"artist\",\"venue\",\"description\",\"basePrice\",\"dates\"],\"properties\":{\"title\":{\"type\":\"string\",\"minLength\":1,\"maxLength\":120},\"artist\":{\"type\":\"string\",\"minLength\":1,\"maxLength\":120},\"venue\":{\"type\":\"string\",\"minLength\":1,\"maxLength\":120},\"description\":{\"type\":\"string\",\"minLength\":1,\"maxLength\":2000},\"basePrice\":{\"type\":\"integer\",\"minimum\":1000,\"maximum\":1000000,\"description\":\"실제 서버는 Number로 변환하므로 수치 문자열도 수용한다. 정수 JSON 사용을 권장한다.\"},\"dates\":{\"type\":\"array\",\"items\":{\"type\":\"string\",\"format\":\"date-time\",\"description\":\"시간대가 명시된 서로 다른 일시. 모든 회차는 서버의 등록 시각보다 최소 24시간 뒤여야 한다.\"},\"minItems\":1,\"maxItems\":10,\"uniqueItems\":true},\"bookingOpensAt\":{\"type\":[\"string\",\"null\"],\"format\":\"date-time\",\"description\":\"선택. 시간대가 명시된 첫 회차 시작 전의 예매 오픈 일시. 생략, null 또는 등록 시각보다 최대 60초 이전이면 즉시 오픈한다.\"}},\"additionalProperties\":true},\"IdResult\":{\"type\":\"object\",\"required\":[\"id\"],\"properties\":{\"id\":{\"$ref\":\"#/definitions/Id\"}},\"additionalProperties\":false},\"BlockRequest\":{\"type\":\"object\",\"required\":[\"seatIds\",\"blocked\"],\"properties\":{\"seatIds\":{\"type\":\"array\",\"items\":{\"type\":\"string\"},\"minItems\":1,\"maxItems\":96,\"uniqueItems\":true},\"blocked\":{\"type\":\"boolean\"}},\"additionalProperties\":true},\"Updated\":{\"type\":\"object\",\"required\":[\"updated\"],\"properties\":{\"updated\":{\"type\":\"integer\",\"minimum\":1,\"maximum\":96}},\"additionalProperties\":false},\"AdminSummary\":{\"type\":\"object\",\"required\":[\"stats\",\"users\",\"performances\",\"audit\"],\"properties\":{\"stats\":{\"type\":\"object\",\"required\":[\"bookings\",\"revenue\"],\"properties\":{\"bookings\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":9007199254740991},\"revenue\":{\"$ref\":\"#/definitions/Money\"}},\"additionalProperties\":false},\"users\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":9007199254740991},\"performances\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"required\":[\"id\",\"starts_at\",\"title\",\"total\",\"blocked\",\"booked\",\"held\",\"concert_id\",\"sale_state\",\"sale_revision\",\"booking_count\"],\"properties\":{\"id\":{\"$ref\":\"#/definitions/Id\"},\"starts_at\":{\"$ref\":\"#/definitions/Time\"},\"title\":{\"type\":\"string\"},\"total\":{\"type\":\"integer\",\"minimum\":1,\"maximum\":9007199254740991},\"blocked\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":9007199254740991},\"booked\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":9007199254740991},\"held\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":9007199254740991},\"concert_id\":{\"$ref\":\"#/definitions/Id\"},\"sale_state\":{\"type\":\"string\",\"enum\":[\"open\",\"paused\",\"cancelled\"]},\"sale_revision\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":9007199254740991},\"booking_count\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":9007199254740991}},\"additionalProperties\":false}},\"audit\":{\"type\":\"array\",\"items\":{\"type\":\"object\",\"required\":[\"action\",\"detail\",\"created_at\",\"name\"],\"properties\":{\"action\":{\"type\":\"string\",\"enum\":[\"block\",\"unblock\",\"create-concert\",\"cancel-booking\",\"restrict-member\",\"restore-member\",\"pause-performance\",\"resume-performance\",\"cancel-performance\"]},\"detail\":{\"type\":\"string\",\"description\":\"감사 상세 JSON을 담은 문자열. 토큰·비밀번호는 포함하지 않는다.\"},\"created_at\":{\"$ref\":\"#/definitions/Time\"},\"name\":{\"type\":\"string\"}},\"additionalProperties\":false},\"maxItems\":15}},\"additionalProperties\":false},\"QueueError\":{\"type\":\"object\",\"required\":[\"error\",\"code\"],\"properties\":{\"error\":{\"type\":\"string\"},\"code\":{\"type\":\"string\",\"pattern\":\"^[A-Z][A-Z0-9_]{0,63}$\"}},\"additionalProperties\":false},\"QueueRequest\":{\"type\":\"object\",\"required\":[],\"properties\":{\"resumeHoldId\":{\"type\":\"string\",\"minLength\":1}},\"additionalProperties\":false},\"QueueStatus\":{\"type\":\"object\",\"required\":[\"performance_id\",\"entry_id\",\"sequence\",\"state\",\"position\",\"estimated_wait_ms\",\"entry_expires_at\",\"server_now\",\"restart_epoch\",\"admission_token\",\"admission_expires_at\",\"mode\",\"ahead\"],\"properties\":{\"performance_id\":{\"$ref\":\"#/definitions/Id\"},\"entry_id\":{\"$ref\":\"#/definitions/Id\"},\"sequence\":{\"type\":\"integer\",\"minimum\":1},\"state\":{\"type\":\"string\",\"enum\":[\"waiting\",\"admitted\"]},\"position\":{\"type\":\"integer\",\"minimum\":0},\"estimated_wait_ms\":{\"type\":[\"integer\",\"null\"],\"minimum\":0},\"entry_expires_at\":{\"$ref\":\"#/definitions/Time\"},\"server_now\":{\"$ref\":\"#/definitions/Time\"},\"restart_epoch\":{\"type\":\"string\"},\"admission_token\":{\"type\":[\"string\",\"null\"]},\"admission_expires_at\":{\"type\":[\"integer\",\"null\"],\"minimum\":0},\"mode\":{\"type\":\"string\",\"enum\":[\"general\",\"hold-recovery\"]},\"ahead\":{\"type\":\"integer\",\"minimum\":0}},\"additionalProperties\":false},\"Health\":{\"type\":\"object\",\"required\":[\"status\"],\"properties\":{\"status\":{\"type\":\"string\",\"enum\":[\"ok\"]}},\"additionalProperties\":false},\"Readiness\":{\"type\":\"object\",\"required\":[\"status\",\"schema_version\"],\"properties\":{\"status\":{\"type\":\"string\",\"enum\":[\"ready\"]},\"schema_version\":{\"type\":\"integer\",\"enum\":[0,1]}},\"additionalProperties\":false},\"Withdrawal\":{\"type\":\"object\",\"required\":[\"password\",\"confirmed\"],\"properties\":{\"password\":{\"type\":\"string\",\"minLength\":10,\"maxLength\":128,\"description\":\"현재 로그인한 회원의 비밀번호\"},\"confirmed\":{\"type\":\"boolean\",\"enum\":[true]}},\"additionalProperties\":false},\"AdminBooking\":{\"type\":\"object\",\"required\":[\"id\",\"performance_id\",\"title\",\"starts_at\",\"status\",\"total\",\"seats\",\"cancelled_at\",\"can_cancel\"],\"properties\":{\"id\":{\"$ref\":\"#/definitions/Id\"},\"performance_id\":{\"$ref\":\"#/definitions/Id\"},\"title\":{\"type\":\"string\"},\"starts_at\":{\"$ref\":\"#/definitions/Time\"},\"status\":{\"type\":\"string\",\"enum\":[\"confirmed\",\"cancelled\"]},\"total\":{\"$ref\":\"#/definitions/Money\"},\"seats\":{\"type\":\"array\",\"items\":{\"$ref\":\"#/definitions/BookingSeat\"},\"minItems\":1,\"maxItems\":4},\"cancelled_at\":{\"type\":[\"integer\",\"null\"],\"minimum\":0,\"maximum\":9007199254740991},\"can_cancel\":{\"type\":\"boolean\"},\"admin_cancel_reason\":{\"type\":\"string\",\"enum\":[\"customer_request\"]}},\"additionalProperties\":false},\"AdminBookingResult\":{\"type\":\"object\",\"required\":[\"booking\"],\"properties\":{\"booking\":{\"$ref\":\"#/definitions/AdminBooking\"}},\"additionalProperties\":false},\"AdminBookingCancel\":{\"type\":\"object\",\"required\":[\"reason\",\"confirmed\"],\"properties\":{\"reason\":{\"type\":\"string\",\"enum\":[\"customer_request\"]},\"confirmed\":{\"type\":\"boolean\",\"enum\":[true]}},\"additionalProperties\":false},\"MemberRestriction\":{\"type\":\"object\",\"required\":[\"member_id\",\"email\",\"name\",\"restricted\",\"revision\",\"reason\",\"changed_at\"],\"properties\":{\"member_id\":{\"$ref\":\"#/definitions/Id\"},\"email\":{\"type\":\"string\",\"minLength\":1,\"maxLength\":254},\"name\":{\"type\":\"string\"},\"restricted\":{\"type\":\"boolean\"},\"revision\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":9007199254740991},\"reason\":{\"type\":[\"string\",\"null\"],\"minLength\":1,\"maxLength\":200},\"changed_at\":{\"type\":[\"integer\",\"null\"],\"minimum\":0,\"maximum\":9007199254740991}},\"additionalProperties\":false},\"MemberRestrictionResult\":{\"type\":\"object\",\"required\":[\"member\"],\"properties\":{\"member\":{\"$ref\":\"#/definitions/MemberRestriction\"}},\"additionalProperties\":false},\"MemberRestrictionLookup\":{\"type\":\"object\",\"required\":[\"email\"],\"properties\":{\"email\":{\"type\":\"string\",\"minLength\":1,\"maxLength\":254}},\"additionalProperties\":false},\"MemberRestrictionChange\":{\"type\":\"object\",\"required\":[\"member_id\",\"restricted\",\"revision\",\"reason\"],\"properties\":{\"member_id\":{\"$ref\":\"#/definitions/Id\"},\"restricted\":{\"type\":\"boolean\"},\"revision\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":9007199254740991},\"reason\":{\"type\":\"string\",\"minLength\":1,\"maxLength\":200}},\"additionalProperties\":false},\"AdminSeatOccupant\":{\"type\":\"object\",\"required\":[\"seat_id\",\"state\",\"member\"],\"properties\":{\"seat_id\":{\"$ref\":\"#/definitions/Id\"},\"state\":{\"type\":\"string\",\"enum\":[\"available\",\"blocked\",\"held\",\"booked\"]},\"member\":{\"type\":[\"object\",\"null\"],\"required\":[\"name\",\"email\"],\"properties\":{\"name\":{\"type\":\"string\"},\"email\":{\"type\":\"string\"}},\"additionalProperties\":false},\"booking_id\":{\"$ref\":\"#/definitions/Id\"},\"hold_expires_at\":{\"$ref\":\"#/definitions/Time\"}},\"additionalProperties\":false},\"PerformanceSalesChange\":{\"type\":\"object\",\"required\":[\"action\",\"targets\",\"reason\"],\"properties\":{\"action\":{\"type\":\"string\",\"enum\":[\"pause\",\"resume\",\"cancel\"]},\"targets\":{\"type\":\"array\",\"minItems\":1,\"maxItems\":50,\"items\":{\"type\":\"object\",\"required\":[\"performance_id\",\"revision\",\"booking_count\"],\"properties\":{\"performance_id\":{\"$ref\":\"#/definitions/Id\"},\"revision\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":9007199254740991},\"booking_count\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":9007199254740991}},\"additionalProperties\":false}},\"reason\":{\"type\":\"string\",\"minLength\":1,\"maxLength\":200}},\"additionalProperties\":false},\"PerformanceSalesResult\":{\"type\":\"object\",\"required\":[\"state\",\"performance_ids\",\"cancelled_bookings\"],\"properties\":{\"state\":{\"type\":\"string\",\"enum\":[\"open\",\"paused\",\"cancelled\"]},\"performance_ids\":{\"type\":\"array\",\"minItems\":1,\"items\":{\"$ref\":\"#/definitions/Id\"}},\"cancelled_bookings\":{\"type\":\"integer\",\"minimum\":0,\"maximum\":9007199254740991}},\"additionalProperties\":false}}"
     }
   ],
   "event": [
@@ -34,8 +34,12 @@
           "valid=valid && !(meta.localOnly && mode!=='local');",
           "const port=Number((base||'').match(/:([0-9]+)$/)?.[1] || (mode==='staging'?443:0)); valid=valid && port>0 && port<=65535;",
           "if (!valid) { pm.test('dedicated demo target and run scope',()=>pm.expect(valid).eql(true)); pm.execution.setNextRequest(null); pm.execution.skipRequest(); }",
-          "if (pm.info.requestName==='01 health') { ['csrf','admission','holdId','bookingId','seatPrice','userId'].forEach(k=>pm.variables.unset(k)); }",
-          "pm.variables.set('futureDate',new Date(Date.now()+86400000*30).toISOString());",
+          "if (pm.info.requestName==='01 health') { ['csrf','admission','holdId','bookingId','seatPrice','userId','futureDate','openingDate','imminentDate','scheduledConcertId','scheduledPerformanceId'].forEach(k=>pm.variables.unset(k)); }",
+          "if (!pm.variables.get('futureDate')) pm.variables.set('futureDate',new Date(Date.now()+86400000*30).toISOString());",
+          "if (pm.info.requestName==='32 create fixture concert') {",
+          "  pm.variables.set('openingDate',new Date(Date.now()+3600000).toISOString());",
+          "  pm.variables.set('imminentDate',new Date(Date.now()+7200000).toISOString());",
+          "}",
           "if (!pm.request.headers.has('Origin')) pm.request.headers.upsert({key:'Origin',value:base});",
           "pm.request.headers.remove('X-CSRF-Token'); pm.request.headers.remove('X-Admission-Token');",
           "if (!meta.noCsrf && pm.variables.get('csrf') && !['GET','HEAD'].includes(pm.request.method)) pm.request.headers.upsert({key:'X-CSRF-Token',value:pm.variables.get('csrf')});",
@@ -501,6 +505,7 @@
                   "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
                   "",
                   "verify('future available seat and no existing hold', () => { pm.expect(data.performance.starts_at).above(data.server_now); pm.expect(data.hold).eql(null);",
+                  "pm.expect(data.performance.booking_opens_at===null || data.performance.booking_opens_at<=data.server_now).eql(true);",
                   "const seat = data.seats.find(s => s.id === pm.environment.get('seatId')); pm.expect(seat.state).eql('available'); pm.expect(Number.isSafeInteger(seat.price)).eql(true); pm.variables.set('seatPrice', seat.price); });",
                   "})();"
                 ]
@@ -1373,6 +1378,265 @@
           ]
         },
         {
+          "name": "29f member login for cancellation fixture",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{memberEmail}}\",\"password\":\"{{memberPassword}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "verify('user session and cookie contract', () => { pm.expect(data.user.role).eql('user'); pm.expect(data.csrf).to.be.a('string');",
+                  "const cookie = pm.response.headers.get('Set-Cookie'); pm.expect(cookie).match(/HttpOnly/); pm.expect(cookie).match(/SameSite=Lax/);",
+                  "if (pm.environment.get('mode') === 'staging') pm.expect(cookie).match(/; Secure(?:;|$)/);",
+                  "pm.variables.set('csrf', data.csrf); pm.variables.set('userId', data.user.id); });",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "29g enter queue for cancellation fixture",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/performances/{{performanceId}}/queue",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "verify('new member admission', () => { pm.expect(data.state).eql('admitted'); pm.variables.set('admission', data.admission_token); });",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "29h reserve cancellation fixture",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/performances/{{performanceId}}/hold",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"seatIds\":[\"{{seatId}}\"]}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "verify('new owned hold', () => { pm.expect(data.hold.id).to.be.a('string'); pm.variables.set('holdId', data.hold.id); });",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "29i confirm cancellation fixture",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/bookings",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"holdId\":\"{{holdId}}\",\"buyerName\":\"검증회원\",\"buyerPhone\":\"01000000000\",\"delivery\":\"mobile\",\"agreed\":true,\"paymentMethod\":\"demo\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "verify('new confirmed booking', () => { pm.expect(data.booking.status).eql('confirmed'); pm.variables.set('bookingId', data.booking.id); });",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "29j leave cancellation fixture queue",
+          "request": {
+            "method": "DELETE",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/performances/{{performanceId}}/queue"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "29k logout cancellation fixture member",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/logout"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "pm.variables.unset('csrf'); pm.variables.unset('admission');",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "30 isolated administrator login",
           "request": {
             "method": "POST",
@@ -1454,6 +1718,262 @@
           ]
         },
         {
+          "name": "31 seat occupant lookup",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/performances/{{performanceId}}/seats?seatId={{seatId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "verify('seat belongs to the booked fixture', () => { pm.expect(data.state).eql('booked'); pm.expect(data.member.email).eql(pm.environment.get('memberEmail')); pm.expect(data.booking_id).eql(pm.variables.get('bookingId')); });",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "31a administrator finds member booking",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/bookings/{{bookingId}}"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "verify('cancellable booking without contact details', () => { pm.expect(data.booking.id).eql(pm.variables.get('bookingId')); pm.expect(data.booking.can_cancel).eql(true); pm.expect(data.booking).not.to.have.property('buyer_phone'); });",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "31b administrator cancels member booking",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/bookings/{{bookingId}}/cancel",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"reason\":\"customer_request\",\"confirmed\":true}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "verify('administrative cancellation', () => { pm.expect(data.booking.id).eql(pm.variables.get('bookingId')); pm.expect(data.booking.status).eql('cancelled'); pm.expect(data.booking.admin_cancel_reason).eql('customer_request'); });",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "31c administrator finds member for restriction",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/member-restrictions/lookup",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{memberEmail}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "verify('fixture member found', () => { pm.expect(data.member.member_id).eql(pm.variables.get('userId')); pm.expect(data.member.revision).eql(0); });",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "31d administrator restricts member booking",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/member-restrictions",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"member_id\":\"{{userId}}\",\"revision\":0,\"restricted\":true,\"reason\":\"격리 테스트 예매 제한\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "verify('member booking restricted', () => { pm.expect(data.member.restricted).eql(true); pm.expect(data.member.revision).eql(1); });",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "31e administrator restores member booking",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/member-restrictions",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"member_id\":\"{{userId}}\",\"revision\":1,\"restricted\":false,\"reason\":\"격리 테스트 예매 제한 해제\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "verify('member booking restored', () => { pm.expect(data.member.restricted).eql(false); pm.expect(data.member.revision).eql(2); });",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "32 create fixture concert",
           "request": {
             "method": "POST",
@@ -1470,7 +1990,54 @@
             "url": "{{baseUrl}}/api/admin/concerts",
             "body": {
               "mode": "raw",
-              "raw": "{\"title\":\"CLI 가상 공연\",\"artist\":\"CLI 가상 밴드\",\"venue\":\"CLI 가상 공연장\",\"description\":\"격리된 DB에서만 생성\",\"basePrice\":50000,\"dates\":[\"{{futureDate}}\"]}",
+              "raw": "{\"title\":\"CLI 가상 공연\",\"artist\":\"CLI 가상 밴드\",\"venue\":\"CLI 가상 공연장\",\"description\":\"격리된 DB에서만 생성\",\"basePrice\":50000,\"dates\":[\"{{futureDate}}\"],\"bookingOpensAt\":\"{{openingDate}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "verify('store scheduled concert ID', () => { pm.variables.set('scheduledConcertId', data.id); });",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "32a identical concert rejected",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/concerts",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"title\":\"CLI 가상 공연\",\"artist\":\"CLI 가상 밴드\",\"venue\":\"CLI 가상 공연장\",\"description\":\"격리된 DB에서만 생성\",\"basePrice\":50000,\"dates\":[\"{{futureDate}}\"],\"bookingOpensAt\":\"{{openingDate}}\"}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1494,6 +2061,87 @@
                   "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
                   "",
                   "",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "32b performance inside 24-hour window rejected",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/concerts",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"title\":\"CLI 가상 공연\",\"artist\":\"CLI 가상 밴드\",\"venue\":\"CLI 가상 공연장\",\"description\":\"격리된 DB에서만 생성\",\"basePrice\":50000,\"dates\":[\"{{imminentDate}}\"],\"bookingOpensAt\":\"{{openingDate}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "verify('registration lead time enforced', () => { pm.expect(data.error).include('24시간'); });",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "32c scheduled opening readback",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/concerts"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "verify('opening time and performance ID', () => { const concert=data.concerts.find(c=>c.id===pm.variables.get('scheduledConcertId')); pm.expect(concert.booking_opens_at).eql(Date.parse(pm.variables.get('openingDate'))); pm.variables.set('scheduledPerformanceId', concert.performances[0].id); });",
                   "})();"
                 ]
               }
@@ -1629,6 +2277,181 @@
           ]
         },
         {
+          "name": "35a pause performance sales",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/performance-sales",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"action\":\"pause\",\"targets\":[{\"performance_id\":\"{{performanceId}}\",\"revision\":0,\"booking_count\":0}],\"reason\":\"격리 테스트 판매 중단\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "verify('performance sales paused', () => { pm.expect(data.state).eql('paused'); });",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "35b resume performance sales",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/performance-sales",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"action\":\"resume\",\"targets\":[{\"performance_id\":\"{{performanceId}}\",\"revision\":1,\"booking_count\":0}],\"reason\":\"격리 테스트 판매 재개\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "verify('performance sales resumed', () => { pm.expect(data.state).eql('open'); });",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "35c cancel performance",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/admin/performance-sales",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"action\":\"cancel\",\"targets\":[{\"performance_id\":\"{{performanceId}}\",\"revision\":2,\"booking_count\":0}],\"reason\":\"격리 테스트 회차 취소\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "verify('performance cancelled', () => { pm.expect(data.state).eql('cancelled'); pm.expect(data.cancelled_bookings).eql(0); });",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "35d cancelled performance hidden",
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/concerts"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "verify('cancelled performance absent from public list', () => { pm.expect(data.concerts.some(c=>c.performances.some(p=>p.id===pm.environment.get('performanceId')))).eql(false); });",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
           "name": "36 administrator logout",
           "request": {
             "method": "POST",
@@ -1656,6 +2479,184 @@
                   "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
                   "",
                   "pm.variables.unset('csrf');",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "37 member login for scheduled opening",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/login",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"email\":\"{{memberEmail}}\",\"password\":\"{{memberPassword}}\"}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "verify('user session and cookie contract', () => { pm.expect(data.user.role).eql('user'); pm.expect(data.csrf).to.be.a('string');",
+                  "const cookie = pm.response.headers.get('Set-Cookie'); pm.expect(cookie).match(/HttpOnly/); pm.expect(cookie).match(/SameSite=Lax/);",
+                  "if (pm.environment.get('mode') === 'staging') pm.expect(cookie).match(/; Secure(?:;|$)/);",
+                  "pm.variables.set('csrf', data.csrf); pm.variables.set('userId', data.user.id); });",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "38 queue denied before opening",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/v1/performances/{{scheduledPerformanceId}}/queue",
+            "body": {
+              "mode": "raw",
+              "raw": "{}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "verify('queue returns booking opening error', () => { pm.expect(data.code).eql('BOOKING_NOT_OPEN'); });",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "39 seat hold denied before opening",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/performances/{{scheduledPerformanceId}}/hold",
+            "body": {
+              "mode": "raw",
+              "raw": "{\"seatIds\":[\"{{seatId}}\"]}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "verify('hold returns booking opening error', () => { pm.expect(data.error).include('오픈'); });",
+                  "})();"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "40 scheduled opening member logout",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": "{{baseUrl}}/api/auth/logout"
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "(function () {",
+                  "",
+                  "const meta=JSON.parse(pm.collectionVariables.get('contracts'))[pm.info.requestName];",
+                  "let data;",
+                  "function verify(name, action) { let passed=true; pm.test(name,()=>{try {action();}catch(error){passed=false;throw error;}}); if(!passed){pm.execution.setNextRequest(null);throw new Error('POSTMAN_ASSERTION_STOPPED_MANUAL_REVIEW');} }",
+                  "verify('HTTP status',()=>pm.expect(pm.response.code).eql(meta.status));",
+                  "verify('JSON and no-store',()=>{pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/);pm.expect(pm.response.headers.get('Cache-Control')).eql('no-store');data=pm.response.json();});",
+                  "verify('OpenAPI response schema',()=>pm.response.to.have.jsonSchema({...meta.schema,definitions:JSON.parse(pm.collectionVariables.get('definitions'))}));",
+                  "",
+                  "",
                   "})();"
                 ]
               }

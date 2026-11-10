@@ -9,7 +9,10 @@
 | [001_model.sql](../../db/migrations/001_model.sql) | 14개 업무 STRICT 테이블·1개 기술 테이블·키·CHECK·FK·인덱스·booking_totals 뷰 |
 | [001_guards.sql](../../db/migrations/001_guards.sql) | 회차·공연장·현재 점유·이력 변경을 보호하는 기본 트리거 |
 | [002_withdrawal_guard.sql](../../db/migrations/002_withdrawal_guard.sql) | 탈퇴 회원의 예매자 비식별화만 허용하는 v1 트리거 개정. 기존 데이터·테이블·user_version 유지 |
-| [003_booking_opens_at.sql](../../db/migrations/003_booking_opens_at.sql) | concerts에 nullable booking_opens_at 추가. 기존 model·legacy 파일은 시작 시 한 번 적용하고 기존 공연은 NULL(제한 없음). 데이터·user_version 유지 |
+| [003_booking_opens_at.sql](../../db/migrations/003_booking_opens_at.sql) | 두 스키마의 concerts에 예매 오픈 시각을 추가한다. 기존 공연은 NULL로 예매 가능 시각을 제한하지 않는다. |
+| [003_admin_booking_cancellations.sql](../../db/migrations/003_admin_booking_cancellations.sql) | 두 스키마의 관리자 취소 기록 테이블을 추가한다. 앱 최초 실행 시 기존 행과 user_version을 보존한다. |
+| [004_member_booking_restrictions.sql](../../db/migrations/004_member_booking_restrictions.sql) | 두 스키마의 회원 예매 제한 이력 테이블을 추가한다. 최신 revision으로 현재 상태를 판단한다. |
+| [005_performance_sales.sql](../../db/migrations/005_performance_sales.sql) | 회차의 판매 중단·재개·최종 취소와 일괄 취소된 예매를 기록한다. 기존 회차는 이력이 생기기 전까지 판매 가능 상태다. |
 | [model.mjs](../../db/model.mjs) | 연결 설정·빈 DB 생성·오프라인 원자 작업·완성 상태 무결성 검증·출력 경로 보호 |
 | [migrate.mjs](../../db/migrate.mjs) | 기존 스키마 읽기 전용 사전 검사·새 파일 이관·VACUUM INTO 스냅샷 |
 | [demo.mjs](../../db/seeds/demo.mjs) | 별도 새 모델 DB에 넣는 가상 seed |
@@ -43,6 +46,10 @@
 | current_bookings | 없음 | inventory_id·booking_id. NULL 없음 |
 | payment_attempts | amount·attempted_at | id·hold_id·request_key·body_hash·result·booking_id·failure_code. amount·booking_id·failure_code 조건부 NULL |
 | audit_events | id·created_at | user_id·action·detail. id는 양의 INTEGER PRIMARY KEY, detail은 json_valid 검사 |
+| admin_booking_cancellations | created_at | booking_id PK/FK, admin_id FK, reason은 customer_request. 관리자 취소 시에만 예매 상태 변경과 함께 생성 |
+| member_booking_restrictions | revision·restricted·created_at | member_id와 revision의 복합 PK, member_id·admin_id FK, reason은 운영자 처리 사유 |
+| performance_sales_events | revision·created_at | performance_id와 revision의 복합 PK, performance_id·admin_id FK, 판매 상태와 사유 |
+| performance_cancelled_bookings | revision | booking_id PK/FK, performance_id와 revision은 취소 처리 이력의 복합 FK |
 | legacy_booking_imports | 없음 | booking_id PK/FK. 이관된 예매라는 기술적 출처만 기록 |
 
 legacy_booking_imports는 과거 데모 시도 기록이 없는 기존 예매를 식별한다. 결제 시도·시각·요청 키를 꾸며내는 대신 이 행이 있는 예매만 성공 시도 0개를 허용한다. 일반 예매 경로가 이 기술 테이블에 행을 넣는 것은 지원하지 않는다. 새 앱 통합에서 쓰기 권한·호출 경계를 유지해야 한다.

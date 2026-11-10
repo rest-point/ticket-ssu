@@ -295,7 +295,7 @@ test('운영자는 회차와 96개 좌석을 생성하며 입력 오류는 저�
     venue: '서울 테스트홀',
     description: '검증용 공연',
     basePrice: 50000,
-    dates: [new Date(Date.now() + 86400000).toISOString()]
+    dates: [new Date(Date.now() + 2 * 86400000).toISOString()]
   };
   assert.throws(() => store.createConcert(user.id, data), {
     status: 403

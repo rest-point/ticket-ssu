@@ -61,9 +61,10 @@ for (const schema of ['legacy', 'model']) {
 
   test(`[${schema}] 유효 hold라도 공연 시작 시각부터 신규 확정·취소·차단을 거부한다`, async t => {
     const f = await fixture(t, schema), { store, user, other } = f;
-    const starts = initialTime + 60000;
+    const starts = initialTime + 86400000;
     const { id } = store.createConcert(other.id, { title: '마감 경계 공연', artist: '가상 밴드', venue: '가상 공연장', description: '경계 검증', basePrice: 50000, dates: [new Date(starts).toISOString()] });
     const pid = store.concerts().find(c => c.id === id).performances[0].id;
+    f.time(starts - 60000);
     const early = f.checkout(user, store.setHold(user.id, pid, ['A-01']).hold);
     const otherBooking = f.checkout(other, store.setHold(other.id, pid, ['A-03']).hold);
     const held = store.setHold(user.id, pid, ['A-02']).hold;

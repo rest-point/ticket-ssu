@@ -160,7 +160,7 @@ for (const schema of ['legacy', 'model']) {
   });
 }
 
-test('기존 model v1 파일은 데이터 보존 후 기본 guard만 갱신하고 탈퇴 상태를 재시작에도 유지한다', async t => {
+test('기존 model v1 파일은 기능용 DDL만 적용하고 예매·탈퇴 상태를 재시작에도 유지한다', async t => {
   const directory = await mkdtemp(join(tmpdir(), 'ticket-ssu-withdrawal-')), file = join(directory, 'fixture.sqlite');
   let store;
   t.after(async () => {
@@ -171,11 +171,18 @@ test('기존 model v1 파일은 데이터 보존 후 기본 guard만 갱신하�
   store = new ModelStore(file); await store.seed();
   const user = await store.register({ email, name: '탈퇴검증회원', phone: '01098765432', password, terms: true, ageConfirmed: true });
   const pid = store.concerts()[0].performances[0].id;
-  const booked = store.checkout(user.id, checkout(store.setHold(user.id, pid, ['A-01']).hold)); store.cancel(user.id, booked.id);
+  const booked = store.checkout(user.id, checkout(store.setHold(user.id, pid, ['A-01']).hold));
+  const cancelled = store.cancel(user.id, booked.id);
   const original = (await readFile(new URL('../db/migrations/001_guards.sql', import.meta.url), 'utf8')).match(/CREATE TRIGGER booking_immutable[\s\S]*?END;/)[0];
-  store.db.exec('DROP TRIGGER booking_immutable'); store.db.exec(original); store.close();
+  store.db.exec(`DROP TRIGGER booking_immutable; DROP TABLE admin_booking_cancellations; DROP TABLE member_booking_restrictions;
+    DROP TABLE performance_cancelled_bookings; DROP TABLE performance_sales_events`);
+  store.db.exec(original); store.close();
   store = new ModelStore(file);
-  assert.equal(store.bookings(user.id)[0].id, booked.id);
+  assert.deepEqual(store.bookings(user.id)[0], cancelled);
+  assert.equal(store.get('PRAGMA user_version').user_version, 1);
+  assert.equal(store.get('SELECT COUNT(*) AS n FROM admin_booking_cancellations').n, 0);
+  assert.equal(store.get('SELECT COUNT(*) AS n FROM member_booking_restrictions').n, 0);
+  assert.equal(store.get('SELECT COUNT(*) AS n FROM performance_sales_events').n, 0);
   store.withdrawAccount(user.id, await store.verifyWithdrawal(user.id, body)); store.close();
   store = new ModelStore(file);
   assert.equal(store.bookings(user.id)[0].buyer_name, '탈퇴회원');

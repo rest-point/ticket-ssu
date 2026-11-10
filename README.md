@@ -56,6 +56,8 @@ legacy는 기존 저장 모델, model은 별도의 새/이관 DB에 명시적으
 
 선점7분·선택 변경으로 만료 연장 없음·확정 포함 회차당4매·장당 수수료2,000원·서버 금액 계산을 적용한다. 공연 시작 전 전액 취소하고 이력은 보존한다. 묶음 선점/확정/취소는 SQLite 트랜잭션에서 전부 성공하거나 롤백한다. 모델/현재 API의 상세 계약은 아래 문서에 둔다.
 
+관리자가 공연을 등록할 때는 모든 회차가 서버의 등록 시점부터 최소 24시간 뒤에 시작해야 한다. 한 회차라도 기준에 미달하거나 공연 정보와 전체 회차가 동일하면 등록을 거부한다. 예매 오픈 일시는 첫 회차 시작 전으로 지정하며, 비우면 등록 즉시 오픈한다. 오픈 전에는 대기열 진입·신규 선점·예매 확정을 막는다.
+
 ## HTTPS 시연
 
 Windows x64에서 고정 cloudflared를 프로젝트 전용 .tools에 설치한다. 계정·도메인·공유기 포트 개방 없이 시연 중에만 임시 URL을 발급한다.
@@ -68,6 +70,8 @@ npm run start:tunnel
 ```
 
 tunnel-ready의 origin으로 접속한다. .env.tunnel.example은 production·DEMO_MODE=false·별도 model DB·loopback API3000/중계3001을 사용한다. 실제 환경/암호는 출력하거나 커밋하지 않는다. PUBLIC_ORIGIN/PROXY_TOKEN은 실행기가 매번 메모리에서 생성하므로 직접 설정하지 않는다. 실제 .env.tunnel과 전용 DB는 재실행에도 보존한다.
+
+같은 작업 폴더에서 새로 시작하면 로컬과 터널 모두 현재 소스의 예매·관리자 기능을 사용한다. 터널 주소에서는 터널용 관리자 계정으로 로그인한다. 두 기본 설정이 API 포트 3000을 사용하므로 동시에 실행하려면 API 포트를 분리한다.
 
 Cloudflare가 HTTPS를 종단하고 노트북까지 암호화된 터널로 연결한다. URL은 인터넷 공개 주소이며 같은 Wi-Fi 한정이나 중계 사업자도 볼 수 없는 암호화가 아니다. 사용자 IP는 검증하지 않아 공유 IP 예산을 유지한다. 로그인/가입은 기본 전체30회/10분, 일반 요청은 burst120/초당30이며 회원별 제한도 유지한다.429의 Retry-After를 따른다.
 
@@ -94,11 +98,11 @@ npm run db:backup -- restore data/backups/snapshot.sqlite data/restored-candidat
 | [docs/data-model/logical.md](docs/data-model/logical.md) | 릴레이션·도메인·후보키/PK/FK·NULL·교차 제약 |
 | [docs/data-model/normalization.md](docs/data-model/normalization.md) | FD·1NF~3NF·무손실 분해·종속성 보존 |
 | [docs/data-model/physical.md](docs/data-model/physical.md) | SQLite DDL·자료형·인덱스·데이터 사전·보존 이관 |
-| [docs/design/api.md](docs/design/api.md) | 현재19작업·인증/입출력/오류·정합성·상태·멱등성·대기열/요청 제한 |
+| [docs/design/api.md](docs/design/api.md) | 현재 25작업·인증/입출력/오류·정합성·상태·멱등성·대기열/요청 제한 |
 | [docs/design/crud-matrix.md](docs/design/crud-matrix.md) | API별 테이블 CRUD·권한·트랜잭션 경계 |
 | [docs/design/service-improvements.md](docs/design/service-improvements.md) | 서비스 문제·개선 구현·장단점·통제 실험·한계·Notion 팀 논의 방식 |
 
-기계 명세는 [docs/openapi.yaml](docs/openapi.yaml), 실제 DDL은 [001_model.sql](db/migrations/001_model.sql)·[001_guards.sql](db/migrations/001_guards.sql)·[002_withdrawal_guard.sql](db/migrations/002_withdrawal_guard.sql)·[003_booking_opens_at.sql](db/migrations/003_booking_opens_at.sql)이다. 현재 API만 명세하며 미구현 계획용 명세/작업 계획/과거 검증 보고서는 제출 문서에서 제외했다.
+기계 명세는 [docs/openapi.yaml](docs/openapi.yaml)에 있다. 예매 오픈·관리자 대리 취소·회원 제한·회차 판매 상태를 포함한 DDL 목록은 [물리 데이터 모델](docs/data-model/physical.md)의 마이그레이션 표에서 확인할 수 있다.
 
 ## 검증 명령
 
@@ -121,11 +125,11 @@ npm run verify:postman
 npm run build:postman
 ```
 
-Postman 앱에는 아래 JSON 2개를 import한다. 사용자가 업로드한 New Collection/New Environment와 같은 **폴더 없는 평면 목록**이며 기존 18개 요청 이름·순서를 유지하고 누락된 account delete를 추가했다. API 19개가 각각 한 번씩 있고, Method·URL 객체·Headers·raw JSON·예시 응답을 채웠다.
+Postman 앱에는 아래 JSON 2개를 import한다. 사용자가 업로드한 New Collection/New Environment와 같은 **폴더 없는 평면 목록**이며 기존 요청 이름·순서를 유지하고 회차 판매 관리를 목록 끝에 추가했다. API 25개가 각각 한 번씩 있고, Method·URL 객체·Headers·raw JSON·예시 응답을 채웠다.
 
 | import할 파일 | 용도 |
 | --- | --- |
-| [postman/ticket-ssu.team.postman_collection.json](postman/ticket-ssu.team.postman_collection.json) | 원본 양식의 API 요청 19개 |
+| [postman/ticket-ssu.team.postman_collection.json](postman/ticket-ssu.team.postman_collection.json) | 원본 양식의 API 요청 25개 |
 | [postman/environments/team.local.postman_environment.json](postman/environments/team.local.postman_environment.json) | baseUrl·email/password·토큰/ID 변수 |
 
 1. 평소처럼 npm run start:local로 서버를 실행하고 두 파일을 Import한다. 환경은 **ticket-ssu local**, baseUrl은 **http://127.0.0.1:3000**이다. Cookie Jar를 켠다. 별도 데모 DB에서 테스트하려면 npm run start:postman을 실행하고 baseUrl만 http://127.0.0.1:3100으로 바꾼다.
@@ -133,11 +137,15 @@ Postman 앱에는 아래 JSON 2개를 import한다. 사용자가 업로드한 Ne
 3. concert list → seat search로 회차·좌석을 확인한다. performanceId/seatId가 비어 있으면 응답에서 자동 저장하며 원하는 값을 직접 지정해도 된다.
 4. 예매는 queue enter → queue state(admitted 확인) → seat preempt → booking confirm → booking list 순서로 Send한다. CSRF·입장권·holdId·bookingId는 응답 스크립트가 저장한다. 429는 Retry-After 뒤 다시 시도한다.
 5. booking cancel로 취소하고 queue out으로 이탈한다. 선점만 해제하려면 seat preempt의 seatIds를 빈 배열로 바꾼다. queue out은 선점을 취소하지 않으므로 선점/결제 전에 호출하지 않는다.
-6. 관리자는 logout 후 개인 환경 email/password를 관리자 계정으로 바꾸고 같은 login을 Send한다. admin search·concert add·seat block을 선택해 실행한다. 생성 공연은 concert list로 다시 읽으면 해당 회차가 선택된다. seat block의 blocked=false는 해제다.
+6. 관리자는 logout 후 개인 환경의 email/password를 관리자 계정으로 바꾸고 같은 login을 Send한다. `concert add`의 `futureDate`는 비어 있으면 30일 뒤로 채워진다. 예약 오픈을 확인하려면 `bookingOpensAt`에 시간대를 포함한 ISO 8601 시각을 입력한다. 비워 두면 즉시 오픈한다. 생성 후 `concert list`로 회차를 선택한다. `seat block`에서 `blocked: false`는 좌석 차단 해제다.
 7. 회원 탈퇴는 본인 일반 회원으로 로그인한 상태에서 account delete를 Send한다. 시작 전 확정 예매는 먼저 취소한다. 관리자는 탈퇴할 수 없다.
+8. 고객 요청에 따른 대리 취소는 관리자 화면의 **회원 예매 취소**에서 예매번호로 조회한 뒤 공연·회차·좌석을 확인하고 진행한다. Postman에서는 관리자 로그인 후 `bookingId`를 설정하고 `admin booking lookup` → `admin booking cancel`을 Send한다. 실제 고객 요청을 확인했을 때만 시작 전 예매 건 전체를 취소한다. 회원은 **나의 티켓**에서 취소 사유를 확인한다.
+9. 관리자 화면의 **회원 예매 제한**에서 대상 이메일과 처리 사유를 확인해 제한하거나 해제한다. 적용하면 대기열·선점이 해제되고 새 예매가 막힌다. 기존 확정 예매의 조회·본인 취소는 가능하다. Postman에서는 `restrictionEmail`을 채워 `admin member lookup`을 Send한 뒤 `restrictionReason`을 입력하고 `admin member restriction`을 Send한다. 해제할 때는 본문의 `restricted`를 `false`로 바꾼다.
+10. 관리자 **좌석 판매 관리**에서 선점·예매 좌석을 누르면 점유 회원을 확인할 수 있다. 확정 좌석은 **취소 화면에서 예매 확인**으로 연결된다. Postman에서는 `performanceId`와 `seatId`를 설정한 뒤 `admin seat occupant`를 Send한다.
+11. 관리자 **공연 판매 및 취소**에서 대상 회차, 처리 방식, 사유를 선택한다. 판매 중단은 확정 예매를 유지하고 판매 재개가 가능하다. 최종 취소는 회차를 공개 목록에서 숨기고 기존 예매를 모두 취소한다. Postman에서 `admin search`로 최신 값을 조회한 뒤 `admin performance sales`의 `targets`에 회차 ID를 `performance_id`로, `sale_revision`을 `revision`으로, 확정 예매 건수를 `booking_count`로 입력한다. `action`에는 `pause`, `resume`, `cancel` 중 하나를 선택하고 `reason`을 입력한다. 최종 취소는 전용 테스트 회차에서 확인한다.
 
 목록은 원본 배치이므로 전체 Run 순서가 아니다. 요청을 골라 Send한다. URL은 요청 상단, 입력은 Body → raw → JSON, 출력 예시는 요청의 Examples에서 확인한다. 자동 회원 생성·추가 관리자 로그인 요청·중복 검증용 요청·폴더 분류는 공유판에서 제외했다. 실제 계정/쿠키가 채워진 개인 환경을 export해 공유하지 않는다. 수정 시 postman/team-build.mjs를 바꾸고 npm run build:postman을 실행한다.
-자동 회귀/외부 소수 요청 smoke용은 [postman/ticket-ssu.postman_collection.json](postman/ticket-ssu.postman_collection.json)이다. 기존 temp-ticket.postman_collection.json을 새 프로젝트명으로 대체했으며, 회원 탈퇴를 포함해 19개 API를 41개 요청으로 검증한다. 이 컬렉션에는 environments의 local/staging 예시를 사용하고 실제 자격증명은 공유 파일에 저장하지 않는다. staging은 전용 일반 회원/미래 회차/빈 좌석을 지정한 Booking smoke 폴더만 실행한다. 본인 전용 가상 환경에만 allowWrite=dedicated-demo를 설정한다. 리다이렉트/인증서 검증을 우회하지 않는다.
+자동 회귀/외부 소수 요청 smoke용은 [postman/ticket-ssu.postman_collection.json](postman/ticket-ssu.postman_collection.json)이다. 전체 회귀는 25개 API를 64개 요청으로 검증한다. 로컬 전용 시나리오에는 좌석 점유 조회, 대리 취소, 회원 제한·해제, 중복 등록·24시간 기준, 예약 오픈 전 차단, 회차 판매 중단·재개·최종 취소가 포함된다. staging에서는 이미 예매가 열린 미래 회차와 전용 일반 회원·빈 좌석을 지정해 Booking smoke 폴더만 실행한다. 본인 전용 가상 환경에만 `allowWrite=dedicated-demo`를 설정하고, 실제 자격증명은 공유 파일에서 제외한다.
 
 실제 HTTPS의 소수 요청 smoke는 .env.smoke.example을 기존 파일을 보존하며 준비하고 새 SMOKE_ORIGIN·전용 일반 회원/회차/좌석을 로컬에서 채운 뒤 npm run verify:external:env로 실행한다. 관리자/공개 데모 계정·기존 선점/확정 예매/큐를 거부한다. 수동 시연과 같은 계정을 동시에 사용하지 않는다. manualReviewRequired이면 본인 내역을 확인하고 새로 만든 상태만 정리한다. 자동 보고서의 externalNetworkVerified=false는 별도 망 접속 증명이 아니다.
 
@@ -166,9 +174,9 @@ DB·WAL/SHM·백업·실제 .env/비밀값·설치 도구·node_modules·개인 
 
 팀원은 아래 팀원용 컬렉션과 로컬 환경 JSON을 함께 Import해 API 동작을 확인합니다. 서비스 문제와 개선 내용은 Notion에서 함께 정리합니다.
 
-- [팀원용 컬렉션 JSON — 평면 19개 요청](postman/ticket-ssu.team.postman_collection.json)
+- [팀원용 컬렉션 JSON — 평면 25개 요청](postman/ticket-ssu.team.postman_collection.json)
 - [로컬 환경 JSON](postman/environments/team.local.postman_environment.json)
-- [자동 회귀용 컬렉션 JSON — 41개 요청](postman/ticket-ssu.postman_collection.json)
+- [자동 회귀용 컬렉션 JSON — 64개 요청](postman/ticket-ssu.postman_collection.json)
 
 1. 팀원용 컬렉션과 로컬 환경 파일의 GitHub 화면에서 **Download raw file**을 눌러 JSON 파일을 다운로드합니다.
 2. Postman 앱에서 **Import → Files**를 선택하고 컬렉션과 환경 JSON을 함께 가져옵니다.
