@@ -87,15 +87,15 @@ physical_seats(id, venue_id, seat_code, row_label, number)
 ### concerts
 
 ```text
-concerts(id, title, artist, description, theme, duration, age, created_at)
+concerts(id, title, artist, description, theme, duration, age, created_at, booking_opens_at)
 ```
 
 | 항목 | 규칙 |
 | --- | --- |
 | PK / CK | PK id; CK id |
-| 속성 도메인 | id: ID; title·artist: LABEL; description: 1~2000자; theme: teal·purple·orange·blue; duration: 양의 분 단위 정수; age: 1~120자 관람등급 안내; created_at: TIME |
-| nullable / FK | 없음 / 없음 |
-| 유일성·보존 | 제목·아티스트는 키가 아님. 공연장 문자열은 제거하고 회차의 장소로 구함. 현재 등록 기본값 duration=120, age=8세 이상 |
+| 속성 도메인 | id: ID; title·artist: LABEL; description: 1~2000자; theme: teal·purple·orange·blue; duration: 양의 분 단위 정수; age: 1~120자 관람등급 안내; created_at: TIME; booking_opens_at: TIME 또는 NULL |
+| nullable / FK | booking_opens_at / 없음 |
+| 유일성·보존 | 제목·아티스트는 키가 아님. 공연장 문자열은 제거하고 회차의 장소로 구함. 현재 등록 기본값 duration=120, age=8세 이상. booking_opens_at은 공연 단위 예매 오픈 시각으로 첫 회차 시작보다 앞서야 함. 등록 시 생략하면 등록 시각, NULL은 이 속성 추가 전 공연(제한 없음) |
 
 ### performances
 

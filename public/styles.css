@@ -10,3 +10,4 @@
 
 /* ticket-ssu wordmark fits the existing responsive header. */
 .header .logo{font-size:28px;letter-spacing:-1.3px;white-space:nowrap}.auth-art>span{font-size:32px;letter-spacing:-1px}@media(max-width:560px){.header .logo{font-size:24px}}
+.available-dot.soon{color:#a2611f}.available-dot.soon:before{background:#c47a2c}

@@ -98,7 +98,7 @@ npm run db:backup -- restore data/backups/snapshot.sqlite data/restored-candidat
 | [docs/design/crud-matrix.md](docs/design/crud-matrix.md) | API별 테이블 CRUD·권한·트랜잭션 경계 |
 | [docs/design/service-improvements.md](docs/design/service-improvements.md) | 서비스 문제·개선 구현·장단점·통제 실험·한계·Notion 팀 논의 방식 |
 
-기계 명세는 [docs/openapi.yaml](docs/openapi.yaml), 실제 DDL은 [001_model.sql](db/migrations/001_model.sql)·[001_guards.sql](db/migrations/001_guards.sql)·[002_withdrawal_guard.sql](db/migrations/002_withdrawal_guard.sql)이다. 현재 API만 명세하며 미구현 계획용 명세/작업 계획/과거 검증 보고서는 제출 문서에서 제외했다.
+기계 명세는 [docs/openapi.yaml](docs/openapi.yaml), 실제 DDL은 [001_model.sql](db/migrations/001_model.sql)·[001_guards.sql](db/migrations/001_guards.sql)·[002_withdrawal_guard.sql](db/migrations/002_withdrawal_guard.sql)·[003_booking_opens_at.sql](db/migrations/003_booking_opens_at.sql)이다. 현재 API만 명세하며 미구현 계획용 명세/작업 계획/과거 검증 보고서는 제출 문서에서 제외했다.
 
 ## 검증 명령
 

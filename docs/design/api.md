@@ -22,19 +22,19 @@
 | logout | POST /api/auth/logout | 로그인·CSRF | 200 {ok:true}. 해당 세션 삭제·쿠키 만료 |
 | listConcerts | GET /api/concerts | 공개 | 200. 회차·잔여석·최저가. 검색/지역/정렬은 브라우저 수행 |
 | getSeats | GET /api/performances/{performanceId}/seats | 공개, 본인 선점 표시만 세션 사용 | 200. performance / seats / hold / server_now / max_tickets=4. 회차 없음 404 |
-| replaceHold | PUT /api/performances/{performanceId}/hold | 로그인·CSRF·본인 | 200. 중복 없는 문자열 0~4개, 확정 포함 4매, 마감·충돌 검사. 빈 배열은 해제 |
+| replaceHold | PUT /api/performances/{performanceId}/hold | 로그인·CSRF·본인 | 200. 중복 없는 문자열 0~4개, 확정 포함 4매, 예매 오픈·마감·충돌 검사(오픈 전 409). 빈 배열은 해제 |
 | createBooking | POST /api/bookings | 로그인·CSRF·본인 hold | 201. 이름·전화·수령 방식·동의·demo 검증. 유효 선점·마감·서버 금액. 기존 결과 재반환도 201 |
 | listBookings | GET /api/bookings | 로그인·본인 내역 | 200. 확정·취소 포함. 개별 GET /api/bookings/{id}는 없음 |
 | cancelBooking | POST /api/bookings/{bookingId}/cancel | 로그인·CSRF·본인 예매 | 200. 최초 취소는 시작 전, 전액·이력 보존. 반복 취소도 기존 결과 |
 | adminSummary | GET /api/admin/summary | 관리자 | 200. confirmed 판매 합계·회원 수·회차 상태·최근 감사 15개 |
-| createConcert | POST /api/admin/concerts | 관리자·CSRF | 201 {id}. 필수 문자열·1~10개 다른 미래 일시(시간대 명시)·S 가격 정수 1,000~1,000,000원. 회차별 96석 원자 생성 |
+| createConcert | POST /api/admin/concerts | 관리자·CSRF | 201 {id}. 필수 문자열·1~10개 다른 미래 일시(시간대 명시)·S 가격 정수 1,000~1,000,000원. 선택 bookingOpensAt(시간대 명시, 현재 이후·첫 회차 시작 전, 생략 시 즉시 오픈)은 공연의 모든 회차에 적용. 회차별 96석 원자 생성 |
 | blockSeats | PATCH /api/admin/performances/{performanceId}/seats | 관리자·CSRF | 200 {updated}. 1~96개 중복 없는 좌석·boolean blocked. 선점/예매 좌석 거부·묶음 롤백 |
 
 ## 큐·상태 확인
 
 | operationId | Method / URL | 인증·검증·응답 |
 | --- | --- | --- |
-| enterQueue | POST /api/v1/performances/{performanceId}/queue | 로그인·CSRF. 본문 생략 또는 {}로 일반 진입, {resumeHoldId}로 본인 유효 hold 복구. 200 본인 QueueStatus, 404 회차 없음, 409 복구 불가, 429 상한/요청 제한 |
+| enterQueue | POST /api/v1/performances/{performanceId}/queue | 로그인·CSRF. 본문 생략 또는 {}로 일반 진입, {resumeHoldId}로 본인 유효 hold 복구. 200 본인 QueueStatus, 404 회차 없음, 409 복구 불가·마감·예매 오픈 전(code BOOKING_NOT_OPEN), 429 상한/요청 제한 |
 | getQueue | GET /api/v1/performances/{performanceId}/queue | 로그인·본인 항목. 200 상태·순번·앞선 인원·추정 시간·입장권, 404 항목 없음. 메모리 조회이며 다른 회원 상태는 노출하지 않음 |
 | leaveQueue | DELETE /api/v1/performances/{performanceId}/queue | 로그인·CSRF·본인 항목. 200 {ok:true}, 반복 성공. 유효 DB hold를 자동 취소하지 않음 |
 | health | GET /api/v1/health | 공개. 200 {status:"ok"}. 프로세스 생존만 확인, DB 쓰기/상세 경로 노출 없음 |

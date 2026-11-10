@@ -9,6 +9,7 @@
 | [001_model.sql](../../db/migrations/001_model.sql) | 14개 업무 STRICT 테이블·1개 기술 테이블·키·CHECK·FK·인덱스·booking_totals 뷰 |
 | [001_guards.sql](../../db/migrations/001_guards.sql) | 회차·공연장·현재 점유·이력 변경을 보호하는 기본 트리거 |
 | [002_withdrawal_guard.sql](../../db/migrations/002_withdrawal_guard.sql) | 탈퇴 회원의 예매자 비식별화만 허용하는 v1 트리거 개정. 기존 데이터·테이블·user_version 유지 |
+| [003_booking_opens_at.sql](../../db/migrations/003_booking_opens_at.sql) | concerts에 nullable booking_opens_at 추가. 기존 model·legacy 파일은 시작 시 한 번 적용하고 기존 공연은 NULL(제한 없음). 데이터·user_version 유지 |
 | [model.mjs](../../db/model.mjs) | 연결 설정·빈 DB 생성·오프라인 원자 작업·완성 상태 무결성 검증·출력 경로 보호 |
 | [migrate.mjs](../../db/migrate.mjs) | 기존 스키마 읽기 전용 사전 검사·새 파일 이관·VACUUM INTO 스냅샷 |
 | [demo.mjs](../../db/seeds/demo.mjs) | 별도 새 모델 DB에 넣는 가상 seed |
@@ -32,7 +33,7 @@
 | sessions | expires_at | token_hash·user_id·csrf. NULL 없음 |
 | venues | 없음 | id·name·region. region만 NULL 허용 |
 | physical_seats | number | id·venue_id·seat_code·row_label. NULL 없음 |
-| concerts | duration·created_at | id·title·artist·description·theme·age. NULL 없음 |
+| concerts | duration·created_at·booking_opens_at | id·title·artist·description·theme·age. booking_opens_at만 NULL 허용 |
 | performances | starts_at | id·concert_id·venue_id. NULL 없음 |
 | inventory | price·blocked | id·performance_id·physical_seat_id·grade. blocked 기본 0 |
 | holds | expires_at | id·user_id·performance_id·status. NULL 없음 |

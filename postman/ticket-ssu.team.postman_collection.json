@@ -634,7 +634,7 @@
               "value": "application/json"
             }
           ],
-          "body": "{\n  \"concerts\": [\n    {\n      \"id\": \"concert-example\",\n      \"title\": \"가상 공연\",\n      \"artist\": \"가상 밴드\",\n      \"venue\": \"가상 공연장\",\n      \"description\": \"명세용 가상 공연\",\n      \"theme\": \"teal\",\n      \"duration\": 120,\n      \"age\": \"8세 이상\",\n      \"created_at\": 1800000000000,\n      \"performances\": [\n        {\n          \"id\": \"performance-example\",\n          \"concert_id\": \"concert-example\",\n          \"starts_at\": 1801814400000,\n          \"available\": 96,\n          \"min_price\": 90000\n        }\n      ]\n    }\n  ]\n}"
+          "body": "{\n  \"concerts\": [\n    {\n      \"id\": \"concert-example\",\n      \"title\": \"가상 공연\",\n      \"artist\": \"가상 밴드\",\n      \"venue\": \"가상 공연장\",\n      \"description\": \"명세용 가상 공연\",\n      \"theme\": \"teal\",\n      \"duration\": 120,\n      \"age\": \"8세 이상\",\n      \"created_at\": 1800000000000,\n      \"booking_opens_at\": null,\n      \"performances\": [\n        {\n          \"id\": \"performance-example\",\n          \"concert_id\": \"concert-example\",\n          \"starts_at\": 1801814400000,\n          \"available\": 96,\n          \"min_price\": 90000\n        }\n      ]\n    }\n  ]\n}"
         }
       ],
       "event": [
@@ -728,7 +728,7 @@
               "value": "application/json"
             }
           ],
-          "body": "{\n  \"performance\": {\n    \"id\": \"performance-example\",\n    \"concert_id\": \"concert-example\",\n    \"starts_at\": 1801814400000,\n    \"title\": \"가상 공연\",\n    \"venue\": \"가상 공연장\"\n  },\n  \"seats\": [\n    {\n      \"id\": \"A-01\",\n      \"row\": \"A\",\n      \"number\": 1,\n      \"grade\": \"VIP\",\n      \"price\": 130000,\n      \"state\": \"selected\"\n    }\n  ],\n  \"hold\": {\n    \"id\": \"hold-example\",\n    \"expires_at\": 1800000420000\n  },\n  \"server_now\": 1800000000000,\n  \"max_tickets\": 4\n}"
+          "body": "{\n  \"performance\": {\n    \"id\": \"performance-example\",\n    \"concert_id\": \"concert-example\",\n    \"starts_at\": 1801814400000,\n    \"title\": \"가상 공연\",\n    \"venue\": \"가상 공연장\",\n    \"booking_opens_at\": null\n  },\n  \"seats\": [\n    {\n      \"id\": \"A-01\",\n      \"row\": \"A\",\n      \"number\": 1,\n      \"grade\": \"VIP\",\n      \"price\": 130000,\n      \"state\": \"selected\"\n    }\n  ],\n  \"hold\": {\n    \"id\": \"hold-example\",\n    \"expires_at\": 1800000420000\n  },\n  \"server_now\": 1800000000000,\n  \"max_tickets\": 4\n}"
         }
       ],
       "event": [

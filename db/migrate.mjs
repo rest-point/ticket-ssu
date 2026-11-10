@@ -13,6 +13,8 @@ const legacyColumns = {
   booking_seats: 'booking_id seat_id grade price',
   audit: 'id user_id action detail created_at'
 };
+// Additive legacy columns: files created before the addition still migrate (value NULL).
+const optionalLegacyColumns = { concerts: 'booking_opens_at' };
 
 export function insertRow(db, table, row) {
   // Identifiers are code-owned, never request input.
@@ -33,8 +35,9 @@ export function readLegacy(db) {
   const payload = {};
   for (const [table, columns] of Object.entries(legacyColumns)) {
     const info = db.prepare(`PRAGMA table_info(${table})`).all();
-    if (info.map(c => c.name).join(' ') !== columns) reject('unexpected source column layout');
-    const integers = new Set('created_at expires_at starts_at cancelled_at ticket_total fee total number price blocked duration'.split(' '));
+    const layout = info.map(c => c.name).join(' ');
+    if (layout !== columns && !(optionalLegacyColumns[table] && layout === `${columns} ${optionalLegacyColumns[table]}`)) reject('unexpected source column layout');
+    const integers = new Set('created_at expires_at starts_at cancelled_at ticket_total fee total number price blocked duration booking_opens_at'.split(' '));
     if (info.some(c => c.type !== (integers.has(c.name) || (table === 'audit' && c.name === 'id') ? 'INTEGER' : 'TEXT'))) reject('unexpected source declared type');
     payload[table] = db.prepare(`SELECT * FROM ${table}`).all();
     for (const row of payload[table]) for (const col of info) {
@@ -54,7 +57,7 @@ export function readLegacy(db) {
 function importLegacy(db, data) {
   for (const row of data.users) insertRow(db, 'users', row);
   for (const row of data.sessions) insertRow(db, 'sessions', row);
-  for (const row of data.concerts) insertRow(db, 'concerts', selectFields(row, 'id title artist description theme duration age created_at'));
+  for (const row of data.concerts) insertRow(db, 'concerts', { ...selectFields(row, 'id title artist description theme duration age created_at'), booking_opens_at: row.booking_opens_at ?? null });
   const concerts = new Map(data.concerts.map(c => [c.id, c]));
   // Conservative mapping: no automatic merging of similarly named venues/layouts.
   for (const p of data.performances) {

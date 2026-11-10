@@ -33,6 +33,23 @@ export function enableAccountWithdrawal(db) {
   }
 }
 
+// Adds concerts.booking_opens_at once; shared by fresh model/legacy and existing files.
+export function enableBookingOpening(db) {
+  const hasColumn = () => db.prepare('PRAGMA table_info(concerts)').all().some(c => c.name === 'booking_opens_at');
+  if (hasColumn()) return;
+  const startedHere = !db.isTransaction;
+  if (startedHere) db.exec('BEGIN IMMEDIATE');
+  try {
+    // Re-check under the write lock: another process may have added it after the first check.
+    if (startedHere && hasColumn()) { db.exec('ROLLBACK'); return; }
+    db.exec(sql('003_booking_opens_at.sql'));
+    if (startedHere) db.exec('COMMIT');
+  } catch (error) {
+    if (startedHere && db.isTransaction) db.exec('ROLLBACK');
+    throw error;
+  }
+}
+
 export function applySchema(db) {
   if (db.prepare("SELECT COUNT(*) AS n FROM sqlite_schema WHERE name NOT LIKE 'sqlite_%'").get().n !== 0 || db.prepare('PRAGMA user_version').get().user_version !== 0) {
     throw new Error('schema initialization requires an empty database');
@@ -43,6 +60,7 @@ export function applySchema(db) {
     db.exec(sql('001_model.sql'));
     db.exec(sql('001_guards.sql'));
     db.exec(sql('002_withdrawal_guard.sql'));
+    enableBookingOpening(db);
     db.exec(`PRAGMA user_version=${MODEL_VERSION}; COMMIT;`);
   } catch (error) {
     if (db.isTransaction) db.exec('ROLLBACK');
@@ -61,6 +79,8 @@ export function validateModel(db) {
   failIf(`SELECT 1 FROM inventory i JOIN performances p ON p.id=i.performance_id JOIN physical_seats s ON s.id=i.physical_seat_id WHERE p.venue_id!=s.venue_id LIMIT 1`, 'inventory venue');
   failIf(`SELECT 1 FROM concerts c WHERE NOT EXISTS(SELECT 1 FROM performances p WHERE p.concert_id=c.id) LIMIT 1`, 'concert without performance');
   failIf(`SELECT 1 FROM performances p WHERE NOT EXISTS(SELECT 1 FROM inventory i WHERE i.performance_id=p.id) LIMIT 1`, 'performance without inventory');
+  failIf(`SELECT 1 FROM concerts c WHERE c.booking_opens_at IS NOT NULL
+    AND c.booking_opens_at >= (SELECT MIN(p.starts_at) FROM performances p WHERE p.concert_id=c.id) LIMIT 1`, 'booking opens after first performance');
   failIf(`SELECT 1 FROM current_holds ch JOIN inventory i ON i.id=ch.inventory_id JOIN holds h ON h.id=ch.hold_id
     WHERE i.blocked!=0 OR h.status!='active' OR h.performance_id!=i.performance_id OR EXISTS(SELECT 1 FROM current_bookings cb WHERE cb.inventory_id=i.id) LIMIT 1`, 'current hold');
   failIf(`SELECT 1 FROM holds h LEFT JOIN current_holds ch ON ch.hold_id=h.id GROUP BY h.id
