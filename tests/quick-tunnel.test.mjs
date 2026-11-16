@@ -165,7 +165,7 @@ async function fixture(t, schema, extra = {}) {
   return { tunnel, dir, path, logs, signals, send: (method, path, options = {}) => send(port, method, path, { ...options, tls: cert }) };
 }
 for (const schema of ['legacy', 'model']) {
-  test(`[${schema}] TLS→가짜 터널→중계→API의 회원/예매/취소와 Origin/CSRF·직접 우회 차단`, async t => {
+  test(`[${schema}] TLS→가짜 터널→중계→API의 회원/예매/관리자 취소와 Origin/CSRF·직접 우회 차단`, async t => {
     const f = await fixture(t, schema);
     assert.equal((await send(f.tunnel.apiPort)).status, 403);
     const signup = await f.send('POST', '/api/auth/signup', { headers: { origin }, body: {
@@ -186,8 +186,35 @@ for (const schema of ['legacy', 'model']) {
     const booked = await f.send('POST', '/api/bookings', { headers, body: { holdId: hold.body.hold.id, buyerName: '검증회원', buyerPhone: '01000000000', delivery: 'mobile', agreed: true, paymentMethod: 'demo' } });
     assert.equal(booked.status, 201); const id = booked.body.booking.id;
     assert.equal((await f.send('GET', '/api/bookings', { headers })).body.bookings[0].id, id);
-    assert.equal((await f.send('POST', `/api/bookings/${id}/cancel`, { headers, body: {} })).status, 200);
-    assert.equal((await f.send('GET', '/api/bookings', { headers })).body.bookings[0].status, 'cancelled');
+    const operator = await f.send('POST', '/api/auth/login', { headers: { origin }, body: { email: 'operator@example.test', password: adminPassword } });
+    assert.equal(operator.status, 200);
+    assert.match(operator.headers['set-cookie'][0], /Secure/);
+    const operatorHeaders = { origin, cookie: operator.headers['set-cookie'][0].split(';')[0], 'x-csrf-token': operator.body.csrf };
+    const occupantPath = `/api/admin/performances/${pid}/seats?seatId=A-01`;
+    assert.equal((await f.send('GET', occupantPath, { headers })).status, 403);
+    const occupant = await f.send('GET', occupantPath, { headers: operatorHeaders });
+    assert.equal(occupant.status, 200);
+    assert.equal(occupant.body.member.email, 'member@example.test');
+    assert.equal(occupant.body.booking_id, id);
+    const lookup = await f.send('GET', `/api/admin/bookings/${id}`, { headers: operatorHeaders });
+    assert.equal(lookup.status, 200);
+    assert.equal(lookup.body.booking.can_cancel, true);
+    const cancel = await f.send('POST', `/api/admin/bookings/${id}/cancel`, { headers: operatorHeaders, body: { reason: 'customer_request', confirmed: true } });
+    assert.equal(cancel.status, 200);
+    const memberBooking = (await f.send('GET', '/api/bookings', { headers })).body.bookings[0];
+    assert.equal(memberBooking.status, 'cancelled');
+    assert.equal(memberBooking.admin_cancel_reason, 'customer_request');
+    const lookupMember = await f.send('POST', '/api/admin/member-restrictions/lookup', { headers: operatorHeaders, body: { email: 'member@example.test' } });
+    assert.equal(lookupMember.status, 200);
+    const member = lookupMember.body.member;
+    const restriction = await f.send('PUT', '/api/admin/member-restrictions', { headers: operatorHeaders, body: {
+      member_id: member.member_id, revision: member.revision, restricted: true, reason: '터널 테스트 제한'
+    } });
+    assert.equal(restriction.status, 200);
+    const denied = await f.send('POST', `/api/v1/performances/${pid}/queue`, { headers, body: {} });
+    assert.equal(denied.status, 403);
+    assert.equal(denied.body.code, 'BOOKING_RESTRICTED');
+    assert.equal((await f.send('POST', '/api/auth/logout', { headers: operatorHeaders })).status, 200);
     assert.equal((await f.send('POST', '/api/auth/logout', { headers, body: {} })).status, 200);
     const apiPort = f.tunnel.apiPort, bridgePort = f.tunnel.bridgePort;
     f.signals.emit('SIGINT'); await f.tunnel.closed; await f.tunnel.stop();

@@ -33,7 +33,7 @@ export async function runPostmanCollection({ collection, environment, folder }) 
 
 export async function runIsolatedPostman(schema) {
   if (!['legacy', 'model'].includes(schema) || process.env.NODE_ENV === 'production' || process.env.PUBLIC_ORIGIN || process.env.PROXY_TOKEN) throw new Error('POSTMAN_LOCAL_ENV_REFUSED');
-  await checkCollection();
+  const { currentOperations } = await checkCollection();
   const collection = JSON.parse(await readFile(resolve(root, 'postman/ticket-ssu.postman_collection.json'), 'utf8'));
   const directory = await mkdtemp(join(tmpdir(), 'ticket-ssu-postman-'));
   let app, report;
@@ -57,7 +57,7 @@ export async function runIsolatedPostman(schema) {
     if (schema === 'model') validateModel(app.store.db);
     Object.assign(report, { currentOperationsCovered: covered.size, confirmedBookings: confirmed, activeHolds, sessions,
       temporaryDatabaseOnly: true, externalNetworkVerified: false });
-    report.passed &&= covered.size === 19 && confirmed === 0 && activeHolds === 0 && sessions === 0;
+    report.passed &&= covered.size === currentOperations && confirmed === 0 && activeHolds === 0 && sessions === 0;
   } finally {
     await app?.shutdown(1000);
     if (!resolve(directory).startsWith(resolve(tmpdir()) + sep + 'ticket-ssu-postman-')) throw new Error('POSTMAN_CLEANUP_PATH');

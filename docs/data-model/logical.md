@@ -87,15 +87,15 @@ physical_seats(id, venue_id, seat_code, row_label, number)
 ### concerts
 
 ```text
-concerts(id, title, artist, description, theme, duration, age, created_at)
+concerts(id, title, artist, description, theme, duration, age, created_at, booking_opens_at)
 ```
 
 | 항목 | 규칙 |
 | --- | --- |
 | PK / CK | PK id; CK id |
-| 속성 도메인 | id: ID; title·artist: LABEL; description: 1~2000자; theme: teal·purple·orange·blue; duration: 양의 분 단위 정수; age: 1~120자 관람등급 안내; created_at: TIME |
-| nullable / FK | 없음 / 없음 |
-| 유일성·보존 | 제목·아티스트는 키가 아님. 공연장 문자열은 제거하고 회차의 장소로 구함. 현재 등록 기본값 duration=120, age=8세 이상 |
+| 속성 도메인 | id: ID; title·artist: LABEL; description: 1~2000자; theme: teal·purple·orange·blue; duration: 양의 분 단위 정수; age: 1~120자 관람등급 안내; created_at: TIME; booking_opens_at: TIME 또는 NULL |
+| nullable / FK | booking_opens_at / 없음 |
+| 유일성·보존 | 제목·아티스트는 키가 아님. 공연장 문자열은 제거하고 회차의 장소로 구함. 현재 등록 기본값 duration=120, age=8세 이상. booking_opens_at은 공연 단위 예매 오픈 시각으로 첫 회차 시작보다 앞서야 함. 등록 시 생략하면 등록 시각, NULL은 이 속성 추가 전 공연(제한 없음) |
 
 ### performances
 
@@ -233,6 +233,17 @@ audit_events(id, user_id, action, detail, created_at)
 | 유일성·보존 | 동작·대상은 유일키 아님. 관리자가 나중에 역할이 바뀌어도 기록을 보존. 입력 당시 권한 검사. 시스템 사용자 생성은 이번 범위 아님 |
 
 detail은 동작의 불변 사건 자료다. 현재처럼 create-concert의 id/title, block/unblock의 performanceId/ids를 보존한다. 좌석 목록은 판매 관계를 저장하는 컬럼이 아니라 감사 사건의 원문 상세다. 관계 조회·FK 검증·매수 집계에 detail을 사용하지 않는다. 범용 target_id를 여러 테이블에 거짓 FK로 연결하지 않으며 감사 대상 FK가 필요해지면 별도 대상 관계를 설계한다.
+
+## 관리자 기능 이력
+
+다음 이력은 model과 legacy에 공통으로 추가된다. 현재 상태를 결정하는 최신 revision과 기존 예매의 연결을 보존한다. 자료형·FK 삭제 정책은 [물리 모델](physical.md)을 따른다.
+
+| 릴레이션 | 키 | 보존 내용 |
+| --- | --- | --- |
+| admin_booking_cancellations | booking_id | 예매당 대리 취소 한 건. 처리 관리자·사유·시각을 보존한다. |
+| member_booking_restrictions | (member_id, revision) | 회원별 제한·해제 이력. 최신 revision을 현재 상태로 사용한다. |
+| performance_sales_events | (performance_id, revision) | 회차별 판매 중단·재개·최종 취소 이력. 최신 revision을 현재 상태로 사용한다. |
+| performance_cancelled_bookings | booking_id | 최종 취소된 예매를 해당 (performance_id, revision)의 판매 이력에 연결한다. |
 
 ## 릴레이션 간 무결성 계약
 

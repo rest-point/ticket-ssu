@@ -14,10 +14,13 @@
           "if(!/^http:\\/\\/127[.]0[.]0[.]1:[1-9][0-9]{0,4}$/.test(base) || Number(base.split(':').pop())>65535){",
           " pm.test('local target',()=>pm.expect.fail('baseUrl: http://127.0.0.1:3000')); pm.execution.setNextRequest(null); pm.execution.skipRequest(); return;",
           "}",
-          "if(!pm.environment.get('futureDate') || Date.parse(pm.environment.get('futureDate'))<=Date.now()) pm.environment.set('futureDate',new Date(Date.now()+30*86400000).toISOString());",
+          "if(!pm.environment.get('futureDate')) pm.environment.set('futureDate',new Date(Date.now()+30*86400000).toISOString());",
           "if(pm.request.body?.mode==='raw'){",
           " const replace=v=>typeof v==='string'?pm.variables.replaceIn(v):Array.isArray(v)?v.map(replace):v&&typeof v==='object'?Object.fromEntries(Object.entries(v).map(([k,x])=>[k,replace(x)])):v;",
-          " pm.request.body.update(JSON.stringify(replace(JSON.parse(pm.request.body.raw))));",
+          " const body=replace(JSON.parse(pm.request.body.raw));",
+          " if(body.bookingOpensAt==='' || body.bookingOpensAt==='{{bookingOpensAt}}') delete body.bookingOpensAt;",
+          " if(pm.request.method==='PUT' && body.member_id!==undefined && typeof body.revision==='string' && /^\\d+$/.test(body.revision)) body.revision=Number(body.revision);",
+          " pm.request.body.update(JSON.stringify(body));",
           "}",
           "})();"
         ]
@@ -110,7 +113,11 @@
               "}",
               "if(id==='replaceHold'){if(data.hold)pm.environment.set('holdId',data.hold.id);else pm.environment.unset('holdId');}",
               "if(id==='createBooking')pm.environment.set('bookingId',data.booking.id);",
+              "if(id==='adminGetSeatOccupant'){if(data.booking_id)pm.environment.set('bookingId',data.booking_id);else pm.environment.unset('bookingId');}",
               "if(id==='createConcert')pm.environment.set('createdConcertId',data.id);",
+              "if(['adminLookupMemberRestriction','adminSetMemberRestriction'].includes(id)){",
+              " pm.environment.set('restrictionMemberId',data.member.member_id);pm.environment.set('restrictionRevision',String(data.member.revision));",
+              "}",
               "})();"
             ]
           }
@@ -244,7 +251,11 @@
               "}",
               "if(id==='replaceHold'){if(data.hold)pm.environment.set('holdId',data.hold.id);else pm.environment.unset('holdId');}",
               "if(id==='createBooking')pm.environment.set('bookingId',data.booking.id);",
+              "if(id==='adminGetSeatOccupant'){if(data.booking_id)pm.environment.set('bookingId',data.booking_id);else pm.environment.unset('bookingId');}",
               "if(id==='createConcert')pm.environment.set('createdConcertId',data.id);",
+              "if(['adminLookupMemberRestriction','adminSetMemberRestriction'].includes(id)){",
+              " pm.environment.set('restrictionMemberId',data.member.member_id);pm.environment.set('restrictionRevision',String(data.member.revision));",
+              "}",
               "})();"
             ]
           }
@@ -378,7 +389,11 @@
               "}",
               "if(id==='replaceHold'){if(data.hold)pm.environment.set('holdId',data.hold.id);else pm.environment.unset('holdId');}",
               "if(id==='createBooking')pm.environment.set('bookingId',data.booking.id);",
+              "if(id==='adminGetSeatOccupant'){if(data.booking_id)pm.environment.set('bookingId',data.booking_id);else pm.environment.unset('bookingId');}",
               "if(id==='createConcert')pm.environment.set('createdConcertId',data.id);",
+              "if(['adminLookupMemberRestriction','adminSetMemberRestriction'].includes(id)){",
+              " pm.environment.set('restrictionMemberId',data.member.member_id);pm.environment.set('restrictionRevision',String(data.member.revision));",
+              "}",
               "})();"
             ]
           }
@@ -468,7 +483,11 @@
               "}",
               "if(id==='replaceHold'){if(data.hold)pm.environment.set('holdId',data.hold.id);else pm.environment.unset('holdId');}",
               "if(id==='createBooking')pm.environment.set('bookingId',data.booking.id);",
+              "if(id==='adminGetSeatOccupant'){if(data.booking_id)pm.environment.set('bookingId',data.booking_id);else pm.environment.unset('bookingId');}",
               "if(id==='createConcert')pm.environment.set('createdConcertId',data.id);",
+              "if(['adminLookupMemberRestriction','adminSetMemberRestriction'].includes(id)){",
+              " pm.environment.set('restrictionMemberId',data.member.member_id);pm.environment.set('restrictionRevision',String(data.member.revision));",
+              "}",
               "})();"
             ]
           }
@@ -576,7 +595,11 @@
               "}",
               "if(id==='replaceHold'){if(data.hold)pm.environment.set('holdId',data.hold.id);else pm.environment.unset('holdId');}",
               "if(id==='createBooking')pm.environment.set('bookingId',data.booking.id);",
+              "if(id==='adminGetSeatOccupant'){if(data.booking_id)pm.environment.set('bookingId',data.booking_id);else pm.environment.unset('bookingId');}",
               "if(id==='createConcert')pm.environment.set('createdConcertId',data.id);",
+              "if(['adminLookupMemberRestriction','adminSetMemberRestriction'].includes(id)){",
+              " pm.environment.set('restrictionMemberId',data.member.member_id);pm.environment.set('restrictionRevision',String(data.member.revision));",
+              "}",
               "})();"
             ]
           }
@@ -634,7 +657,7 @@
               "value": "application/json"
             }
           ],
-          "body": "{\n  \"concerts\": [\n    {\n      \"id\": \"concert-example\",\n      \"title\": \"가상 공연\",\n      \"artist\": \"가상 밴드\",\n      \"venue\": \"가상 공연장\",\n      \"description\": \"명세용 가상 공연\",\n      \"theme\": \"teal\",\n      \"duration\": 120,\n      \"age\": \"8세 이상\",\n      \"created_at\": 1800000000000,\n      \"performances\": [\n        {\n          \"id\": \"performance-example\",\n          \"concert_id\": \"concert-example\",\n          \"starts_at\": 1801814400000,\n          \"available\": 96,\n          \"min_price\": 90000\n        }\n      ]\n    }\n  ]\n}"
+          "body": "{\n  \"concerts\": [\n    {\n      \"id\": \"concert-example\",\n      \"title\": \"가상 공연\",\n      \"artist\": \"가상 밴드\",\n      \"venue\": \"가상 공연장\",\n      \"description\": \"명세용 가상 공연\",\n      \"theme\": \"teal\",\n      \"duration\": 120,\n      \"age\": \"8세 이상\",\n      \"created_at\": 1800000000000,\n      \"performances\": [\n        {\n          \"id\": \"performance-example\",\n          \"concert_id\": \"concert-example\",\n          \"starts_at\": 1801814400000,\n          \"available\": 96,\n          \"min_price\": 90000,\n          \"sale_state\": \"open\"\n        }\n      ],\n      \"booking_opens_at\": null\n    }\n  ]\n}"
         }
       ],
       "event": [
@@ -666,7 +689,11 @@
               "}",
               "if(id==='replaceHold'){if(data.hold)pm.environment.set('holdId',data.hold.id);else pm.environment.unset('holdId');}",
               "if(id==='createBooking')pm.environment.set('bookingId',data.booking.id);",
+              "if(id==='adminGetSeatOccupant'){if(data.booking_id)pm.environment.set('bookingId',data.booking_id);else pm.environment.unset('bookingId');}",
               "if(id==='createConcert')pm.environment.set('createdConcertId',data.id);",
+              "if(['adminLookupMemberRestriction','adminSetMemberRestriction'].includes(id)){",
+              " pm.environment.set('restrictionMemberId',data.member.member_id);pm.environment.set('restrictionRevision',String(data.member.revision));",
+              "}",
               "})();"
             ]
           }
@@ -728,7 +755,7 @@
               "value": "application/json"
             }
           ],
-          "body": "{\n  \"performance\": {\n    \"id\": \"performance-example\",\n    \"concert_id\": \"concert-example\",\n    \"starts_at\": 1801814400000,\n    \"title\": \"가상 공연\",\n    \"venue\": \"가상 공연장\"\n  },\n  \"seats\": [\n    {\n      \"id\": \"A-01\",\n      \"row\": \"A\",\n      \"number\": 1,\n      \"grade\": \"VIP\",\n      \"price\": 130000,\n      \"state\": \"selected\"\n    }\n  ],\n  \"hold\": {\n    \"id\": \"hold-example\",\n    \"expires_at\": 1800000420000\n  },\n  \"server_now\": 1800000000000,\n  \"max_tickets\": 4\n}"
+          "body": "{\n  \"performance\": {\n    \"id\": \"performance-example\",\n    \"concert_id\": \"concert-example\",\n    \"starts_at\": 1801814400000,\n    \"title\": \"가상 공연\",\n    \"venue\": \"가상 공연장\",\n    \"booking_opens_at\": null\n  },\n  \"seats\": [\n    {\n      \"id\": \"A-01\",\n      \"row\": \"A\",\n      \"number\": 1,\n      \"grade\": \"VIP\",\n      \"price\": 130000,\n      \"state\": \"selected\"\n    }\n  ],\n  \"hold\": {\n    \"id\": \"hold-example\",\n    \"expires_at\": 1800000420000\n  },\n  \"server_now\": 1800000000000,\n  \"max_tickets\": 4\n}"
         }
       ],
       "event": [
@@ -760,7 +787,11 @@
               "}",
               "if(id==='replaceHold'){if(data.hold)pm.environment.set('holdId',data.hold.id);else pm.environment.unset('holdId');}",
               "if(id==='createBooking')pm.environment.set('bookingId',data.booking.id);",
+              "if(id==='adminGetSeatOccupant'){if(data.booking_id)pm.environment.set('bookingId',data.booking_id);else pm.environment.unset('bookingId');}",
               "if(id==='createConcert')pm.environment.set('createdConcertId',data.id);",
+              "if(['adminLookupMemberRestriction','adminSetMemberRestriction'].includes(id)){",
+              " pm.environment.set('restrictionMemberId',data.member.member_id);pm.environment.set('restrictionRevision',String(data.member.revision));",
+              "}",
               "})();"
             ]
           }
@@ -898,7 +929,11 @@
               "}",
               "if(id==='replaceHold'){if(data.hold)pm.environment.set('holdId',data.hold.id);else pm.environment.unset('holdId');}",
               "if(id==='createBooking')pm.environment.set('bookingId',data.booking.id);",
+              "if(id==='adminGetSeatOccupant'){if(data.booking_id)pm.environment.set('bookingId',data.booking_id);else pm.environment.unset('bookingId');}",
               "if(id==='createConcert')pm.environment.set('createdConcertId',data.id);",
+              "if(['adminLookupMemberRestriction','adminSetMemberRestriction'].includes(id)){",
+              " pm.environment.set('restrictionMemberId',data.member.member_id);pm.environment.set('restrictionRevision',String(data.member.revision));",
+              "}",
               "})();"
             ]
           }
@@ -994,7 +1029,11 @@
               "}",
               "if(id==='replaceHold'){if(data.hold)pm.environment.set('holdId',data.hold.id);else pm.environment.unset('holdId');}",
               "if(id==='createBooking')pm.environment.set('bookingId',data.booking.id);",
+              "if(id==='adminGetSeatOccupant'){if(data.booking_id)pm.environment.set('bookingId',data.booking_id);else pm.environment.unset('bookingId');}",
               "if(id==='createConcert')pm.environment.set('createdConcertId',data.id);",
+              "if(['adminLookupMemberRestriction','adminSetMemberRestriction'].includes(id)){",
+              " pm.environment.set('restrictionMemberId',data.member.member_id);pm.environment.set('restrictionRevision',String(data.member.revision));",
+              "}",
               "})();"
             ]
           }
@@ -1106,7 +1145,11 @@
               "}",
               "if(id==='replaceHold'){if(data.hold)pm.environment.set('holdId',data.hold.id);else pm.environment.unset('holdId');}",
               "if(id==='createBooking')pm.environment.set('bookingId',data.booking.id);",
+              "if(id==='adminGetSeatOccupant'){if(data.booking_id)pm.environment.set('bookingId',data.booking_id);else pm.environment.unset('bookingId');}",
               "if(id==='createConcert')pm.environment.set('createdConcertId',data.id);",
+              "if(['adminLookupMemberRestriction','adminSetMemberRestriction'].includes(id)){",
+              " pm.environment.set('restrictionMemberId',data.member.member_id);pm.environment.set('restrictionRevision',String(data.member.revision));",
+              "}",
               "})();"
             ]
           }
@@ -1250,7 +1293,11 @@
               "}",
               "if(id==='replaceHold'){if(data.hold)pm.environment.set('holdId',data.hold.id);else pm.environment.unset('holdId');}",
               "if(id==='createBooking')pm.environment.set('bookingId',data.booking.id);",
+              "if(id==='adminGetSeatOccupant'){if(data.booking_id)pm.environment.set('bookingId',data.booking_id);else pm.environment.unset('bookingId');}",
               "if(id==='createConcert')pm.environment.set('createdConcertId',data.id);",
+              "if(['adminLookupMemberRestriction','adminSetMemberRestriction'].includes(id)){",
+              " pm.environment.set('restrictionMemberId',data.member.member_id);pm.environment.set('restrictionRevision',String(data.member.revision));",
+              "}",
               "})();"
             ]
           }
@@ -1390,7 +1437,11 @@
               "}",
               "if(id==='replaceHold'){if(data.hold)pm.environment.set('holdId',data.hold.id);else pm.environment.unset('holdId');}",
               "if(id==='createBooking')pm.environment.set('bookingId',data.booking.id);",
+              "if(id==='adminGetSeatOccupant'){if(data.booking_id)pm.environment.set('bookingId',data.booking_id);else pm.environment.unset('bookingId');}",
               "if(id==='createConcert')pm.environment.set('createdConcertId',data.id);",
+              "if(['adminLookupMemberRestriction','adminSetMemberRestriction'].includes(id)){",
+              " pm.environment.set('restrictionMemberId',data.member.member_id);pm.environment.set('restrictionRevision',String(data.member.revision));",
+              "}",
               "})();"
             ]
           }
@@ -1480,7 +1531,11 @@
               "}",
               "if(id==='replaceHold'){if(data.hold)pm.environment.set('holdId',data.hold.id);else pm.environment.unset('holdId');}",
               "if(id==='createBooking')pm.environment.set('bookingId',data.booking.id);",
+              "if(id==='adminGetSeatOccupant'){if(data.booking_id)pm.environment.set('bookingId',data.booking_id);else pm.environment.unset('bookingId');}",
               "if(id==='createConcert')pm.environment.set('createdConcertId',data.id);",
+              "if(['adminLookupMemberRestriction','adminSetMemberRestriction'].includes(id)){",
+              " pm.environment.set('restrictionMemberId',data.member.member_id);pm.environment.set('restrictionRevision',String(data.member.revision));",
+              "}",
               "})();"
             ]
           }
@@ -1590,7 +1645,11 @@
               "}",
               "if(id==='replaceHold'){if(data.hold)pm.environment.set('holdId',data.hold.id);else pm.environment.unset('holdId');}",
               "if(id==='createBooking')pm.environment.set('bookingId',data.booking.id);",
+              "if(id==='adminGetSeatOccupant'){if(data.booking_id)pm.environment.set('bookingId',data.booking_id);else pm.environment.unset('bookingId');}",
               "if(id==='createConcert')pm.environment.set('createdConcertId',data.id);",
+              "if(['adminLookupMemberRestriction','adminSetMemberRestriction'].includes(id)){",
+              " pm.environment.set('restrictionMemberId',data.member.member_id);pm.environment.set('restrictionRevision',String(data.member.revision));",
+              "}",
               "})();"
             ]
           }
@@ -1682,7 +1741,11 @@
               "}",
               "if(id==='replaceHold'){if(data.hold)pm.environment.set('holdId',data.hold.id);else pm.environment.unset('holdId');}",
               "if(id==='createBooking')pm.environment.set('bookingId',data.booking.id);",
+              "if(id==='adminGetSeatOccupant'){if(data.booking_id)pm.environment.set('bookingId',data.booking_id);else pm.environment.unset('bookingId');}",
               "if(id==='createConcert')pm.environment.set('createdConcertId',data.id);",
+              "if(['adminLookupMemberRestriction','adminSetMemberRestriction'].includes(id)){",
+              " pm.environment.set('restrictionMemberId',data.member.member_id);pm.environment.set('restrictionRevision',String(data.member.revision));",
+              "}",
               "})();"
             ]
           }
@@ -1742,7 +1805,7 @@
               "value": "application/json"
             }
           ],
-          "body": "{\n  \"stats\": {\n    \"bookings\": 1,\n    \"revenue\": 132000\n  },\n  \"users\": 2,\n  \"performances\": [\n    {\n      \"id\": \"performance-example\",\n      \"starts_at\": 1801814400000,\n      \"title\": \"가상 공연\",\n      \"total\": 96,\n      \"blocked\": 0,\n      \"booked\": 1,\n      \"held\": 0\n    }\n  ],\n  \"audit\": []\n}"
+          "body": "{\n  \"stats\": {\n    \"bookings\": 1,\n    \"revenue\": 132000\n  },\n  \"users\": 2,\n  \"performances\": [\n    {\n      \"id\": \"performance-example\",\n      \"starts_at\": 1801814400000,\n      \"title\": \"가상 공연\",\n      \"total\": 96,\n      \"blocked\": 0,\n      \"booked\": 1,\n      \"held\": 0,\n      \"concert_id\": \"concert-example\",\n      \"sale_state\": \"open\",\n      \"sale_revision\": 0,\n      \"booking_count\": 1\n    }\n  ],\n  \"audit\": []\n}"
         }
       ],
       "event": [
@@ -1774,7 +1837,11 @@
               "}",
               "if(id==='replaceHold'){if(data.hold)pm.environment.set('holdId',data.hold.id);else pm.environment.unset('holdId');}",
               "if(id==='createBooking')pm.environment.set('bookingId',data.booking.id);",
+              "if(id==='adminGetSeatOccupant'){if(data.booking_id)pm.environment.set('bookingId',data.booking_id);else pm.environment.unset('bookingId');}",
               "if(id==='createConcert')pm.environment.set('createdConcertId',data.id);",
+              "if(['adminLookupMemberRestriction','adminSetMemberRestriction'].includes(id)){",
+              " pm.environment.set('restrictionMemberId',data.member.member_id);pm.environment.set('restrictionRevision',String(data.member.revision));",
+              "}",
               "})();"
             ]
           }
@@ -1805,7 +1872,7 @@
         ],
         "body": {
           "mode": "raw",
-          "raw": "{\n  \"title\": \"Postman 검증 공연\",\n  \"artist\": \"가상 밴드\",\n  \"venue\": \"가상 공연장\",\n  \"description\": \"로컬 API 검증용 공연입니다.\",\n  \"basePrice\": 50000,\n  \"dates\": [\n    \"{{futureDate}}\"\n  ]\n}",
+          "raw": "{\n  \"title\": \"Postman 검증 공연\",\n  \"artist\": \"가상 밴드\",\n  \"venue\": \"가상 공연장\",\n  \"description\": \"로컬 API 검증용 공연입니다.\",\n  \"basePrice\": 50000,\n  \"dates\": [\n    \"{{futureDate}}\"\n  ],\n  \"bookingOpensAt\": \"{{bookingOpensAt}}\"\n}",
           "options": {
             "raw": {
               "language": "json"
@@ -1849,7 +1916,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Postman 검증 공연\",\n  \"artist\": \"가상 밴드\",\n  \"venue\": \"가상 공연장\",\n  \"description\": \"로컬 API 검증용 공연입니다.\",\n  \"basePrice\": 50000,\n  \"dates\": [\n    \"{{futureDate}}\"\n  ]\n}",
+              "raw": "{\n  \"title\": \"Postman 검증 공연\",\n  \"artist\": \"가상 밴드\",\n  \"venue\": \"가상 공연장\",\n  \"description\": \"로컬 API 검증용 공연입니다.\",\n  \"basePrice\": 50000,\n  \"dates\": [\n    \"{{futureDate}}\"\n  ],\n  \"bookingOpensAt\": \"{{bookingOpensAt}}\"\n}",
               "options": {
                 "raw": {
                   "language": "json"
@@ -1908,7 +1975,11 @@
               "}",
               "if(id==='replaceHold'){if(data.hold)pm.environment.set('holdId',data.hold.id);else pm.environment.unset('holdId');}",
               "if(id==='createBooking')pm.environment.set('bookingId',data.booking.id);",
+              "if(id==='adminGetSeatOccupant'){if(data.booking_id)pm.environment.set('bookingId',data.booking_id);else pm.environment.unset('bookingId');}",
               "if(id==='createConcert')pm.environment.set('createdConcertId',data.id);",
+              "if(['adminLookupMemberRestriction','adminSetMemberRestriction'].includes(id)){",
+              " pm.environment.set('restrictionMemberId',data.member.member_id);pm.environment.set('restrictionRevision',String(data.member.revision));",
+              "}",
               "})();"
             ]
           }
@@ -2046,7 +2117,11 @@
               "}",
               "if(id==='replaceHold'){if(data.hold)pm.environment.set('holdId',data.hold.id);else pm.environment.unset('holdId');}",
               "if(id==='createBooking')pm.environment.set('bookingId',data.booking.id);",
+              "if(id==='adminGetSeatOccupant'){if(data.booking_id)pm.environment.set('bookingId',data.booking_id);else pm.environment.unset('bookingId');}",
               "if(id==='createConcert')pm.environment.set('createdConcertId',data.id);",
+              "if(['adminLookupMemberRestriction','adminSetMemberRestriction'].includes(id)){",
+              " pm.environment.set('restrictionMemberId',data.member.member_id);pm.environment.set('restrictionRevision',String(data.member.revision));",
+              "}",
               "})();"
             ]
           }
@@ -2180,7 +2255,779 @@
               "}",
               "if(id==='replaceHold'){if(data.hold)pm.environment.set('holdId',data.hold.id);else pm.environment.unset('holdId');}",
               "if(id==='createBooking')pm.environment.set('bookingId',data.booking.id);",
+              "if(id==='adminGetSeatOccupant'){if(data.booking_id)pm.environment.set('bookingId',data.booking_id);else pm.environment.unset('bookingId');}",
               "if(id==='createConcert')pm.environment.set('createdConcertId',data.id);",
+              "if(['adminLookupMemberRestriction','adminSetMemberRestriction'].includes(id)){",
+              " pm.environment.set('restrictionMemberId',data.member.member_id);pm.environment.set('restrictionRevision',String(data.member.revision));",
+              "}",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "admin booking lookup",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/admin/bookings/{{bookingId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "admin",
+            "bookings",
+            "{{bookingId}}"
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "200",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/bookings/{{bookingId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "bookings",
+                "{{bookingId}}"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"booking\": {\n    \"id\": \"T0123456789AB\",\n    \"performance_id\": \"performance-example\",\n    \"title\": \"가상 공연\",\n    \"starts_at\": 1801814400000,\n    \"status\": \"confirmed\",\n    \"total\": 132000,\n    \"seats\": [\n      {\n        \"seat_id\": \"A-01\",\n        \"grade\": \"VIP\",\n        \"price\": 130000\n      }\n    ],\n    \"cancelled_at\": null,\n    \"can_cancel\": true\n  }\n}"
+        }
+      ],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function () {",
+              "const id=\"adminGetBooking\";",
+              "pm.test('status',()=>pm.expect(pm.response.code).eql(200));",
+              "pm.test('json',()=>pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/));",
+              "if(pm.response.code>=400)return;",
+              "const data=pm.response.json();",
+              "if(['signup','login','getSession'].includes(id)){if(data.csrf)pm.environment.set('csrf',data.csrf);else pm.environment.unset('csrf');}",
+              "if(['logout','withdrawAccount'].includes(id)){pm.environment.unset('csrf');pm.environment.unset('admissionToken');}",
+              "if(id==='leaveQueue')pm.environment.unset('admissionToken');",
+              "if(['enterQueue','getQueue'].includes(id)){if(data.admission_token)pm.environment.set('admissionToken',data.admission_token);else pm.environment.unset('admissionToken');}",
+              "if(id==='listConcerts'){",
+              " const created=data.concerts.find(c=>c.id===pm.environment.get('createdConcertId'));",
+              " const current=pm.environment.get('performanceId');",
+              " const options=created?created.performances:data.concerts.flatMap(c=>c.performances);",
+              " const p=(!created&&options.find(p=>p.id===current))||options.find(p=>p.starts_at>Date.now()&&p.available>0);",
+              " if(p)pm.environment.set('performanceId',p.id);",
+              "}",
+              "if(id==='getSeats'){",
+              " if(!pm.environment.get('seatId')){const seat=data.seats.find(s=>s.state==='available');if(seat)pm.environment.set('seatId',seat.id);}",
+              " if(data.hold)pm.environment.set('holdId',data.hold.id);else pm.environment.unset('holdId');",
+              "}",
+              "if(id==='replaceHold'){if(data.hold)pm.environment.set('holdId',data.hold.id);else pm.environment.unset('holdId');}",
+              "if(id==='createBooking')pm.environment.set('bookingId',data.booking.id);",
+              "if(id==='adminGetSeatOccupant'){if(data.booking_id)pm.environment.set('bookingId',data.booking_id);else pm.environment.unset('bookingId');}",
+              "if(id==='createConcert')pm.environment.set('createdConcertId',data.id);",
+              "if(['adminLookupMemberRestriction','adminSetMemberRestriction'].includes(id)){",
+              " pm.environment.set('restrictionMemberId',data.member.member_id);pm.environment.set('restrictionRevision',String(data.member.revision));",
+              "}",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "admin booking cancel",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{baseUrl}}"
+          },
+          {
+            "key": "X-CSRF-Token",
+            "value": "{{csrf}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"reason\": \"customer_request\",\n  \"confirmed\": true\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/admin/bookings/{{bookingId}}/cancel",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "admin",
+            "bookings",
+            "{{bookingId}}",
+            "cancel"
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "200",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{baseUrl}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reason\": \"customer_request\",\n  \"confirmed\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/bookings/{{bookingId}}/cancel",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "bookings",
+                "{{bookingId}}",
+                "cancel"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"booking\": {\n    \"id\": \"T0123456789AB\",\n    \"performance_id\": \"performance-example\",\n    \"title\": \"가상 공연\",\n    \"starts_at\": 1801814400000,\n    \"status\": \"cancelled\",\n    \"total\": 132000,\n    \"seats\": [\n      {\n        \"seat_id\": \"A-01\",\n        \"grade\": \"VIP\",\n        \"price\": 130000\n      }\n    ],\n    \"cancelled_at\": 1801714400000,\n    \"can_cancel\": false,\n    \"admin_cancel_reason\": \"customer_request\"\n  }\n}"
+        }
+      ],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function () {",
+              "const id=\"adminCancelBooking\";",
+              "pm.test('status',()=>pm.expect(pm.response.code).eql(200));",
+              "pm.test('json',()=>pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/));",
+              "if(pm.response.code>=400)return;",
+              "const data=pm.response.json();",
+              "if(['signup','login','getSession'].includes(id)){if(data.csrf)pm.environment.set('csrf',data.csrf);else pm.environment.unset('csrf');}",
+              "if(['logout','withdrawAccount'].includes(id)){pm.environment.unset('csrf');pm.environment.unset('admissionToken');}",
+              "if(id==='leaveQueue')pm.environment.unset('admissionToken');",
+              "if(['enterQueue','getQueue'].includes(id)){if(data.admission_token)pm.environment.set('admissionToken',data.admission_token);else pm.environment.unset('admissionToken');}",
+              "if(id==='listConcerts'){",
+              " const created=data.concerts.find(c=>c.id===pm.environment.get('createdConcertId'));",
+              " const current=pm.environment.get('performanceId');",
+              " const options=created?created.performances:data.concerts.flatMap(c=>c.performances);",
+              " const p=(!created&&options.find(p=>p.id===current))||options.find(p=>p.starts_at>Date.now()&&p.available>0);",
+              " if(p)pm.environment.set('performanceId',p.id);",
+              "}",
+              "if(id==='getSeats'){",
+              " if(!pm.environment.get('seatId')){const seat=data.seats.find(s=>s.state==='available');if(seat)pm.environment.set('seatId',seat.id);}",
+              " if(data.hold)pm.environment.set('holdId',data.hold.id);else pm.environment.unset('holdId');",
+              "}",
+              "if(id==='replaceHold'){if(data.hold)pm.environment.set('holdId',data.hold.id);else pm.environment.unset('holdId');}",
+              "if(id==='createBooking')pm.environment.set('bookingId',data.booking.id);",
+              "if(id==='adminGetSeatOccupant'){if(data.booking_id)pm.environment.set('bookingId',data.booking_id);else pm.environment.unset('bookingId');}",
+              "if(id==='createConcert')pm.environment.set('createdConcertId',data.id);",
+              "if(['adminLookupMemberRestriction','adminSetMemberRestriction'].includes(id)){",
+              " pm.environment.set('restrictionMemberId',data.member.member_id);pm.environment.set('restrictionRevision',String(data.member.revision));",
+              "}",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "admin member lookup",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{baseUrl}}"
+          },
+          {
+            "key": "X-CSRF-Token",
+            "value": "{{csrf}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"{{restrictionEmail}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/admin/member-restrictions/lookup",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "admin",
+            "member-restrictions",
+            "lookup"
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "200",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{baseUrl}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{restrictionEmail}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/member-restrictions/lookup",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "member-restrictions",
+                "lookup"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"member\": {\n    \"member_id\": \"member-example\",\n    \"email\": \"member@example.test\",\n    \"name\": \"가상 회원\",\n    \"restricted\": false,\n    \"revision\": 0,\n    \"reason\": null,\n    \"changed_at\": null\n  }\n}"
+        }
+      ],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function () {",
+              "const id=\"adminLookupMemberRestriction\";",
+              "pm.test('status',()=>pm.expect(pm.response.code).eql(200));",
+              "pm.test('json',()=>pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/));",
+              "if(pm.response.code>=400)return;",
+              "const data=pm.response.json();",
+              "if(['signup','login','getSession'].includes(id)){if(data.csrf)pm.environment.set('csrf',data.csrf);else pm.environment.unset('csrf');}",
+              "if(['logout','withdrawAccount'].includes(id)){pm.environment.unset('csrf');pm.environment.unset('admissionToken');}",
+              "if(id==='leaveQueue')pm.environment.unset('admissionToken');",
+              "if(['enterQueue','getQueue'].includes(id)){if(data.admission_token)pm.environment.set('admissionToken',data.admission_token);else pm.environment.unset('admissionToken');}",
+              "if(id==='listConcerts'){",
+              " const created=data.concerts.find(c=>c.id===pm.environment.get('createdConcertId'));",
+              " const current=pm.environment.get('performanceId');",
+              " const options=created?created.performances:data.concerts.flatMap(c=>c.performances);",
+              " const p=(!created&&options.find(p=>p.id===current))||options.find(p=>p.starts_at>Date.now()&&p.available>0);",
+              " if(p)pm.environment.set('performanceId',p.id);",
+              "}",
+              "if(id==='getSeats'){",
+              " if(!pm.environment.get('seatId')){const seat=data.seats.find(s=>s.state==='available');if(seat)pm.environment.set('seatId',seat.id);}",
+              " if(data.hold)pm.environment.set('holdId',data.hold.id);else pm.environment.unset('holdId');",
+              "}",
+              "if(id==='replaceHold'){if(data.hold)pm.environment.set('holdId',data.hold.id);else pm.environment.unset('holdId');}",
+              "if(id==='createBooking')pm.environment.set('bookingId',data.booking.id);",
+              "if(id==='adminGetSeatOccupant'){if(data.booking_id)pm.environment.set('bookingId',data.booking_id);else pm.environment.unset('bookingId');}",
+              "if(id==='createConcert')pm.environment.set('createdConcertId',data.id);",
+              "if(['adminLookupMemberRestriction','adminSetMemberRestriction'].includes(id)){",
+              " pm.environment.set('restrictionMemberId',data.member.member_id);pm.environment.set('restrictionRevision',String(data.member.revision));",
+              "}",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "admin member restriction",
+      "request": {
+        "method": "PUT",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{baseUrl}}"
+          },
+          {
+            "key": "X-CSRF-Token",
+            "value": "{{csrf}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"member_id\": \"{{restrictionMemberId}}\",\n  \"revision\": \"{{restrictionRevision}}\",\n  \"restricted\": true,\n  \"reason\": \"{{restrictionReason}}\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/admin/member-restrictions",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "admin",
+            "member-restrictions"
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "200",
+          "originalRequest": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{baseUrl}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"member_id\": \"{{restrictionMemberId}}\",\n  \"revision\": \"{{restrictionRevision}}\",\n  \"restricted\": true,\n  \"reason\": \"{{restrictionReason}}\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/member-restrictions",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "member-restrictions"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"member\": {\n    \"member_id\": \"member-example\",\n    \"email\": \"member@example.test\",\n    \"name\": \"가상 회원\",\n    \"restricted\": true,\n    \"revision\": 1,\n    \"reason\": \"운영 정책 위반 확인\",\n    \"changed_at\": 1801714400000\n  }\n}"
+        }
+      ],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function () {",
+              "const id=\"adminSetMemberRestriction\";",
+              "pm.test('status',()=>pm.expect(pm.response.code).eql(200));",
+              "pm.test('json',()=>pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/));",
+              "if(pm.response.code>=400)return;",
+              "const data=pm.response.json();",
+              "if(['signup','login','getSession'].includes(id)){if(data.csrf)pm.environment.set('csrf',data.csrf);else pm.environment.unset('csrf');}",
+              "if(['logout','withdrawAccount'].includes(id)){pm.environment.unset('csrf');pm.environment.unset('admissionToken');}",
+              "if(id==='leaveQueue')pm.environment.unset('admissionToken');",
+              "if(['enterQueue','getQueue'].includes(id)){if(data.admission_token)pm.environment.set('admissionToken',data.admission_token);else pm.environment.unset('admissionToken');}",
+              "if(id==='listConcerts'){",
+              " const created=data.concerts.find(c=>c.id===pm.environment.get('createdConcertId'));",
+              " const current=pm.environment.get('performanceId');",
+              " const options=created?created.performances:data.concerts.flatMap(c=>c.performances);",
+              " const p=(!created&&options.find(p=>p.id===current))||options.find(p=>p.starts_at>Date.now()&&p.available>0);",
+              " if(p)pm.environment.set('performanceId',p.id);",
+              "}",
+              "if(id==='getSeats'){",
+              " if(!pm.environment.get('seatId')){const seat=data.seats.find(s=>s.state==='available');if(seat)pm.environment.set('seatId',seat.id);}",
+              " if(data.hold)pm.environment.set('holdId',data.hold.id);else pm.environment.unset('holdId');",
+              "}",
+              "if(id==='replaceHold'){if(data.hold)pm.environment.set('holdId',data.hold.id);else pm.environment.unset('holdId');}",
+              "if(id==='createBooking')pm.environment.set('bookingId',data.booking.id);",
+              "if(id==='adminGetSeatOccupant'){if(data.booking_id)pm.environment.set('bookingId',data.booking_id);else pm.environment.unset('bookingId');}",
+              "if(id==='createConcert')pm.environment.set('createdConcertId',data.id);",
+              "if(['adminLookupMemberRestriction','adminSetMemberRestriction'].includes(id)){",
+              " pm.environment.set('restrictionMemberId',data.member.member_id);pm.environment.set('restrictionRevision',String(data.member.revision));",
+              "}",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "admin seat occupant",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          }
+        ],
+        "url": {
+          "raw": "{{baseUrl}}/api/admin/performances/{{performanceId}}/seats?seatId={{seatId}}",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "admin",
+            "performances",
+            "{{performanceId}}",
+            "seats"
+          ],
+          "query": [
+            {
+              "key": "seatId",
+              "value": "{{seatId}}"
+            }
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "200",
+          "originalRequest": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              }
+            ],
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/performances/{{performanceId}}/seats?seatId={{seatId}}",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "performances",
+                "{{performanceId}}",
+                "seats"
+              ],
+              "query": [
+                {
+                  "key": "seatId",
+                  "value": "{{seatId}}"
+                }
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"seat_id\": \"A-01\",\n  \"state\": \"booked\",\n  \"member\": {\n    \"name\": \"가상 회원\",\n    \"email\": \"member@example.test\"\n  },\n  \"booking_id\": \"T0123456789AB\"\n}"
+        }
+      ],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function () {",
+              "const id=\"adminGetSeatOccupant\";",
+              "pm.test('status',()=>pm.expect(pm.response.code).eql(200));",
+              "pm.test('json',()=>pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/));",
+              "if(pm.response.code>=400)return;",
+              "const data=pm.response.json();",
+              "if(['signup','login','getSession'].includes(id)){if(data.csrf)pm.environment.set('csrf',data.csrf);else pm.environment.unset('csrf');}",
+              "if(['logout','withdrawAccount'].includes(id)){pm.environment.unset('csrf');pm.environment.unset('admissionToken');}",
+              "if(id==='leaveQueue')pm.environment.unset('admissionToken');",
+              "if(['enterQueue','getQueue'].includes(id)){if(data.admission_token)pm.environment.set('admissionToken',data.admission_token);else pm.environment.unset('admissionToken');}",
+              "if(id==='listConcerts'){",
+              " const created=data.concerts.find(c=>c.id===pm.environment.get('createdConcertId'));",
+              " const current=pm.environment.get('performanceId');",
+              " const options=created?created.performances:data.concerts.flatMap(c=>c.performances);",
+              " const p=(!created&&options.find(p=>p.id===current))||options.find(p=>p.starts_at>Date.now()&&p.available>0);",
+              " if(p)pm.environment.set('performanceId',p.id);",
+              "}",
+              "if(id==='getSeats'){",
+              " if(!pm.environment.get('seatId')){const seat=data.seats.find(s=>s.state==='available');if(seat)pm.environment.set('seatId',seat.id);}",
+              " if(data.hold)pm.environment.set('holdId',data.hold.id);else pm.environment.unset('holdId');",
+              "}",
+              "if(id==='replaceHold'){if(data.hold)pm.environment.set('holdId',data.hold.id);else pm.environment.unset('holdId');}",
+              "if(id==='createBooking')pm.environment.set('bookingId',data.booking.id);",
+              "if(id==='adminGetSeatOccupant'){if(data.booking_id)pm.environment.set('bookingId',data.booking_id);else pm.environment.unset('bookingId');}",
+              "if(id==='createConcert')pm.environment.set('createdConcertId',data.id);",
+              "if(['adminLookupMemberRestriction','adminSetMemberRestriction'].includes(id)){",
+              " pm.environment.set('restrictionMemberId',data.member.member_id);pm.environment.set('restrictionRevision',String(data.member.revision));",
+              "}",
+              "})();"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "admin performance sales",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Accept",
+            "value": "application/json"
+          },
+          {
+            "key": "Origin",
+            "value": "{{baseUrl}}"
+          },
+          {
+            "key": "X-CSRF-Token",
+            "value": "{{csrf}}"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"action\": \"pause\",\n  \"targets\": [\n    {\n      \"performance_id\": \"{{performanceId}}\",\n      \"revision\": 0,\n      \"booking_count\": 0\n    }\n  ],\n  \"reason\": \"\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "{{baseUrl}}/api/admin/performance-sales",
+          "host": [
+            "{{baseUrl}}"
+          ],
+          "path": [
+            "api",
+            "admin",
+            "performance-sales"
+          ]
+        }
+      },
+      "response": [
+        {
+          "name": "200",
+          "originalRequest": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Accept",
+                "value": "application/json"
+              },
+              {
+                "key": "Origin",
+                "value": "{{baseUrl}}"
+              },
+              {
+                "key": "X-CSRF-Token",
+                "value": "{{csrf}}"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"action\": \"pause\",\n  \"targets\": [\n    {\n      \"performance_id\": \"{{performanceId}}\",\n      \"revision\": 0,\n      \"booking_count\": 0\n    }\n  ],\n  \"reason\": \"\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "{{baseUrl}}/api/admin/performance-sales",
+              "host": [
+                "{{baseUrl}}"
+              ],
+              "path": [
+                "api",
+                "admin",
+                "performance-sales"
+              ]
+            }
+          },
+          "status": "OK",
+          "code": 200,
+          "header": [
+            {
+              "key": "Content-Type",
+              "value": "application/json"
+            }
+          ],
+          "body": "{\n  \"state\": \"cancelled\",\n  \"performance_ids\": [\n    \"performance-example\"\n  ],\n  \"cancelled_bookings\": 1\n}"
+        }
+      ],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "(function () {",
+              "const id=\"adminChangePerformanceSales\";",
+              "pm.test('status',()=>pm.expect(pm.response.code).eql(200));",
+              "pm.test('json',()=>pm.expect(pm.response.headers.get('Content-Type')).match(/^application\\/json/));",
+              "if(pm.response.code>=400)return;",
+              "const data=pm.response.json();",
+              "if(['signup','login','getSession'].includes(id)){if(data.csrf)pm.environment.set('csrf',data.csrf);else pm.environment.unset('csrf');}",
+              "if(['logout','withdrawAccount'].includes(id)){pm.environment.unset('csrf');pm.environment.unset('admissionToken');}",
+              "if(id==='leaveQueue')pm.environment.unset('admissionToken');",
+              "if(['enterQueue','getQueue'].includes(id)){if(data.admission_token)pm.environment.set('admissionToken',data.admission_token);else pm.environment.unset('admissionToken');}",
+              "if(id==='listConcerts'){",
+              " const created=data.concerts.find(c=>c.id===pm.environment.get('createdConcertId'));",
+              " const current=pm.environment.get('performanceId');",
+              " const options=created?created.performances:data.concerts.flatMap(c=>c.performances);",
+              " const p=(!created&&options.find(p=>p.id===current))||options.find(p=>p.starts_at>Date.now()&&p.available>0);",
+              " if(p)pm.environment.set('performanceId',p.id);",
+              "}",
+              "if(id==='getSeats'){",
+              " if(!pm.environment.get('seatId')){const seat=data.seats.find(s=>s.state==='available');if(seat)pm.environment.set('seatId',seat.id);}",
+              " if(data.hold)pm.environment.set('holdId',data.hold.id);else pm.environment.unset('holdId');",
+              "}",
+              "if(id==='replaceHold'){if(data.hold)pm.environment.set('holdId',data.hold.id);else pm.environment.unset('holdId');}",
+              "if(id==='createBooking')pm.environment.set('bookingId',data.booking.id);",
+              "if(id==='adminGetSeatOccupant'){if(data.booking_id)pm.environment.set('bookingId',data.booking_id);else pm.environment.unset('bookingId');}",
+              "if(id==='createConcert')pm.environment.set('createdConcertId',data.id);",
+              "if(['adminLookupMemberRestriction','adminSetMemberRestriction'].includes(id)){",
+              " pm.environment.set('restrictionMemberId',data.member.member_id);pm.environment.set('restrictionRevision',String(data.member.revision));",
+              "}",
               "})();"
             ]
           }

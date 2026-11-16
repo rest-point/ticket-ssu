@@ -53,7 +53,7 @@ test('새 STRICT DDL은 논리 속성·복합 FK·필수 키와 실제 PRAGMA를
   for (const [, table, cols] of logical.matchAll(/^([a-z_]+)\(([a-z_, ]+)\)$/gm)) {
     assert.deepEqual(db.prepare(`PRAGMA table_info(${table})`).all().map(c => c.name), cols.split(', '));
   }
-  assert.equal(db.prepare('PRAGMA table_list').all().filter(r => r.schema === 'main' && r.type === 'table' && !r.name.startsWith('sqlite_')).filter(r => r.strict === 1).length, 15);
+  assert.equal(db.prepare('PRAGMA table_list').all().filter(r => r.schema === 'main' && r.type === 'table' && !r.name.startsWith('sqlite_')).filter(r => r.strict === 1).length, 19);
   assert.equal(scalar(db, 'PRAGMA foreign_keys'), 1);
   assert.equal(scalar(db, 'PRAGMA busy_timeout'), 5000);
   assert.equal(scalar(db, 'SELECT COUNT(*) FROM physical_seats'), 192);
@@ -138,11 +138,13 @@ async function legacy(t) {
   const admin = await store.authenticate('admin@ticket-ssu.local', 'TicketSsuAdmin123!');
   const p = store.concerts()[0].performances[0].id;
   const checkout = who => store.checkout(who.id, { holdId: store.setHold(who.id, p, ['A-01']).hold.id, buyerName: '가상예매자', buyerPhone: '01012345678', delivery: 'mobile', paymentMethod: 'demo', agreed: true });
-  const cancelled = checkout(user); store.cancel(user.id, cancelled.id);
+  const cancelled = checkout(user); store.cancelAsAdmin(admin.id, cancelled.id, { reason: 'customer_request', confirmed: true });
   checkout(admin);
-  store.setHold(user.id, p, ['A-02']);
   store.createSession(user.id);
   store.blockSeats(admin.id, p, ['A-03'], true);
+  store.adminSetMemberRestriction(admin.id, { member_id: user.id, revision: 0, restricted: true, reason: '이관 검증' });
+  store.adminSetMemberRestriction(admin.id, { member_id: user.id, revision: 1, restricted: false, reason: '이관 검증 해제' });
+  store.setHold(user.id, p, ['A-02']);
   store.close();
   return { dir, source, target: join(dir, 'normalized.sqlite') };
 }
@@ -153,12 +155,13 @@ test('기존 파일을 읽기 전용 이관하고 계정·세션·취소·재판
   const before = await digest(source);
   const original = new DatabaseSync(source, { readOnly: true });
   let expected;
-  try { expected = Object.fromEntries(['users', 'sessions', 'holds', 'audit'].map(table => [table, original.prepare(`SELECT * FROM ${table} ORDER BY 1`).all()])); } finally { original.close(); }
+  const preserved = ['users', 'sessions', 'holds', 'audit', 'admin_booking_cancellations', 'member_booking_restrictions'];
+  try { expected = Object.fromEntries(preserved.map(table => [table, original.prepare(`SELECT * FROM ${table} ORDER BY 1`).all()])); } finally { original.close(); }
   assert.equal(migrateLegacy(source, target).bookings, 2);
   assert.equal(await digest(source), before);
   const db = configure(new DatabaseSync(target));
   try {
-    for (const table of ['users', 'sessions', 'holds', 'audit']) assert.deepEqual(db.prepare(`SELECT * FROM ${table === 'audit' ? 'audit_events' : table} ORDER BY 1`).all(), expected[table]);
+    for (const table of preserved) assert.deepEqual(db.prepare(`SELECT * FROM ${table === 'audit' ? 'audit_events' : table} ORDER BY 1`).all(), expected[table]);
     assert.equal(scalar(db, 'SELECT COUNT(*) FROM payment_attempts'), 0);
     assert.equal(scalar(db, 'SELECT COUNT(*) FROM legacy_booking_imports'), 2);
     assert.equal(scalar(db, 'SELECT COUNT(*) FROM current_holds'), 1);

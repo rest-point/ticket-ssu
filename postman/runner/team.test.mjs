@@ -9,8 +9,8 @@ import { runPostmanCollection } from '../../scripts/postman.mjs';
 import { validateModel } from '../../db/model.mjs';
 
 const set = (env, key, value) => { env.values.find(v => v.key === key).value = value; };
-test('사용자 원본과 같은 평면 19요청이 현재 명세 전체를 포함한다', async () => {
-  assert.deepEqual(await checkTeamCollection(), { currentOperations: 19, requests: 19, folders: 0, status: 'passed' });
+test('사용자 원본의 평면 형식이 현재 명세 전체를 포함한다', async () => {
+  assert.deepEqual(await checkTeamCollection(), { currentOperations: 25, requests: 25, folders: 0, status: 'passed' });
 });
 
 test('평면 요청의 실제 쿠키·CSRF·입장권 연결과 예매·취소·탈퇴·관리자 기능을 검증한다', async t => {
@@ -30,23 +30,35 @@ test('평면 요청의 실제 쿠키·CSRF·입장권 연결과 예매·취소·
     const environment = buildTeamEnvironment();
     set(environment, 'baseUrl', `http://127.0.0.1:${app.server.address().port}`);
     set(environment, 'email', `flat-${i}@example.test`); set(environment, 'password', 'PostmanFixture123!');
+    const opening = i === 0 ? '' : new Date(Date.now() + 3600000).toISOString();
+    if (opening) set(environment, 'bookingOpensAt', opening);
+    set(environment, 'restrictionEmail', 'existing-member@example.test'); set(environment, 'restrictionReason', '평면 컬렉션 검증');
     const collection = buildTeamCollection(), pick = name => structuredClone(collection.item.find(item => item.name === name));
     // GUI users choose Send order. Only this test arranges the flat requests into a workflow.
     const adminLogin = pick('login'); adminLogin.request.body.raw = JSON.stringify({ email: 'admin@ticket-ssu.local', password: 'TicketSsuAdmin123!' });
     const unblock = pick('seat block'); unblock.request.body.raw = JSON.stringify({ seatIds: ['A-03'], blocked: false });
+    const occupant = pick('admin seat occupant');
+    occupant.request.url.raw = occupant.request.url.raw.replace('{{seatId}}', 'A-01');
+    occupant.request.url.query[0].value = 'A-01';
+    const restore = pick('admin member restriction');
+    restore.name = 'admin member restriction restore';
+    restore.request.body.raw = JSON.stringify({ ...JSON.parse(restore.request.body.raw), restricted: false });
     collection.item = [
       ...['process alive','server ready','login state','signup','login','concert list','seat search','queue enter','queue state',
         'seat preempt','booking confirm','booking list','booking cancel','queue out','logout','login','account delete','login state'].map(pick),
-      adminLogin, ...['admin search','concert add','concert list','seat block','seat search'].map(pick), unblock, pick('logout')
+      adminLogin, pick('admin search'), occupant, ...['admin member lookup','admin member restriction'].map(pick), restore,
+      ...['concert add','concert list','seat block','seat search'].map(pick), unblock, pick('logout')
     ];
     const report = await runPostmanCollection({ collection, environment });
     assert.equal(report.passed, true, JSON.stringify(report));
     assert.equal(report.requests, collection.item.length); assert.equal(report.assertions, 2 * collection.item.length);
     assert.deepEqual(store.bookings(foreign.id), original);
+    assert.equal(store.get('SELECT restricted FROM member_booking_restrictions WHERE member_id=? ORDER BY revision DESC LIMIT 1', foreign.id).restricted, 0);
     assert.equal(store.get("SELECT COUNT(*) AS n FROM bookings WHERE status='confirmed'").n, 1);
     assert.equal(store.get("SELECT COUNT(*) AS n FROM holds WHERE status='active'").n, 0);
     assert.equal(store.get('SELECT COUNT(*) AS n FROM sessions').n, 0);
     assert.equal(store.get('SELECT name FROM users WHERE id=?', foreign.id).name, '기존회원');
+    if (opening) assert.ok(store.concerts().some(concert => concert.booking_opens_at === Date.parse(opening)));
     assert.equal(store.concerts().length, concertsBefore + i + 1); validateModel(store.db);
     t.diagnostic(`Flat collection run ${i + 1}: requests=${report.requests}; assertions=${report.assertions}`);
   }

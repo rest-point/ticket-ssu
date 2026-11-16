@@ -45,13 +45,22 @@ async function home() {
   const result=await api('/api/concerts'); concerts=result.concerts;
   if(location.hash!==hashBefore)return;
   let region='전체';
+  function saleBadge(concert) {
+    const now=Date.now();
+    if(concert.performances.some(p=>p.starts_at>now&&p.sale_state!=='paused'&&p.available)){
+      if(concert.booking_opens_at>now)return '<span class="available-dot soon">예매 오픈 예정</span>';
+      return '<span class="available-dot">예매 중</span>';
+    }
+    const label=concert.performances.some(p=>p.starts_at>now&&p.sale_state==='paused')?'판매 중단':'예매 마감';
+    return '<span class="available-dot">'+label+'</span>';
+  }
   function renderCards() {
     if(!$('#concert-grid'))return;
     const query=$('#search').value.toLowerCase().trim();
     const list=concerts.filter(c=>(region==='전체'||c.venue.includes(region))&&`${c.title} ${c.artist} ${c.venue}`.toLowerCase().includes(query));
     list.sort((a,b)=>$('#sort').value==='price'?a.performances[0].min_price-b.performances[0].min_price:a.performances[0].starts_at-b.performances[0].starts_at);
     $('#result-count').textContent=`총 ${list.length}개의 공연`;
-    $('#concert-grid').innerHTML=list.length?list.map(c=>`<a class="concert-card" href="#/concert/${c.id}">${poster(c)}<div class="card-info"><div class="card-label"><span>콘서트</span><span class="available-dot">${c.performances.some(p=>p.starts_at>Date.now()&&p.available)?'예매 중':'예매 마감'}</span></div><h3>${escape(c.title)}</h3><p>${escape(c.venue)}</p><p>${date(c.performances[0].starts_at,true)} — ${date(c.performances.at(-1).starts_at,true)}</p><div class="card-price"><b>${won(c.performances[0].min_price)}<small>부터</small></b><span>${icon('arrow',18)}</span></div></div></a>`).join(''):'<div class="empty wide"><h3>검색 결과가 없어요.</h3><p>다른 검색어나 지역을 선택해 주세요.</p></div>';
+    $('#concert-grid').innerHTML=list.length?list.map(c=>`<a class="concert-card" href="#/concert/${c.id}">${poster(c)}<div class="card-info"><div class="card-label"><span>콘서트</span>${saleBadge(c)}</div><h3>${escape(c.title)}</h3><p>${escape(c.venue)}</p><p>${date(c.performances[0].starts_at,true)} — ${date(c.performances.at(-1).starts_at,true)}</p><div class="card-price"><b>${won(c.performances[0].min_price)}<small>부터</small></b><span>${icon('arrow',18)}</span></div></div></a>`).join(''):'<div class="empty wide"><h3>검색 결과가 없어요.</h3><p>다른 검색어나 지역을 선택해 주세요.</p></div>';
   }
   $$('.filter-tab').forEach(button=>button.addEventListener('click',()=>{region=button.dataset.region;$$('.filter-tab').forEach(b=>{b.classList.toggle('active',b===button);b.setAttribute('aria-pressed',b===button);});renderCards();}));
   $('#search').addEventListener('input',renderCards);$('#sort').addEventListener('change',renderCards);renderCards();
@@ -60,11 +69,14 @@ async function home() {
 }
 
 async function concertDetail(id) {
-  const r=revision; if(!concerts.length)concerts=(await api('/api/concerts')).concerts;if(r!==revision)return;
+  const r=revision, latest=await api('/api/concerts');if(r!==revision)return;
+  concerts=latest.concerts;
   const c=concerts.find(c=>c.id===id);if(!c)throw new Error('공연을 찾을 수 없습니다.');
-  const firstOpen=c.performances.find(p=>p.starts_at>Date.now())?.id;
-  app.innerHTML=`<div class="container"><a class="back-link" href="#/">${icon('back')}공연 목록</a><div class="detail-layout"><div class="detail-poster">${poster(c)}</div><section class="detail-info"><span class="eyebrow">ticket-ssu LIVE · 콘서트</span><h1>${escape(c.title)}</h1><p class="artist-name">${escape(c.artist)}</p><dl class="info-list"><div><dt>장소</dt><dd>${escape(c.venue)}</dd></div><div><dt>공연 기간</dt><dd>${date(c.performances[0].starts_at,true)} ~ ${date(c.performances.at(-1).starts_at,true)}</dd></div><div><dt>관람 시간</dt><dd>${c.duration}분</dd></div><div><dt>관람 등급</dt><dd>${escape(c.age)}</dd></div><div><dt>매수 제한</dt><dd>1인 회차당 최대 4매</dd></div></dl><h3>좌석 등급별 가격</h3><div class="price-grades"><span><i class="swatch vip"></i>VIP <b>${won(c.performances[0].min_price+40000)}</b></span><span><i class="swatch r"></i>R <b>${won(c.performances[0].min_price+20000)}</b></span><span><i class="swatch s"></i>S <b>${won(c.performances[0].min_price)}</b></span></div><p class="caption">예매 수수료 장당 2,000원 별도</p></section><aside class="panel schedule"><span class="eyebrow">BOOK YOUR MOMENT</span><h2>관람일 · 회차 선택</h2><div class="schedule-options">${c.performances.map(p=>`<label class="schedule-option"><input type="radio" name="performance" value="${p.id}" ${p.id===firstOpen?'checked':''} ${p.starts_at<=Date.now()?'disabled':''}><span><b>${date(p.starts_at)}</b><small>잔여 ${p.available}석${p.starts_at<=Date.now()?' · 마감':''}</small></span></label>`).join('')}</div><div class="schedule-policy">${icon('clock',17)}좌석 선택 후 7분간 선점됩니다.</div><button id="start-booking" class="button full" ${firstOpen?'':'disabled'}>좌석 선택하기 ${icon('arrow')}</button><p class="caption center">공연 시작 전까지 예매 · 취소 가능</p></aside></div><section class="detail-notice"><h2>공연 소개</h2><p>${escape(c.description)}</p><h3>예매 전 확인해 주세요</h3><ul><li>좌석 선택은 로그인 후 가능하며, 회차당 최대 4매까지 예매할 수 있습니다.</li><li>선점 시간이 지나면 선택 좌석이 자동으로 해제됩니다.</li><li>ticket-ssu는 데모 서비스입니다. 실제 결제나 티켓 발권은 이루어지지 않습니다.</li><li>공연 시작 전까지 취소 가능하며, 데모에서는 전액 취소됩니다.</li></ul></section></div>`;
+  const firstOpen=c.performances.find(p=>p.sale_state!=='paused'&&p.starts_at>Date.now())?.id;
+  const notOpen=Boolean(firstOpen&&c.booking_opens_at>Date.now());
+  app.innerHTML=`<div class="container"><a class="back-link" href="#/">${icon('back')}공연 목록</a><div class="detail-layout"><div class="detail-poster">${poster(c)}</div><section class="detail-info"><span class="eyebrow">ticket-ssu LIVE · 콘서트</span><h1>${escape(c.title)}</h1><p class="artist-name">${escape(c.artist)}</p><dl class="info-list"><div><dt>장소</dt><dd>${escape(c.venue)}</dd></div><div><dt>공연 기간</dt><dd>${date(c.performances[0].starts_at,true)} ~ ${date(c.performances.at(-1).starts_at,true)}</dd></div><div><dt>관람 시간</dt><dd>${c.duration}분</dd></div><div><dt>관람 등급</dt><dd>${escape(c.age)}</dd></div><div><dt>매수 제한</dt><dd>1인 회차당 최대 4매</dd></div></dl><h3>좌석 등급별 가격</h3><div class="price-grades"><span><i class="swatch vip"></i>VIP <b>${won(c.performances[0].min_price+40000)}</b></span><span><i class="swatch r"></i>R <b>${won(c.performances[0].min_price+20000)}</b></span><span><i class="swatch s"></i>S <b>${won(c.performances[0].min_price)}</b></span></div><p class="caption">예매 수수료 장당 2,000원 별도</p></section><aside class="panel schedule"><span class="eyebrow">BOOK YOUR MOMENT</span><h2>관람일 · 회차 선택</h2><div class="schedule-options">${c.performances.map(p=>`<label class="schedule-option"><input type="radio" name="performance" value="${p.id}" ${p.id===firstOpen?'checked':''} ${p.sale_state==='paused'||p.starts_at<=Date.now()?'disabled':''}><span><b>${date(p.starts_at)}</b><small>${p.sale_state==='paused'?'판매 중단':`잔여 ${p.available}석${p.starts_at<=Date.now()?' · 마감':''}`}</small></span></label>`).join('')}</div><div class="schedule-policy">${icon('clock',17)}${notOpen?'예매 오픈 시각부터 좌석을 선택할 수 있습니다.':'좌석 선택 후 7분간 선점됩니다.'}</div><button id="start-booking" class="button full" ${firstOpen&&!notOpen?'':'disabled'}>${notOpen?date(c.booking_opens_at)+' 오픈':'좌석 선택하기'} ${icon('arrow')}</button><p class="caption center">공연 시작 전까지 예매 · 취소 가능</p></aside></div><section class="detail-notice"><h2>공연 소개</h2><p>${escape(c.description)}</p><h3>예매 전 확인해 주세요</h3><ul><li>좌석 선택은 로그인 후 가능하며, 회차당 최대 4매까지 예매할 수 있습니다.</li><li>선점 시간이 지나면 선택 좌석이 자동으로 해제됩니다.</li><li>ticket-ssu는 데모 서비스입니다. 실제 결제나 티켓 발권은 이루어지지 않습니다.</li><li>공연 시작 전까지 취소 가능하며, 데모에서는 전액 취소됩니다.</li></ul></section></div>`;
   $('#start-booking').addEventListener('click',()=>{const pid=$('input[name=performance]:checked')?.value;if(!pid){toast('예매 가능한 회차를 선택해 주세요.');return;}returnTo=`#/book/${pid}`;location.hash=session.user?returnTo:'#/login';});
+  if(notOpen)tick=setTimeout(()=>{void route();},Math.min(c.booking_opens_at-Date.now()+500,2_147_000_000));
 }
 
 function authPage(signup=false) {
@@ -82,7 +94,7 @@ function authPage(signup=false) {
 }
 
 function seatGrid(map,admin=false,selected=new Set()) {
-  return `<div class="seat-map-scroll"><div class="seat-map"><div class="stage">STAGE<span>무대</span></div><div class="zone-labels"><span>LEFT</span><span>CENTER</span><span>RIGHT</span></div><div class="seats">${Array.from({length:8},(_,r)=>{const row=String.fromCharCode(65+r);return `<div class="seat-row"><span class="row-label">${row}</span>${map.seats.filter(s=>s.row===row).map(s=>{const unavailable=admin?['held','selected','booked'].includes(s.state):!['available','selected'].includes(s.state);const checked=admin?selected.has(s.id):s.state==='selected';const labels={available:'예매 가능',selected:'내 선택',held:'선점 중',booked:'예매 완료',blocked:'판매 차단'};return `<button type="button" class="seat ${s.grade.toLowerCase()} ${s.state} ${checked?'chosen':''}" data-seat="${s.id}" aria-label="${s.id} ${s.grade}석 ${won(s.price)} ${labels[s.state]}" aria-pressed="${checked}" ${unavailable?'disabled':''} title="${s.id} · ${s.grade} · ${labels[s.state]}">${s.number}</button>`;}).join('')}<span class="row-label">${row}</span></div>`;}).join('')}</div><p class="seat-map-caption">각 열의 번호는 왼쪽에서 오른쪽 순서입니다.</p></div></div>`;
+  return `<div class="seat-map-scroll"><div class="seat-map"><div class="stage">STAGE<span>무대</span></div><div class="zone-labels"><span>LEFT</span><span>CENTER</span><span>RIGHT</span></div><div class="seats">${Array.from({length:8},(_,r)=>{const row=String.fromCharCode(65+r);return `<div class="seat-row"><span class="row-label">${row}</span>${map.seats.filter(s=>s.row===row).map(s=>{const inspect=admin&&['held','selected','booked'].includes(s.state);const unavailable=!admin&&!['available','selected'].includes(s.state);const checked=admin?selected.has(s.id):s.state==='selected';const labels={available:'예매 가능',selected:'내 선택',held:'선점 중',booked:'예매 완료',blocked:'판매 차단'};return `<button type="button" class="seat ${s.grade.toLowerCase()} ${s.state} ${checked?'chosen':''}" data-seat="${s.id}" aria-label="${s.id} ${s.grade}석 ${won(s.price)} ${labels[s.state]}${inspect?' · 점유 회원 조회':''}" ${inspect?'data-inspect-seat':`aria-pressed="${checked}"`} ${unavailable?'disabled':''} title="${s.id} · ${s.grade} · ${labels[s.state]}">${s.number}</button>`;}).join('')}<span class="row-label">${row}</span></div>`;}).join('')}</div><p class="seat-map-caption">각 열의 번호는 왼쪽에서 오른쪽 순서입니다.</p></div></div>`;
 }
 const seatLegend = `<div class="legend"><span><i class="swatch vip"></i>VIP</span><span><i class="swatch r"></i>R</span><span><i class="swatch s"></i>S</span><span><i class="swatch chosen"></i>선택</span><span><i class="swatch unavailable"></i>선점 / 예매 / 차단</span></div>`;
 function selectedSeats() {return bookingView?.map.seats.filter(s=>s.state==='selected')||[];}
@@ -113,6 +125,15 @@ function updateTimer() {
   box.textContent=`선점 남은 시간 ${String(Math.floor(left/60)).padStart(2,'0')}:${String(left%60).padStart(2,'0')}`;box.classList.toggle('urgent',left<60);
   if(!left&&!v.expired&&!v.busy){v.expired=true;v.map.hold=null;v.map.seats.forEach(s=>{if(s.state==='selected')s.state='available';});v.stage='seats';renderBooking();toast('선점 시간이 만료되었어요. 좌석을 다시 선택해 주세요.');}
 }
+function showBookingUnavailable(view, message, heading) {
+  if (bookingView !== view) return;
+  bookingView = null;
+  clearTimeout(poll);
+  clearInterval(tick);
+  queueController?.abort();
+  app.innerHTML = `<div class="container booking-page"><section class="panel checkout-panel" role="alert">
+    <h2>${escape(heading)}</h2><p>${escape(message)}</p><a class="button secondary" href="#/bookings">나의 티켓</a></section></div>`;
+}
 async function bookingPage(id) {
   if(!requireAuth())return;
   const r=revision,map=await api(`/api/performances/${id}/seats`);if(r!==revision)return;
@@ -136,6 +157,7 @@ async function bookingPage(id) {
     }catch(e){
       if(bookingView!==v||e.name==='AbortError')return;
       if(e.status===401){requireAuth();return;}
+      if(stopUnavailableBooking(v,e))return;
       showQueue(e.message);
       // Re-enter after expiry/restart/session replacement; an old valid hold is
       // resolved by the server, not converted into fresh seat-selection rights.
@@ -146,6 +168,18 @@ async function bookingPage(id) {
     }
   };
   showQueue();await check(true);
+}
+function stopUnavailableBooking(view, error) {
+  if(error.code==='BOOKING_NOT_OPEN'){
+    const performance=view.map.performance;
+    toast(performance.booking_opens_at==null?error.message:`예매는 ${date(performance.booking_opens_at)}에 열립니다.`);
+    location.hash=`#/concert/${performance.concert_id}`;
+    return true;
+  }
+  const heading = { BOOKING_RESTRICTED: '예매 이용 제한', PERFORMANCE_UNAVAILABLE: '회차 예매 중단' }[error.code];
+  if (!heading) return false;
+  showBookingUnavailable(view,error.message,heading);
+  return true;
 }
 async function startBooking(v) {
   const {id}=v;
@@ -169,7 +203,7 @@ async function startBooking(v) {
       const entry=$('#admission-note');if(entry)entry.textContent=status.mode==='hold-recovery'?'입장 시간이 끝났습니다. 현재 선점의 확정 또는 선택 초기화만 가능합니다.':'입장 완료 · 좌석 선택 시간이 끝나도 유효한 선점은 확정할 수 있습니다.';
       const sync=$('#sync-state');if(sync)sync.textContent='좌석 현황 동기화 중 · 약 3초 간격';
       failures=0;
-    }catch(e){if(bookingView!==v)return;if(e.status===401){requireAuth();return;}if([403,404].includes(e.status)){toast('입장 상태를 다시 확인합니다.');await bookingPage(id);return;}failures++;retryAfter=e.retryAfter||0;const sync=$('#sync-state');if(sync)sync.textContent='연결 확인 중 · 잠시 후 다시 동기화합니다.';}
+    }catch(e){if(bookingView!==v)return;if(e.status===401){requireAuth();return;}if(stopUnavailableBooking(v,e))return;if([403,404].includes(e.status)){toast('입장 상태를 다시 확인합니다.');await bookingPage(id);return;}failures++;retryAfter=e.retryAfter||0;const sync=$('#sync-state');if(sync)sync.textContent='연결 확인 중 · 잠시 후 다시 동기화합니다.';}
     finally {v.polling=false;if(bookingView===v)poll=setTimeout(refresh,pollDelay(failures,retryAfter));}
   };
   poll=setTimeout(refresh,pollDelay());
@@ -200,10 +234,14 @@ function renderBooking() {
   }
 }
 
+function confirmBookingCancellation(message) {
+  const dialog=$('#confirm-dialog');
+  $('#dialog-body').textContent=message;
+  dialog.returnValue='';
+  return new Promise(resolve=>{dialog.addEventListener('close',()=>resolve(dialog.returnValue==='yes'),{once:true});dialog.showModal();});
+}
 async function confirmCancel(b) {
-  const dialog=$('#confirm-dialog');$('#dialog-body').textContent=`${b.title} · ${b.seats.length}매를 취소합니다. 데모 결제 ${won(b.total)}이 전액 취소되고 좌석이 다시 판매됩니다.`;
-  const yes=await new Promise(resolve=>{dialog.addEventListener('close',()=>resolve(dialog.returnValue==='yes'),{once:true});dialog.showModal();});
-  if(!yes)return;
+  if(!await confirmBookingCancellation(`${b.title} · ${b.seats.length}매를 취소합니다. 데모 결제 ${won(b.total)}이 전액 취소되고 좌석이 다시 판매됩니다.`))return;
   try {await api(`/api/bookings/${b.id}/cancel`,{method:'POST'});toast('예매가 취소되었어요.');if(location.hash.startsWith('#/complete/'))location.hash='#/bookings';else await myBookings();}catch(e){toast(e.message);}
 }
 async function myBookings(completeId) {
@@ -213,7 +251,7 @@ async function myBookings(completeId) {
   app.innerHTML=`<div class="container my-page">${complete?.status==='confirmed'?`<section class="success-banner"><span class="success-check">${icon('check',30)}</span><div><span class="eyebrow">SEE YOU AT THE SHOW</span><h1>예매가 완료되었어요!</h1><p>당신의 특별한 순간을 기다릴게요. 실제 결제가 없는 데모 예매입니다.</p></div></section>`:title('MY TICKETS','나의 티켓','기다려지는 순간들을 한곳에서 관리하세요.')}<div class="ticket-tabs filter-tabs" role="group" aria-label="예매 상태 필터"><button class="filter-tab active" data-status="all" aria-pressed="true">전체 ${bookings.length}</button><button class="filter-tab" data-status="confirmed" aria-pressed="false">예매 완료 ${bookings.filter(b=>b.status==='confirmed').length}</button><button class="filter-tab" data-status="cancelled" aria-pressed="false">취소 ${bookings.filter(b=>b.status==='cancelled').length}</button></div><div id="booking-list"></div></div>`;
   function render(status='all') {
     const list=bookings.filter(b=>status==='all'||b.status===status);
-    $('#booking-list').innerHTML=list.length?list.map(b=>`<article class="ticket-card ${b.status==='cancelled'?'cancelled':''}" id="${b.id}"><div class="ticket-thumb">${poster({...b,title:b.title,artist:b.artist})}</div><div class="ticket-info"><div class="ticket-top"><span class="pill ${b.status==='confirmed'?'':'neutral'}">${b.status==='confirmed'?'예매 완료':'취소 완료'}</span><span class="caption">예매번호 ${b.id}</span></div><h2>${escape(b.title)}</h2><p>${date(b.starts_at)}</p><p>${escape(b.venue)}</p><div class="checkout-seats">${b.seats.map(s=>`<span class="pill neutral">${s.grade} ${s.seat_id}</span>`).join('')}</div><details class="ticket-details"><summary>예매 상세 확인</summary><dl class="info-list"><div><dt>예매자</dt><dd>${escape(b.buyer_name)} · ${escape(b.buyer_phone)}</dd></div><div><dt>수령 방법</dt><dd>${b.delivery==='mobile'?'모바일 티켓 (데모)':'현장 수령 (데모)'}</dd></div><div><dt>예매 일시</dt><dd>${date(b.created_at)}</dd></div><div><dt>티켓 / 수수료</dt><dd>${won(b.ticket_total)} / ${won(b.fee)}</dd></div>${b.cancelled_at?`<div><dt>취소 일시</dt><dd>${date(b.cancelled_at)}</dd></div>`:''}</dl></details></div><div class="ticket-actions"><span class="muted">${b.seats.length}매 · 데모 결제</span><strong>${won(b.total)}</strong>${b.status==='confirmed'&&b.starts_at>Date.now()?`<button class="button secondary" data-cancel="${b.id}">예매 취소</button>`:`<span class="caption">${b.status==='cancelled'?'전액 취소됨':'취소 마감'}</span>`}<span class="caption">실제 입장용 티켓이 아닙니다.</span></div></article>`).join(''):empty('아직 예매한 티켓이 없어요.');
+    $('#booking-list').innerHTML=list.length?list.map(b=>`<article class="ticket-card ${b.status==='cancelled'?'cancelled':''}" id="${b.id}"><div class="ticket-thumb">${poster({...b,title:b.title,artist:b.artist})}</div><div class="ticket-info"><div class="ticket-top"><span class="pill ${b.status==='confirmed'?'':'neutral'}">${b.status==='confirmed'?'예매 완료':b.performance_cancel_reason?'공연 취소':b.admin_cancel_reason==='customer_request'?'관리자 취소 · 고객 요청':'취소 완료'}</span><span class="caption">예매번호 ${b.id}</span></div><h2>${escape(b.title)}</h2><p>${date(b.starts_at)}</p><p>${escape(b.venue)}</p>${b.performance_cancel_reason?`<p>공연 취소 사유 · ${escape(b.performance_cancel_reason)}</p>`:''}<div class="checkout-seats">${b.seats.map(s=>`<span class="pill neutral">${s.grade} ${s.seat_id}</span>`).join('')}</div><details class="ticket-details"><summary>예매 상세 확인</summary><dl class="info-list"><div><dt>예매자</dt><dd>${escape(b.buyer_name)} · ${escape(b.buyer_phone)}</dd></div><div><dt>수령 방법</dt><dd>${b.delivery==='mobile'?'모바일 티켓 (데모)':'현장 수령 (데모)'}</dd></div><div><dt>예매 일시</dt><dd>${date(b.created_at)}</dd></div><div><dt>티켓 / 수수료</dt><dd>${won(b.ticket_total)} / ${won(b.fee)}</dd></div>${b.cancelled_at?`<div><dt>취소 일시</dt><dd>${date(b.cancelled_at)}</dd></div>`:''}</dl></details></div><div class="ticket-actions"><span class="muted">${b.seats.length}매 · 데모 결제</span><strong>${won(b.total)}</strong>${b.status==='confirmed'&&b.starts_at>Date.now()?`<button class="button secondary" data-cancel="${b.id}">예매 취소</button>`:`<span class="caption">${b.status==='cancelled'?'전액 취소됨':'취소 마감'}</span>`}<span class="caption">실제 입장용 티켓이 아닙니다.</span></div></article>`).join(''):empty('아직 예매한 티켓이 없어요.');
     $$('[data-cancel]').forEach(button=>button.addEventListener('click',()=>confirmCancel(bookings.find(b=>b.id===button.dataset.cancel))));
   }
   $$('.ticket-tabs button').forEach(b=>b.addEventListener('click',()=>{$$('.ticket-tabs button').forEach(x=>{x.classList.toggle('active',x===b);x.setAttribute('aria-pressed',x===b);});render(b.dataset.status);}));render();
@@ -234,16 +272,267 @@ function accountPage() {
 }
 
 function auditMarkup(items) {
-  return items.length ? items.map(a=>`<div><span class="audit-icon">${icon(a.action==='create-concert'?'plus':'lock',17)}</span><div><b>${a.action==='block'?'좌석 차단':a.action==='unblock'?'차단 해제':'공연 등록'}</b><p>${escape(a.name)} · ${date(a.created_at)}</p><small>${escape(a.detail)}</small></div></div>`).join('') : '<p class="muted">아직 운영 기록이 없습니다.</p>';
+  const labels={'block':'좌석 차단','unblock':'차단 해제','create-concert':'공연 등록','cancel-booking':'관리자 예매 취소',
+    'restrict-member':'회원 예매 제한','restore-member':'회원 예매 제한 해제',
+    'pause-performance':'회차 판매 중단','resume-performance':'회차 판매 재개','cancel-performance':'공연 취소'};
+  return items.length ? items.map(a=>`<div><span class="audit-icon">${icon(a.action==='create-concert'?'plus':'lock',17)}</span><div><b>${labels[a.action]}</b><p>${escape(a.name)} · ${date(a.created_at)}</p><small>${escape(a.detail)}</small></div></div>`).join('') : '<p class="muted">아직 운영 기록이 없습니다.</p>';
 }
-async function adminPage() {
+function setupAdminBookingCancellation(revisionAtRender, selectedBooking) {
+  $('.admin-seats').insertAdjacentHTML('beforebegin',`<section class="panel admin-booking" aria-labelledby="admin-booking-title">
+    <div class="section-head compact"><h2 id="admin-booking-title">회원 예매 취소</h2></div>
+    <p class="caption">고객의 취소 요청을 확인한 뒤, 공연 시작 전 예매를 건 단위로 취소할 수 있습니다.</p>
+    <form id="admin-booking-search"><label>예매번호<input name="bookingId" required maxlength="160" autocomplete="off" spellcheck="false"></label>
+      <button class="button small" type="submit">예매 조회</button></form>
+    <p id="admin-booking-error" class="form-error" role="alert" hidden></p>
+    <div id="admin-booking-result" aria-live="polite"></div>
+  </section>`);
+  const form=$('#admin-booking-search'),input=form.elements.bookingId,search=$('button',form);
+  const result=$('#admin-booking-result'),error=$('#admin-booking-error');
+  const current=()=>revisionAtRender===revision&&form.isConnected;
+  const showError=message=>{error.textContent=message;error.hidden=false;};
+
+  function showBooking(booking) {
+    const seats=booking.seats.map(s=>`${s.grade} ${s.seat_id}`).join(', ');
+    const status=booking.admin_cancel_reason==='customer_request'?'관리자 취소 · 고객 요청':booking.status==='cancelled'?'취소 완료':booking.can_cancel?'예매 완료':'취소 마감';
+    result.innerHTML=`<dl class="info-list"><div><dt>예매번호</dt><dd>${escape(booking.id)}</dd></div>
+      <div><dt>공연 · 회차</dt><dd>${escape(booking.title)} · ${date(booking.starts_at)}</dd></div>
+      <div><dt>좌석</dt><dd>${escape(seats)} (${booking.seats.length}매)</dd></div>
+      <div><dt>데모 결제</dt><dd>${won(booking.total)}</dd></div><div><dt>상태</dt><dd>${status}</dd></div></dl>
+      ${booking.can_cancel?'<button type="button" class="button danger small" id="admin-booking-cancel">고객 요청으로 전체 취소</button>':''}`;
+    const cancel=$('#admin-booking-cancel',result);
+    cancel?.addEventListener('click',async()=>{
+      search.disabled=input.disabled=cancel.disabled=true;error.hidden=true;
+      const yes=await confirmBookingCancellation(`${booking.title} · ${date(booking.starts_at)} · ${seats} (${booking.seats.length}매) 전체를 고객 요청으로 취소합니다. 데모 결제 ${won(booking.total)}이 전액 취소됩니다.`);
+      try {
+        if(!yes||!current())return;
+        const {booking: updated}=await api(`/api/admin/bookings/${encodeURIComponent(booking.id)}/cancel`,{method:'POST',body:{reason:'customer_request',confirmed:true}});
+        if(!current())return;
+        showBooking(updated);
+        toast(updated.admin_cancel_reason?'관리자 취소가 확인되었습니다.':'이미 취소된 예매입니다.');
+        try {await adminPage(updated);}catch {if(current())showError('운영 현황을 새로고침하지 못했습니다.');}
+      }catch(e){if(current())showError(e.message);}
+      finally {search.disabled=input.disabled=cancel.disabled=false;}
+    });
+  }
+
+  async function lookup() {
+    if(!current()||search.disabled)return;
+    const id=input.value.trim();error.hidden=true;result.replaceChildren();
+    if(!id){showError('예매번호를 입력해 주세요.');return;}
+    search.disabled=input.disabled=true;
+    try {
+      const {booking}=await api(`/api/admin/bookings/${encodeURIComponent(id)}`);
+      if(current())showBooking(booking);
+    }catch(e){if(current())showError(e.message);}
+    finally {search.disabled=input.disabled=false;}
+  }
+  form.addEventListener('submit',e=>{e.preventDefault();void lookup();});
+  if(selectedBooking){input.value=selectedBooking.id;showBooking(selectedBooking);}
+  return id=>{
+    if(!current()||search.disabled)return;
+    input.value=id;
+    input.focus();
+    void lookup();
+  };
+}
+function setupAdminMemberRestrictions(revisionAtRender, refreshSeats) {
+  $('.admin-seats').insertAdjacentHTML('beforebegin', `<section class="panel admin-booking" aria-labelledby="admin-member-title">
+    <div class="section-head compact"><h2 id="admin-member-title">회원 예매 제한</h2></div>
+    <p class="caption">제한하면 회원의 대기열과 선점이 해제됩니다. 회원은 기존 확정 예매를 조회하거나 직접 취소할 수 있습니다.</p>
+    <form id="admin-member-search" class="admin-member-form">
+      <label>회원 이메일<input name="email" type="email" required maxlength="254" autocomplete="off"></label>
+      <button class="button small" type="submit">회원 조회</button>
+    </form>
+    <p id="admin-member-error" class="form-error" role="alert" hidden></p>
+    <div id="admin-member-result" aria-live="polite"></div>
+  </section>`);
+  const lookup = $('#admin-member-search');
+  const email = lookup.elements.email;
+  const search = $('button', lookup);
+  const error = $('#admin-member-error');
+  const result = $('#admin-member-result');
+  const current = () => revisionAtRender === revision && lookup.isConnected;
+  const showError = message => { error.textContent = message; error.hidden = false; };
+
+  function renderMember(member) {
+    const restrict = !member.restricted;
+    const action = restrict ? '예매 이용 제한' : '예매 제한 해제';
+    result.innerHTML = `<dl class="info-list">
+      <div><dt>회원</dt><dd>${escape(member.name)} · ${escape(member.email)}</dd></div>
+      <div><dt>현재 상태</dt><dd>${member.restricted ? '제한 중' : '이용 가능'}</dd></div>
+      ${member.reason ? `<div><dt>최근 사유</dt><dd>${escape(member.reason)} · ${date(member.changed_at)}</dd></div>` : ''}
+    </dl><form class="admin-member-form">
+      <label>처리 사유 (개인정보 제외)<input name="reason" required maxlength="200" autocomplete="off"></label>
+      <label class="check-label"><input type="checkbox" required>대상 회원과 조치를 확인했습니다.</label>
+      <button class="button ${restrict ? 'danger' : 'secondary'} small" type="submit">${action}</button>
+    </form>`;
+    const form = $('form', result);
+    const apply = $('button', form);
+    form.addEventListener('submit', async event => {
+      event.preventDefault();
+      if (apply.disabled || search.disabled) return;
+      const reason = form.elements.reason.value.trim();
+      error.hidden = true;
+      if (!reason) { showError('처리 사유를 입력해 주세요.'); return; }
+      search.disabled = email.disabled = apply.disabled = true;
+      try {
+        const { member: updated } = await api('/api/admin/member-restrictions', { method: 'PUT', body: {
+          member_id: member.member_id, revision: member.revision, restricted: restrict, reason
+        } });
+        if (!current()) return;
+        renderMember(updated);
+        toast(`${action} 처리 완료`);
+        await refreshSeats().catch(() => { if (current()) showError('운영 현황을 새로고침하지 못했습니다.'); });
+      } catch (e) {
+        if (current()) {
+          if (e.status === 409 || e.status === 404) result.replaceChildren();
+          showError(e.message);
+        }
+      } finally {
+        search.disabled = email.disabled = apply.disabled = false;
+      }
+    });
+  }
+
+  email.addEventListener('input', () => { error.hidden = true; result.replaceChildren(); });
+  lookup.addEventListener('submit', async event => {
+    event.preventDefault();
+    if (search.disabled) return;
+    error.hidden = true;
+    result.replaceChildren();
+    search.disabled = email.disabled = true;
+    try {
+      const { member } = await api('/api/admin/member-restrictions/lookup', { method: 'POST', body: { email: email.value.trim() } });
+      if (current()) renderMember(member);
+    } catch (e) {
+      if (current()) showError(e.message);
+    } finally {
+      search.disabled = email.disabled = false;
+    }
+  });
+}
+function setupPerformanceSales(performances) {
+  const labels = { open: '판매 중', paused: '판매 중단', cancelled: '공연 취소' };
+  const actions = { pause: '판매 중단', resume: '판매 재개', cancel: '공연 취소' };
+  const groups = new Map();
+  for (const row of performances) {
+    if (!groups.has(row.concert_id)) groups.set(row.concert_id, []);
+    groups.get(row.concert_id).push(row);
+  }
+  $('.admin-seats').insertAdjacentHTML('beforebegin', `<section class="panel admin-booking" aria-labelledby="performance-sales-title">
+    <div class="section-head compact"><h2 id="performance-sales-title">공연 판매 및 취소</h2></div>
+    <form id="performance-sales" class="performance-sales">
+      <label>공연<select name="concert">${[...groups].map(([id, rows]) => `<option value="${escape(id)}">${escape(rows[0].title)} · ${date(rows[0].starts_at)}</option>`).join('')}</select></label>
+      <fieldset><legend>처리할 회차</legend><div id="performance-sales-targets"></div></fieldset>
+      <label>처리 방식<select name="action">${Object.entries(actions).map(([key, label]) => `<option value="${key}">${label}</option>`).join('')}</select></label>
+      <label>처리 사유<input name="reason" maxlength="200" required></label>
+      <p class="caption">공연 취소 사유는 예매한 회원에게 표시됩니다.</p>
+      <p id="performance-sales-preview" aria-live="polite"></p>
+      <label class="check-label"><input name="confirmed" type="checkbox" required>대상 회차와 처리 내용을 확인했습니다.</label>
+      <p class="form-error" role="alert" hidden></p>
+      <button type="submit" class="button small" disabled>판매 중단</button>
+      <button type="button" class="button secondary small" id="performance-sales-refresh">현황 새로고침</button>
+    </form>
+  </section>`);
+  const form = $('#performance-sales');
+  const targets = $('#performance-sales-targets',form);
+  const submit = $('button[type=submit]',form);
+  const preview = $('#performance-sales-preview',form);
+  const error = $('.form-error',form);
+  let rows = [], submitting = false;
+
+  function selectedRows() {
+    return $$('[data-sale-target]:checked:not(:disabled)', targets).map(input => rows[Number(input.value)]);
+  }
+  function updatePreview() {
+    const action = form.elements.action.value;
+    const now = Date.now();
+    const eligible = $$('[data-sale-target]', targets).filter(input => {
+      const row = rows[Number(input.value)];
+      input.disabled = row.starts_at <= now || row.sale_state === 'cancelled' ||
+        (action === 'pause' && row.sale_state !== 'open') || (action === 'resume' && row.sale_state !== 'paused');
+      if (input.disabled) input.checked = false;
+      return !input.disabled;
+    });
+    const selectAll = $('#all-sale-targets', targets);
+    const selected = selectedRows();
+    if (selectAll) {
+      selectAll.disabled = eligible.length === 0;
+      selectAll.checked = eligible.length > 0 && selected.length === eligible.length;
+      selectAll.indeterminate = selected.length > 0 && !selectAll.checked;
+    }
+    const count = selected.reduce((total,row) => total + row.booking_count,0);
+    form.elements.confirmed.checked = false;
+    submit.disabled = submitting || !selected.length;
+    submit.classList.toggle('danger', action === 'cancel');
+    submit.textContent = actions[action];
+    preview.textContent = !eligible.length ? '선택한 방식으로 처리할 수 있는 회차가 없습니다.' :
+      !selected.length ? '처리할 회차를 선택해 주세요.' :
+      action === 'cancel' ? `${selected.length}개 회차의 확정 예매 ${count}건을 모두 취소합니다. 공연 취소는 되돌릴 수 없습니다.` :
+      `${selected.length}개 회차에 적용합니다. 확정 예매 ${count}건은 유지됩니다.`;
+  }
+  function showRows() {
+    rows = groups.get(form.elements.concert.value) ?? [];
+    const now = Date.now();
+    targets.innerHTML = rows.length ? `<label class="check-label"><input type="checkbox" id="all-sale-targets">처리 가능한 전체 회차 선택</label>
+      ${rows.map((row,index) => `<label class="check-label"><input type="checkbox" value="${index}" data-sale-target>
+        ${date(row.starts_at)} · ${row.sale_state === 'open' && row.starts_at <= now ? '공연 종료' : labels[row.sale_state]} · 확정 예매 ${row.booking_count}건</label>`).join('')}` : '등록된 회차가 없습니다.';
+    updatePreview();
+  }
+  targets.addEventListener('change', event => {
+    const selectAll = $('#all-sale-targets',targets);
+    if (event.target === selectAll) {
+      for (const input of $$('[data-sale-target]:not(:disabled)',targets)) input.checked = selectAll.checked;
+    }
+    updatePreview();
+  });
+  form.elements.concert.addEventListener('change',showRows);
+  form.elements.action.addEventListener('change',updatePreview);
+  form.elements.reason.addEventListener('input',() => { form.elements.confirmed.checked = false; });
+  $('#performance-sales-refresh',form).addEventListener('click',() => {
+    if (!submitting) adminPage().catch(e => toast(e.message));
+  });
+  form.addEventListener('submit',async event => {
+    event.preventDefault();
+    if (submit.disabled || !form.elements.confirmed.checked) return;
+    const action = form.elements.action.value;
+    const reason = form.elements.reason.value.trim();
+    error.hidden = true;
+    if (!reason) { error.textContent = '처리 사유를 입력해 주세요.'; error.hidden = false; return; }
+    const selection = selectedRows().map(row => ({ performance_id: row.id, revision: row.sale_revision, booking_count: row.booking_count }));
+    submitting = submit.disabled = true;
+    try {
+      const result = await api('/api/admin/performance-sales',{method:'POST',body:{action,targets:selection,reason}});
+      if (!form.isConnected) return;
+      toast(action === 'cancel' ? `공연 취소 완료 · 예매 ${result.cancelled_bookings}건 취소` : `${actions[action]} 완료`);
+      await adminPage();
+    } catch (e) {
+      if (form.isConnected) { error.textContent = e.message; error.hidden = false; }
+    } finally {
+      submitting = false;
+      if (form.isConnected) updatePreview();
+    }
+  });
+  showRows();
+}
+async function adminPage(selectedBooking) {
   if(!requireAuth())return;
   if(session.user.role!=='admin')throw new Error('관리자 권한이 필요합니다.');
   const r=revision,data=await api('/api/admin/summary');if(r!==revision)return;
-  app.innerHTML=`<div class="container admin-page">${title('ticket-ssu OPERATIONS','공연 · 좌석 관리','회차별 판매 현황을 확인하고 운영 좌석을 관리하세요.')}<div class="stats"><div><span>예매 완료</span><strong>${data.stats.bookings}<small>건</small></strong></div><div><span>데모 결제 총액</span><strong>${won(data.stats.revenue)}</strong></div><div><span>회원 수</span><strong>${data.users}<small>명</small></strong></div><div><span>공연 회차</span><strong>${data.performances.length}<small>회</small></strong></div></div><section class="panel admin-seats"><div class="section-head compact"><h2>좌석 판매 관리</h2><span class="pill neutral">운영자 전용</span></div><label class="select-performance">관리할 회차<select id="admin-performance">${data.performances.map(p=>`<option value="${p.id}">${escape(p.title)} · ${date(p.starts_at)}</option>`).join('')}</select></label><div id="admin-seat-content">${loading()}</div></section><div class="admin-bottom"><section class="panel"><div class="section-head compact"><h2>새 공연 등록</h2>${icon('plus')}</div><p class="caption">회차당 96석 · VIP 24석 / R 36석 / S 36석이 생성됩니다.</p><form id="create-concert"><div class="form-error" role="alert" hidden></div><label>공연명<input name="title" maxlength="120" required placeholder="공연 제목"></label><div class="form-row"><label>아티스트<input name="artist" maxlength="120" required></label><label>공연장<input name="venue" maxlength="120" required></label></div><label>공연 소개<textarea name="description" maxlength="2000" required rows="3"></textarea></label><label>공연 일시 (한국 시간)<input type="datetime-local" name="date" required></label><label>추가 회차 (선택 · 한국 시간)<input type="datetime-local" name="date2"></label><label>S석 기본 가격 (원)<input type="number" name="basePrice" min="1000" max="1000000" step="1000" value="90000" required></label><p class="caption">R석: 기본가 + 20,000원 / VIP석: 기본가 + 40,000원<br>관람 시간 120분 · 8세 이상 · 회차당 1인 4매</p><button class="button full" type="submit">공연 등록 ${icon('plus')}</button></form></section><section class="panel"><h2>최근 운영 기록</h2><div class="audit-list">${auditMarkup(data.audit)}</div></section></div></div>`;
+  app.innerHTML=`<div class="container admin-page">${title('ticket-ssu OPERATIONS','공연 · 좌석 관리','회차별 판매 현황을 확인하고 운영 좌석을 관리하세요.')}<div class="stats"><div><span>예매 완료</span><strong>${data.stats.bookings}<small>건</small></strong></div><div><span>데모 결제 총액</span><strong>${won(data.stats.revenue)}</strong></div><div><span>회원 수</span><strong>${data.users}<small>명</small></strong></div><div><span>공연 회차</span><strong>${data.performances.length}<small>회</small></strong></div></div><section class="panel admin-seats"><div class="section-head compact"><h2>좌석 판매 관리</h2><span class="pill neutral">운영자 전용</span></div><label class="select-performance">관리할 회차<select id="admin-performance">${data.performances.map(p=>`<option value="${p.id}">${escape(p.title)} · ${date(p.starts_at)}</option>`).join('')}</select></label><div id="admin-seat-content">${loading()}</div></section><div class="admin-bottom"><section class="panel"><div class="section-head compact"><h2>새 공연 등록</h2>${icon('plus')}</div><p class="caption">회차당 96석 · VIP 24석 / R 36석 / S 36석이 생성됩니다.</p><p class="caption" id="concert-lead-time">모든 회차는 등록 시점부터 최소 24시간 뒤에 시작해야 합니다.</p><form id="create-concert"><div class="form-error" role="alert" hidden></div><label>공연명<input name="title" maxlength="120" required placeholder="공연 제목"></label><div class="form-row"><label>아티스트<input name="artist" maxlength="120" required></label><label>공연장<input name="venue" maxlength="120" required></label></div><label>공연 소개<textarea name="description" maxlength="2000" required rows="3"></textarea></label><label>공연 일시 (한국 시간)<input type="datetime-local" name="date" aria-describedby="concert-lead-time" required></label><label>추가 회차 (선택 · 한국 시간)<input type="datetime-local" name="date2" aria-describedby="concert-lead-time"></label><label>예매 오픈 일시 (선택 · 한국 시간)<input type="datetime-local" name="bookingOpensAt" aria-describedby="booking-opening-hint"></label><p class="caption" id="booking-opening-hint">비워 두면 등록 즉시 예매가 열립니다. 지정할 때는 첫 회차 시작 전으로 입력하세요.</p><label>S석 기본 가격 (원)<input type="number" name="basePrice" min="1000" max="1000000" step="1000" value="90000" required></label><p class="caption">R석: 기본가 + 20,000원 / VIP석: 기본가 + 40,000원<br>관람 시간 120분 · 8세 이상 · 회차당 1인 4매</p><button class="button full" type="submit">공연 등록 ${icon('plus')}</button></form></section><section class="panel"><h2>최근 운영 기록</h2><div class="audit-list">${auditMarkup(data.audit)}</div></section></div></div>`;
+  const lookupCancellation = setupAdminBookingCancellation(r,selectedBooking);
+  setupAdminMemberRestrictions(r,loadSeats);
+  setupPerformanceSales(data.performances);
+  if(selectedBooking)$('#admin-performance').value=selectedBooking.performance_id;
+  $('#admin-seat-content').insertAdjacentHTML('afterend','<div id="admin-seat-occupant" class="admin-seat-occupant" role="status" hidden></div>');
+  const occupantPanel = $('#admin-seat-occupant');
+  let occupantGeneration = 0;
   let adminMap,selection=new Set(),busy=false,loadGeneration=0;
   async function loadSeats(){
     const g=++loadGeneration,pid=$('#admin-performance').value;
+    occupantGeneration++;
+    occupantPanel.hidden=true;
+    occupantPanel.replaceChildren();
     adminMap=null;selection.clear();$('#admin-seat-content').innerHTML=loading();
     try {
       const map=await api(`/api/performances/${pid}/seats`);
@@ -256,11 +545,37 @@ async function adminPage() {
       throw e;
     }
   }
+  async function inspectSeat(seatId) {
+    const pid = adminMap.performance.id;
+    const generation = ++occupantGeneration;
+    const current = () => r === revision && generation === occupantGeneration && occupantPanel.isConnected;
+    occupantPanel.hidden = false;
+    occupantPanel.textContent = `${seatId} 좌석을 조회하는 중입니다.`;
+    try {
+      const seat = await api(`/api/admin/performances/${encodeURIComponent(pid)}/seats?${new URLSearchParams({seatId})}`);
+      if (!current()) return;
+      const labels = {held:'선점 중',booked:'예매 완료',available:'예매 가능',blocked:'판매 차단'};
+      const occupied = seat.state === 'held' || seat.state === 'booked';
+      occupantPanel.innerHTML = `<h3>${escape(seat.seat_id)} · ${labels[seat.state]}</h3>
+        <p>${seat.member ? `${escape(seat.member.name)} · ${escape(seat.member.email)}` : occupied ? '조회할 수 없는 회원입니다.' : '현재 점유 회원이 없습니다.'}</p>
+        ${seat.hold_expires_at ? `<p>선점 만료 ${date(seat.hold_expires_at)}</p>` : ''}
+        ${seat.booking_id ? `<p>예매번호 ${escape(seat.booking_id)}</p><button type="button" class="button secondary small">취소 화면에서 예매 확인</button>` : ''}`;
+      $('button',occupantPanel)?.addEventListener('click',()=>lookupCancellation(seat.booking_id));
+    } catch (e) {
+      if (current()) occupantPanel.textContent = e.message;
+    }
+  }
   function renderAdminMap(){
     if(!adminMap||r!==revision)return;
     const counts={available:0,held:0,selected:0,booked:0,blocked:0};adminMap.seats.forEach(s=>counts[s.state]++);
-    $('#admin-seat-content').innerHTML=`<div class="inventory-summary"><span>판매 가능 <b>${counts.available}</b></span><span>선점 중 <b>${counts.held+counts.selected}</b></span><span>예매 완료 <b>${counts.booked}</b></span><span>차단 <b>${counts.blocked}</b></span></div>${seatLegend}${seatGrid(adminMap,true,selection)}<div class="admin-seat-tools"><span><b>${selection.size}</b>석 선택</span><button class="button secondary small" id="admin-refresh">현황 새로고침</button><button class="button secondary small" id="unblock">차단 해제</button><button class="button small" id="block">판매 차단</button></div><p class="caption">판매 가능한 좌석과 차단 좌석을 클릭해 선택하세요. 선점·예매된 좌석은 변경할 수 없습니다.</p>`;
-    $$('[data-seat]').forEach(b=>b.addEventListener('click',()=>{if(busy)return;selection.has(b.dataset.seat)?selection.delete(b.dataset.seat):selection.add(b.dataset.seat);renderAdminMap();}));
+    $('#admin-seat-content').innerHTML=`<div class="inventory-summary"><span>판매 가능 <b>${counts.available}</b></span><span>선점 중 <b>${counts.held+counts.selected}</b></span><span>예매 완료 <b>${counts.booked}</b></span><span>차단 <b>${counts.blocked}</b></span></div>${seatLegend}${seatGrid(adminMap,true,selection)}<div class="admin-seat-tools"><span><b>${selection.size}</b>석 선택</span><button class="button secondary small" id="admin-refresh">현황 새로고침</button><button class="button secondary small" id="unblock">차단 해제</button><button class="button small" id="block">판매 차단</button></div><p class="caption">판매 가능한 좌석과 차단 좌석을 클릭해 선택하세요. 선점·예매된 좌석을 누르면 점유 회원을 확인할 수 있습니다.</p>`;
+    $$('[data-seat]').forEach(button=>button.addEventListener('click',()=>{
+      if(busy)return;
+      const seatId = button.dataset.seat;
+      if(button.hasAttribute('data-inspect-seat')){void inspectSeat(seatId);return;}
+      selection.has(seatId)?selection.delete(seatId):selection.add(seatId);
+      renderAdminMap();
+    }));
     $('#admin-refresh').addEventListener('click',()=>loadSeats().catch(e=>toast(e.message)));
     for(const [selector,blocked] of [['#block',true],['#unblock',false]]){
       const b=$(selector);b.disabled=!selection.size||busy;
@@ -280,10 +595,11 @@ async function adminPage() {
       });
     }
   }
-  $('#admin-performance').addEventListener('change',()=>loadSeats().catch(e=>toast(e.message)));await loadSeats();
+  $('#admin-performance').addEventListener('change',()=>loadSeats().catch(e=>toast(e.message)));
   $('#create-concert').addEventListener('submit',async e=>{e.preventDefault();const form=e.currentTarget,data=Object.fromEntries(new FormData(form));const error=$('.form-error',form);error.hidden=true;const button=$('button[type=submit]',form);button.disabled=true;
-    try {await api('/api/admin/concerts',{method:'POST',body:{...data,basePrice:Number(data.basePrice),dates:[data.date,data.date2].filter(Boolean).map(s=>s+':00+09:00')}});concerts=[];toast('공연과 좌석이 등록되었어요.');await adminPage();}catch(e){error.textContent=e.message;error.hidden=false;button.disabled=false;}
+    try {await api('/api/admin/concerts',{method:'POST',body:{...data,basePrice:Number(data.basePrice),dates:[data.date,data.date2].filter(Boolean).map(s=>s+':00+09:00'),bookingOpensAt:data.bookingOpensAt?data.bookingOpensAt+':00+09:00':undefined}});concerts=[];toast('공연과 좌석이 등록되었어요.');await adminPage();}catch(e){error.textContent=e.message;error.hidden=false;button.disabled=false;}
   });
+  await loadSeats().catch(e=>{if(r===revision)toast(e.message);});
 }
 
 async function route() {

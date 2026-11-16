@@ -294,12 +294,14 @@ for (const schema of ['legacy', 'model']) {
 
   test(`[${schema}] 공연 시작은 일반 입장/유효 선점보다 먼저 마감하며 새 확정을 막는다`, async t => {
     const f = await fixture(t, schema, { queueOptions: { admissionMs: 100000 } }), [a, admin] = f.users;
-    const concert = f.app.store.createConcert(admin.id, { title: '입장 마감 경계', artist: '가상 밴드', venue: '가상 공연장', description: '마감 검증', basePrice: 50000, dates: [new Date(initialTime + 1000).toISOString()] });
+    const starts = initialTime + 86400000;
+    const concert = f.app.store.createConcert(admin.id, { title: '입장 마감 경계', artist: '가상 밴드', venue: '가상 공연장', description: '마감 검증', basePrice: 50000, dates: [new Date(starts).toISOString()] });
     const pid = f.app.store.concerts().find(c => c.id === concert.id).performances[0].id;
+    f.advance(starts - initialTime - 1000);
     const status = (await f.join(a, {}, pid)).body;
-    assert.equal(status.admission_expires_at, initialTime + 1000);
+    assert.equal(status.admission_expires_at, starts);
     const hold = (await f.hold(a, ['A-01'], status.admission_token, pid)).body.hold;
-    assert.ok(hold.expires_at > initialTime + 1000);
+    assert.ok(hold.expires_at > starts);
     f.advance(1000);
     assert.equal((await f.api('GET', f.queuePath(pid), a)).status, 404);
     assert.equal((await f.api('POST', '/api/bookings', a, order(hold), status.admission_token)).status, 409);
