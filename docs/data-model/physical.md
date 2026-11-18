@@ -26,7 +26,7 @@
 
 연결마다 foreign_keys=ON, 기본 busy_timeout=5000을 설정한다. API는 seed 뒤 busy_timeout을 25ms로 낮추고 [제한 비동기 재시도](../design/api.md)를 적용한다. 새 파일 DB는 journal_mode=WAL이고 메모리 DB는 memory다. user_version=0은 legacy Store, 1은 model Store 스키마다. 별도 DDL의 초기화는 빈 DB에서 한 트랜잭션으로만 허용한다. 기본 legacy Store의 v1 오접속 거부는 유지한다. 별도 DB_PATH와 DB_SCHEMA=model을 함께 명시하면 ModelStore로 새/이관 v1 DB를 실행하며 시작 시 한 번 전체 검사를 수행한다.
 
-모든 model 테이블은 STRICT다. SQLite의 허용 가능한 무손실 타입 변환까지 금지하는 것은 아니므로 INTEGER 컬럼의 숫자 문자열이 항상 거부된다고 가정하지 않는다. 핵심 저장 타입·범위는 CHECK와 함께 확인한다. 금액은 원 단위 INTEGER, 시각은 UTC epoch milliseconds INTEGER(0~9,007,199,254,740,991), 화면은 Asia/Seoul이다. ID는 기존 문자열 형식을 보존하며 감사 ID만 기존 INTEGER를 유지한다.
+model은 기본 업무 테이블 14개, 관리자 운영 이력 4개, 이관 출처 1개를 합쳐 19개의 STRICT 테이블로 구성된다. SQLite의 허용 가능한 무손실 타입 변환까지 금지하는 것은 아니므로 INTEGER 컬럼의 숫자 문자열이 항상 거부된다고 가정하지 않는다. 핵심 저장 타입·범위는 CHECK와 함께 확인한다. 금액은 원 단위 INTEGER, 시각은 UTC epoch milliseconds INTEGER(0~9,007,199,254,740,991), 화면은 Asia/Seoul이다. ID는 기존 문자열 형식을 보존하며 감사 ID만 기존 INTEGER를 유지한다.
 
 각 컬럼의 업무 의미·길이·NULL·후보키는 [논리 사전](logical.md), 정확한 타입·기본값·제약은 SQL을 원본으로 삼는다. 다음 표는 물리 저장과 조회의 차이다.
 
@@ -54,7 +54,7 @@
 
 legacy_booking_imports는 과거 데모 시도 기록이 없는 기존 예매를 식별한다. 결제 시도·시각·요청 키를 꾸며내는 대신 이 행이 있는 예매만 성공 시도 0개를 허용한다. 일반 예매 경로가 이 기술 테이블에 행을 넣는 것은 지원하지 않는다. 새 앱 통합에서 쓰기 권한·호출 경계를 유지해야 한다.
 
-PK·NOT NULL·후보키 UNIQUE는 SQL에 명시한다. holds는 active 회원·회차 부분 UNIQUE, payment_attempts는 비NULL booking_id 부분 UNIQUE를 사용한다. 시간에 의존하는 부분 인덱스는 없다. 복합 FK는 current_bookings → booking_items의 복합 PK, payment_attempts → bookings의 UQ(id,hold_id)를 참조한다. 모든 FK는 즉시 검사이며 ON DELETE/UPDATE RESTRICT다. FK를 끄거나 지연시켜 우회하지 않는다. [SQLite FK 문서](https://www.sqlite.org/foreignkeys.html)는 부모 유일키와 즉시/지연 검사 차이를 설명한다.
+PK·NOT NULL·후보키 UNIQUE는 SQL에 명시한다. holds는 active 회원·회차 부분 UNIQUE, payment_attempts는 비NULL booking_id 부분 UNIQUE를 사용한다. 시간에 의존하는 부분 인덱스는 없다. 복합 FK는 current_bookings → booking_items의 복합 PK, payment_attempts → bookings의 UQ(id,hold_id), performance_cancelled_bookings → performance_sales_events의 PK(performance_id,revision)를 참조한다. 모든 FK는 즉시 검사하며 삭제에 ON DELETE RESTRICT를 적용한다. 갱신은 기본 스키마가 ON UPDATE RESTRICT, 관리자 운영 이력 4개 테이블은 기본 동작인 NO ACTION을 적용한다. FK를 끄거나 지연시켜 우회하지 않는다. [SQLite FK 문서](https://www.sqlite.org/foreignkeys.html)는 부모 유일키와 즉시/지연 검사 차이를 설명한다.
 
 ## 상태 변경 순서와 제약의 한계
 
@@ -75,7 +75,7 @@ SQLite에는 이 설계를 위한 일반적인 커밋 시점 집계 제약이 �
 
 DB 시간을 임의로 읽는 트리거로 요청 만료 정책을 대체하지 않는다. 현재 도구는 서버 시각 기반 만료·공연 시작·인증·CSRF·일반 멱등성의 API 구현이 아니다. 이관은 만료된 active 상태도 원본 그대로 옮긴다. 실제 앱 통합은 요청 트랜잭션에서 만료를 정리하고 시간·최대 4매를 재검사해야 한다. 현재 검사기는 정리 전 active 연결을 보수적으로 매수에 포함하므로 다음 요청에서 정리 후 검사한다.
 
-현재 앱의 쓰기는 위 만료 정리를 유지하고, 공연/좌석/관리자 읽기는 [별도 스냅샷](../design/api.md)에서 status/기한 조건으로 만료를 제외한다. CLI의 정리 후 원시 쿼리와 HTTP 표시 SQL을 구분한다. DDL/인덱스·user_version은 바꾸지 않았고 실제 요청 SQL은 두 Store를 원본으로 삼는다.
+현재 앱의 쓰기는 위 만료 정리를 유지하고, 공연/좌석/관리자 읽기는 [별도 스냅샷](../design/api.md)에서 status/기한 조건으로 만료를 제외한다. CLI의 정리 후 원시 쿼리와 HTTP 표시 SQL을 구분한다. 예매 오픈과 관리자 이력용 DDL은 model의 user_version=1을 유지하며, 실제 요청 SQL은 두 Store를 원본으로 삼는다.
 
 임의 raw SQL, OR REPLACE, 트리거 제거, 출처 표식 직접 삽입, 검증 없는 COMMIT은 지원 경로가 아니다. 현재 프로세스가 DB 파일의 쓰기 권한을 독점한다는 전제이며 DB 소유자가 제약을 제거할 수 없는 보안 경계라고 주장하지 않는다.
 
@@ -100,18 +100,19 @@ booking_totals 뷰는 항목 가격 SUM과 fee로 ticket_total·total을 파생�
 
 ## 이관 사전 검사와 대응
 
-원본의 user_version=0·테이블 9개·정확한 컬럼 배열·기본 인덱스를 확인한다. 알 수 없는 테이블·뷰·트리거·인덱스는 검토 없이 무시하지 않고 중단한다. 실제 저장 타입·안전 정수·integrity_check·foreign_key_check, 예매와 선점의 회원/회차, 항목 존재·수량·기존 합계·수수료·총액을 검사한다. 새 STRICT 도메인과 트리거 및 최종 무결성 검사에서도 실패할 수 있다.
+원본의 user_version=0, 기본 테이블 9개, 컬럼 배열과 허용된 인덱스를 확인한다. 기존 `concerts.booking_opens_at`과 관리자 이력 테이블 4개는 기능 적용 여부에 따라 포함될 수 있다. 회차 판매 이력과 취소 예매 연결 테이블은 두 테이블이 함께 있어야 한다. 알 수 없는 테이블·뷰·트리거·인덱스는 검토 없이 무시하지 않고 중단한다. 실제 저장 타입·안전 정수·integrity_check·foreign_key_check, 예매와 선점의 회원/회차, 항목 존재·수량·기존 합계·수수료·총액을 검사한다. 새 STRICT 도메인과 트리거 및 최종 무결성 검사에서도 실패할 수 있다.
 
 | 기존 데이터 | 대상·보존 방식 |
 | --- | --- |
 | users / sessions | 모든 컬럼 값·비밀번호 해시·세션 해시·CSRF·시각을 그대로 이관 |
-| concerts | venue 외 속성과 ID 유지. 원문 venue는 새 장소 name으로 보존 |
+| concerts | venue 외 속성과 ID 유지. 원문 venue는 새 장소 name으로 보존. booking_opens_at이 있으면 유지하고 기존 컬럼이 없으면 NULL |
 | performances | ID·공연·시각 유지. 회차마다 별도 legacy-venue ID를 만들어 같은 장소 이름을 자동 병합하지 않음 |
 | seats | 회차별 물리 좌석·inventory로 대응. (performance_id,seat_id)를 JSON 튜플로 인코딩해 내부 ID를 만들어 경계 문자열 충돌 방지. 원래 코드·열·번호·등급·가격·차단 보존 |
 | holds | ID·회원·회차·상태·만료 그대로. 현재 hold_id는 current_holds로 이관 |
 | bookings / booking_seats | ID·취소·수수료·예매자·시각·스냅샷 보존. 기존 user_id/performance_id/합계는 파생 결과와 값별로 대조 |
 | seats.booking_id | 해당 항목이 있는 confirmed 예매의 current_bookings로 이관. 취소 이력과 현재 소유를 분리 |
 | audit | 원본 INTEGER ID·동작·상세 JSON·행위자·시각 그대로 이관 |
+| 관리자 운영 이력 | 관리자 대리 취소, 회원 예매 제한·해제, 회차 판매 상태 및 최종 취소 예매 연결을 보존 |
 | 과거 결제 시도 부재 | 시도 행 0개. legacy_booking_imports로만 출처 표시 |
 
 같은 공연의 여러 회차도 물리 장소 동등성은 자동 추정하지 않는다. 중복 장소를 수동 검토해 통합하는 후속 이관은 별도 작업이다. 이는 원본의 좌석 배치가 모두 같다는 가정으로 이력을 잘못 합치는 일을 피하는 보수적 선택이다.

@@ -21,18 +21,18 @@
 | withdrawAccount | DELETE /api/auth/account | 로그인·CSRF·본인 비밀번호·confirmed=true | 200 {ok:true}. 관리자 403, 시작 전 확정 예매 409. 모든 본인 세션·대기열·선점 정리, 회원/예매자 비식별화, 이력 보존 |
 | logout | POST /api/auth/logout | 로그인·CSRF | 200 {ok:true}. 해당 세션 삭제·쿠키 만료 |
 | listConcerts | GET /api/concerts | 공개 | 200. 회차·잔여석·최저가. 검색/지역/정렬은 브라우저 수행 |
-| getSeats | GET /api/performances/{performanceId}/seats | 공개, 본인 선점 표시만 세션 사용 | 200. performance / seats / hold / server_now / max_tickets=4. 회차 없음 404 |
+| getSeats | GET /api/performances/{performanceId}/seats | 공개, 본인 선점 표시·최종 취소 회차의 관리자 조회에 세션 사용 | 200. performance / seats / hold / server_now / max_tickets=4. 회차 없음 또는 일반 사용자의 최종 취소 회차 조회는 404 |
 | replaceHold | PUT /api/performances/{performanceId}/hold | 로그인·CSRF·본인 | 200. 중복 없는 문자열 0~4개, 확정 포함 4매, 예매 오픈·마감·충돌 검사. 빈 배열은 해제 |
 | createBooking | POST /api/bookings | 로그인·CSRF·본인 hold | 201. 이름·전화·수령 방식·동의·demo 검증. 유효 선점·마감·서버 금액. 기존 결과 재반환도 201 |
 | listBookings | GET /api/bookings | 로그인·본인 내역 | 200. 확정·취소 포함. 개별 GET /api/bookings/{id}는 없음 |
 | cancelBooking | POST /api/bookings/{bookingId}/cancel | 로그인·CSRF·본인 예매 | 200. 최초 취소는 시작 전, 전액·이력 보존. 반복 취소도 기존 결과 |
 | adminSummary | GET /api/admin/summary | 관리자 | 200. confirmed 판매 합계·회원 수·회차 상태·최근 감사 15개 |
-| adminChangePerformanceSales | POST /api/admin/performance-sales | 관리자·CSRF | 200. 하나 이상의 미래 회차를 판매 중단, 판매 재개 또는 최종 취소. 선택한 회차의 상태나 취소 대상 건수가 달라지면 409 |
+| adminChangePerformanceSales | POST /api/admin/performance-sales | 관리자·CSRF | 200. 하나 이상의 미래 회차를 판매 중단, 판매 재개 또는 최종 취소. 마감, 변경 버전 불일치 또는 허용되지 않는 상태 전환은 409. 최종 취소 시 확정 예매 건수가 달라도 409 |
 | adminGetBooking | GET /api/admin/bookings/{bookingId} | 관리자 | 200. 예매번호로 공연·회차·좌석·금액·상태·취소 가능 여부 확인. 예매자 연락처나 회원 ID 미포함 |
 | adminCancelBooking | POST /api/admin/bookings/{bookingId}/cancel | 관리자·CSRF | 200. 고객 요청으로 시작 전 확정 예매 건 전체 취소. 좌석 해제·상태 변경·관리자 기록을 함께 저장 |
 | adminLookupMemberRestriction | POST /api/admin/member-restrictions/lookup | 관리자·CSRF | 200. 이메일이 일치하는 일반 회원의 예매 제한 상태와 마지막 사유 조회 |
 | adminSetMemberRestriction | PUT /api/admin/member-restrictions | 관리자·CSRF | 200. 회원 ID·조회한 revision·제한 여부·사유로 제한/해제. 상태가 바뀐 뒤 들어온 오래된 변경은 409 |
-| createConcert | POST /api/admin/concerts | 관리자·CSRF | 201 {id}. 모든 회차는 등록 시점부터 최소 24시간 뒤여야 한다. 선택 `bookingOpensAt`은 모든 회차에 적용한다. S석 가격 1,000~1,000,000원. 동일 공연은 409 |
+| createConcert | POST /api/admin/concerts | 관리자·CSRF | 201 {id}. 모든 회차는 등록 시점부터 최소 24시간 뒤여야 한다. 선택 `bookingOpensAt`은 모든 회차에 적용한다. S석 가격 1,000~1,000,000원. 기존 동일 공연에 최종 취소되지 않은 회차가 남아 있으면 409 |
 | adminGetSeatOccupant | GET /api/admin/performances/{performanceId}/seats?seatId=A-01 | 관리자 | 200. 현재 좌석 상태·회원 이름과 이메일. 선점은 만료 시각, 확정 예매는 예매번호를 포함 |
 | blockSeats | PATCH /api/admin/performances/{performanceId}/seats | 관리자·CSRF | 200 {updated}. 1~96개 중복 없는 좌석·boolean blocked. 선점/예매 좌석 거부·묶음 롤백 |
 
@@ -40,13 +40,13 @@
 
 관리자 예매 제한은 일반 회원 계정 단위로 해제 전까지 적용된다. 적용 시 선점 해제와 이력 저장을 함께 커밋하고 그 회원의 큐를 제거한다. 큐 진입/조회는 `BOOKING_RESTRICTED`(403), 신규 선점/확정은 403이다. 로그인, 본인 예매 조회·취소, 기존 확정 결과의 재조회는 유지한다. 제한·해제 기록과 사유는 관리자만 열람할 수 있다. 같은 상태의 반복 요청은 처리 기록을 추가하지 않는다.
 
-공연 등록의 중복 비교는 입력 문자열의 앞뒤 공백을 제거하고 회차를 실제 시각으로 비교한다. 회차 순서나 시간대 표기만 바꾼 요청도 중복이며, 일부 회차만 겹치거나 입력 정보가 다르면 등록할 수 있다.
+공연 등록은 공연명·아티스트·장소·소개·S석 기본가·전체 회차 시각으로 중복을 판단한다. 입력 문자열의 앞뒤 공백을 제거하고 회차를 실제 시각으로 비교한다. 회차 순서나 시간대 표기 또는 예매 오픈 시각만 바꾼 요청도 중복이다. 비교 항목이 다르거나 동일한 기존 공연의 모든 회차가 최종 취소된 경우에는 등록할 수 있다.
 
 공연 등록 시 시작까지 24시간 미만인 회차가 하나라도 있으면 400으로 전체 등록을 거부한다. 정확히 24시간 뒤인 회차는 등록할 수 있다.
 
 예매 오픈 일시는 시간대가 있는 ISO 날짜로 첫 회차 시작 전이어야 한다. 생략하거나 분 단위 입력으로 생긴 60초 이내의 과거 시각을 지정하면 등록 시각에 오픈한다. 오픈 전에는 대기열 진입, 신규 선점과 확정 예매를 409로 거부한다. 대기열 API는 `BOOKING_NOT_OPEN` 코드와 오류 메시지를 반환하며, 선점·확정 API는 오류 메시지를 반환한다. 판매 중단·취소 상태는 오픈 시각과 별도로 적용된다.
 
-회차 판매 중단은 신규 대기열·선점·확정을 막고 기존 확정 예매의 조회·본인 취소를 유지한다. 판매 중단·공연 취소 모두 선점을 해제하고 처리 완료 후 대기열을 제거한다. 최종 취소는 회차를 공개 목록에서 숨기고 확정 예매를 모두 취소한다. 회원은 `performance_cancel_reason`으로 공연 취소 사유를 확인한다. 상태 변경·예매 취소·선점 해제·처리 기록은 같은 트랜잭션에 저장한다. 판매 재개는 중단된 회차에만 적용된다.
+회차 판매 중단은 신규 대기열·선점·확정을 막고 기존 확정 예매의 조회·본인 취소를 유지한다. 판매 중단·최종 취소는 선점을 해제하고 커밋 후 해당 회차의 대기열을 제거한다. 최종 취소는 회차를 공개 목록에서 숨기고 확정 예매를 모두 취소한다. 최종 취소된 회차의 좌석 현황은 관리자만 조회할 수 있다. 회원은 `performance_cancel_reason`으로 공연 취소 사유를 확인한다. 상태 변경과 해당 작업의 예매 취소·선점 해제·처리 기록은 같은 트랜잭션에 저장한다. 판매 재개는 중단된 회차에만 적용된다.
 
 좌석 점유 조회는 선택한 회차의 좌석 하나만 읽는다. 유효한 선점이나 확정 예매에 연결된 회원을 표시한다. 비어 있거나 차단된 좌석 또는 회원이 비식별화된 경우 `member`는 `null`이다. 공개 좌석 응답에는 점유 회원 정보가 포함되지 않는다.
 
@@ -55,7 +55,7 @@
 | operationId | Method / URL | 인증·검증·응답 |
 | --- | --- | --- |
 | enterQueue | POST /api/v1/performances/{performanceId}/queue | 로그인·CSRF. 본문 생략 또는 {}로 일반 진입, {resumeHoldId}로 본인 유효 hold 복구. 200 본인 QueueStatus, 404 회차 없음, 오픈 전 409 `BOOKING_NOT_OPEN`, 429 상한/요청 제한 |
-| getQueue | GET /api/v1/performances/{performanceId}/queue | 로그인·본인 항목. 제한 여부 확인 후 메모리에서 상태·순번·입장권 조회. 제한 회원 403, 항목 없음 404 |
+| getQueue | GET /api/v1/performances/{performanceId}/queue | 로그인·본인 항목. 제한 여부와 회차 판매 상태를 확인한 후 메모리에서 상태·순번·입장권 조회. 제한 회원 403, 항목 없음 404, 판매 중단·최종 취소 회차 409 |
 | leaveQueue | DELETE /api/v1/performances/{performanceId}/queue | 로그인·CSRF·본인 항목. 200 {ok:true}, 반복 성공. 유효 DB hold를 자동 취소하지 않음 |
 | health | GET /api/v1/health | 공개. 200 {status:"ok"}. 프로세스 생존만 확인, DB 쓰기/상세 경로 노출 없음 |
 | readiness | GET /api/v1/readiness | 공개. 초기화 후 선택 스키마(legacy=0/model=1)·FK 설정·users 읽기 가능 시 200 {status:"ready",schema_version}. 종료 중/실패 503 {error,code:"NOT_READY"}·Retry-After: 1. 쓰기·전체 integrity_check 없음 |
@@ -66,7 +66,7 @@ health/readiness GET은 세션·일반 예산·CSRF·입장권과 독립적이�
 
 선점은7분이며 선택 변경으로 만료가 연장되지 않는다. 현재 PUT은 같은 좌석 집합에도 새 hold ID를 반환한다. 이전 hold는 released, 만료는 expired, 확정은 converted로 전환하고 본인 조회의 selected는 held 좌석 표시다. 응답을 잃으면 결제 전에 최신 본인 hold를 조회한다.
 
-확정 예매와 유효 선점을 합해 회원/회차당 최대4매다. 장당 수수료2,000원과 좌석 가격은 서버가 계산한다. confirmed 예매는 공연 시작 전 전체 취소만 가능하며 cancelled 뒤 재결제해 되살리지 않는다. 취소 시 현재 점유를 해제하고 항목·원래 가격/등급/수수료·취소 시각은 보존한다. 반복 취소는 기존 결과이며 판매 집계는 confirmed만 포함한다. 최초 선점/확정/취소는 공연 시작 시각 이상이면 거부한다.
+확정 예매와 유효 선점을 합해 회원/회차당 최대4매다. 장당 수수료2,000원과 좌석 가격은 서버가 계산한다. 예매 확정 직후부터 공연 시작 전까지 예매 건 전체를 취소할 수 있다. cancelled 상태는 재결제해도 유지된다. 취소 시 현재 점유를 해제하고 항목·원래 가격/등급/수수료·취소 시각은 보존한다. 반복 취소는 기존 결과이며 판매 집계는 confirmed만 포함한다. 최초 선점/확정/취소는 공연 시작 시각 이상이면 거부한다.
 
 선점·확정·취소·차단은 짧은 BEGIN IMMEDIATE에서 소유권·현재 시각·회차/공연장·가용 좌석·확정 포함4매를 재검증한다. 묶음은 전부 성공하거나 전부 롤백한다. SQLite가 판매의 최종 원본이며 큐/화면 상태로 DB 검사를 대체하지 않는다. 현재 재고의 소유자만 하나이고 취소/재판매의 과거 항목은 여러 건 보존할 수 있다. 관리자 차단은 가용 좌석만 허용한다.
 

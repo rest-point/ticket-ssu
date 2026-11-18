@@ -1,6 +1,6 @@
 # 논리 데이터 모델
 
-[개념 모델](conceptual.md)의12개 업무 엔터티를14개 릴레이션으로 구체화한다. current_holds/current_bookings는 현재 점유를 분리하며 과거 항목은 보존한다. 별도 model 모드의 저장 계약이며 기본 legacy/기존 DB를 자동 전환하지 않는다. [정규화](normalization.md)·[물리 모델](physical.md)과 함께 읽는다.
+[개념 모델](conceptual.md)의 12개 기본 업무 엔터티를 14개 기본 업무 릴레이션으로 구체화한다. 전체 model은 관리자 운영 이력 4개와 이관 출처(`legacy_booking_imports`) 1개를 합쳐 19개 테이블이다. current_holds/current_bookings는 현재 점유를 분리하며 과거 항목은 보존한다. 별도 model 모드의 저장 계약이며 기본 legacy/기존 DB를 자동 전환하지 않는다. [정규화](normalization.md)·[물리 모델](physical.md)과 함께 읽는다.
 
 ## 설계 원칙과 표기
 
@@ -30,7 +30,7 @@
 
 ## 릴레이션 명세
 
-각 절의 스키마 한 줄은 전체 속성 집합이다. nullable에 없는 모든 속성은 NOT NULL이다. FK의 모든 구성 속성이 NULL이 아닌 경우 부모 행이 존재해야 한다. 이력 참조는 원칙적으로 ON DELETE RESTRICT / ON UPDATE RESTRICT이며 아래 생명주기 정책을 따른다.
+각 절의 스키마 한 줄은 전체 속성 집합이다. nullable에 없는 속성은 필수다. FK의 모든 구성 속성이 NULL이 아닌 경우 부모 행이 존재해야 한다. 외래키 삭제는 RESTRICT이며, 갱신은 기본 스키마에 RESTRICT, 관리자 운영 이력 테이블에 NO ACTION을 적용한다.
 
 ### users
 
@@ -261,7 +261,7 @@ detail은 동작의 불변 사건 자료다. 현재처럼 create-concert의 id/t
 | X-08 | 확정 항목·수수료·시각·소유권은 취소 후에도 보존. 새 예매 fee = 항목 수 ×2,000원 | 생성 시 스냅샷·집계 확인. 항목/예매 불변 정보 수정·삭제 차단. 취소는 연결 해제·status/cancelled_at 갱신만 허용. 별도 탈퇴 트랜잭션은 탈퇴 회원의 예매자 이름/전화 비식별화만 예외 |
 | X-09 | 새 예매에는 성공 결제 시도 정확히 1개, 기존 마이그레이션 예매에는 0개 허용 | 성공 시도 부분 UNIQUE로 최대 1개, 신규 확정 트랜잭션으로 최소 1개. 과거 기록 부재는 마이그레이션 경계에서 구분; 가짜 과거 시도 생성 금지 |
 
-SQLite FK를 쓸 때 참조 부모의 동일 컬럼 조합에 PK 또는 명시적 UNIQUE가 필요하다. 위 두 복합 FK는 각각 booking_items의 복합 PK와 bookings의 추가 UQ를 참조한다. current_holds에는 회차 중복 컬럼이 없으므로 단일 FK만으로 회차 일치를 보장한다고 쓰지 않는다. 트리거·CHECK의 구체적 SQL과 예매 생성/취소 중간 상태 처리 순서는 물리 모델에서 검증해야 한다.
+SQLite FK를 쓸 때 참조 부모의 동일 컬럼 조합에 PK 또는 명시적 UNIQUE가 필요하다. 기본 업무 릴레이션의 복합 FK는 booking_items의 복합 PK와 bookings의 추가 UQ를 참조한다. 관리자 운영 이력의 performance_cancelled_bookings는 performance_sales_events의 복합 PK를 참조한다. current_holds의 회차 일치는 개별 FK와 트리거로 검증한다. 트리거·CHECK의 구체적 SQL과 예매 생성/취소 중간 상태 처리 순서는 물리 모델에서 검증해야 한다.
 
 ## 금액·취소·식별 보존
 
